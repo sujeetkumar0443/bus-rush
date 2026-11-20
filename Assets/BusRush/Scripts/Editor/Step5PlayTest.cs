@@ -18,7 +18,9 @@ namespace BusRush.EditorTools
     [InitializeOnLoad]
     public static class Step5PlayTest
     {
-        public const string ShotsDir = "C:/UnityBuilds/BusRush_Source/unity_shots/step5";
+        /// <summary>Output folder; override with BUSRUSH_SHOTDIR (e.g. .../unity_shots/step5b).</summary>
+        public static string ShotsDir =>
+            System.Environment.GetEnvironmentVariable("BUSRUSH_SHOTDIR") ?? "C:/UnityBuilds/BusRush_Source/unity_shots/step5";
         private const string Flag = "BusRush.Step5PlayTest.Active";
         private const string ExitFlag = "BusRush.Step5PlayTest.Exit";
         private const float PlayTimeScale = 4f;
@@ -152,11 +154,13 @@ namespace BusRush.EditorTools
                     {
                         walk = true;
                         yield return Both("02_mid_walk");
+                        yield return RenderCapture.Capture(ShotsDir, "02_mid_walk_3x", 1170, 2532); // for a close-up crop
                     }
                     if (!boarding && s.Bays.Bays.Any(b => b.Vehicle != null && b.Filled >= 2 && b.Filled < b.Capacity))
                     {
                         boarding = true;
                         yield return Both("03_boarding_pill");
+                        yield return RenderCapture.Capture(ShotsDir, "03_boarding_pill_3x", 1170, 2532);
                     }
                     if (!leaving && s.Bays.Bays.Any(b => b.Departing))
                     {

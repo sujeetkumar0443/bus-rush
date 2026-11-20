@@ -7,7 +7,7 @@ namespace BusRush.Gameplay
     /// <summary>
     /// The passenger queue on the U-shaped track around the island. Two arms start at the gate, curve around the bottom
     /// of the ellipse, up its sides and straight up off screen. Person n uses arm n%2 and lane (n/2)%5; the person at
-    /// queue index i targets 6 + (i/2)*10.5 (+5.25 on odd lanes) ref px from the gate and walks there at 85 px/s, so
+    /// queue index i targets 6 + (i/2)*7.5 (+3.75 on odd lanes) ref px from the gate and walks there at 85 px/s, so
     /// the crowd flows forward as the front boards. At most <see cref="maxVisible"/> people are instantiated (pooled);
     /// the rest exist only logically.
     /// </summary>
@@ -19,16 +19,17 @@ namespace BusRush.Gameplay
         public const float EllipseRy = 72f;
         public const float ArmTopY = -420f;
         public const float FrontRadius = 40f;
-        private static readonly float[] Lanes = { -25f, -12.5f, 0f, 12.5f, 25f };
+        private static readonly float[] Lanes = { -20f, -10f, 0f, 10f, 20f }; // design lanes * 0.8 (denser crowd)
+        public const float RowSpacing = 7.5f;
 
         [SerializeField] private PassengerView passengerPrefab;
-        [SerializeField] private int maxVisible = 60;
+        [SerializeField] private int maxVisible = 70;
         [SerializeField] private float walkSpeedPx = 85f;
         [SerializeField] private float boardSpeedPx = 420f;
         [SerializeField] private float minBoardTime = 0.25f;
-        [SerializeField] private float passengerHeight = 0.45f;
+        [SerializeField] private float passengerHeight = 0.81f;
         [Tooltip("Model height of the Passenger prefab (for scaling to passengerHeight).")]
-        [SerializeField] private float modelHeight = 0.78f;
+        [SerializeField] private float modelHeight = 0.779f;
 
         private sealed class Person
         {
@@ -139,7 +140,7 @@ namespace BusRush.Gameplay
                 // Face the way they walk; standing people face the gate (down the arm).
                 Vector2 facing = Mathf.Abs(moved) > 0.0001f ? tangent * Mathf.Sign(moved) : -tangent;
                 Place(p.view, refPos, facing, dt);
-                p.view.Animate(Mathf.Abs(moved) / Mathf.Max(0.0001f, walkSpeedPx * dt), dt);
+                p.view.Pose(dt, dt > 0f ? Mathf.Abs(moved) / dt : 0f, false);
             }
 
             for (int i = walkers.Count - 1; i >= 0; i--)
@@ -149,7 +150,7 @@ namespace BusRush.Gameplay
                 float k = Mathf.Clamp01(w.time / w.duration);
                 Vector2 pos = PolylinePoint(w.path, k * w.length, out Vector2 dir);
                 Place(w.person.view, pos, dir, dt);
-                w.person.view.Animate(1f, dt);
+                w.person.view.Pose(dt, boardSpeedPx, true);
                 if (k >= 1f)
                 {
                     walkers.RemoveAt(i);
@@ -196,12 +197,12 @@ namespace BusRush.Gameplay
 
         /// <summary>
         /// Distance from the gate for queue index i. The two arms alternate (one person per arm per row) and the five
-        /// lanes cycle along each arm, so each arm advances one row (10.5 px) per person and long queues run up the
+        /// lanes cycle along each arm, so each arm advances one row (RowSpacing) per person and long queues run up the
         /// sides of the island and off the top of the screen.
         /// </summary>
         public static float TargetS(int queueIndex, int lane)
         {
-            return 6f + (queueIndex / 2) * 10.5f + (lane % 2 == 1 ? 5.25f : 0f);
+            return 6f + (queueIndex / 2) * RowSpacing + (lane % 2 == 1 ? RowSpacing * 0.5f : 0f);
         }
 
         /// <summary>
@@ -211,7 +212,7 @@ namespace BusRush.Gameplay
         private float TargetLateral(Person p)
         {
             float full = Lanes[p.lane];
-            float shared = (p.arm == 0 ? -1f : 1f) * (12.5f + full * 0.5f);
+            float shared = (p.arm == 0 ? -1f : 1f) * (10f + full * 0.5f);
             float k = Mathf.InverseLerp(sharedLength, sharedLength + 30f, p.s);
             return Mathf.Lerp(shared, full * (p.arm == 0 ? 1f : -1f), k);
         }

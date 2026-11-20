@@ -7,7 +7,7 @@ using Object = UnityEngine.Object;
 
 namespace BusRush.EditorTools
 {
-    /// <summary>Step 5 additions: passenger prefab rig, crowd, confetti / sparkle effects.</summary>
+    /// <summary>Step 5 additions: crowd, confetti / sparkle effects (passenger prefab: see Step5b).</summary>
     public static partial class GameplayBuilder
     {
         private const string PassengerPrefabPath = "Assets/BusRush/Prefabs/Characters/Passenger.prefab";
@@ -16,52 +16,10 @@ namespace BusRush.EditorTools
         {
             Material confetti = CreateParticleMaterial("Confetti", null, Color.white, 0);
             Material sparkle = CreateParticleMaterial("Sparkle", AssetDatabase.LoadAssetAtPath<Texture2D>($"{TexturesDir}/soft_circle.png"), Color.white, 2);
-            UpgradePassengerPrefab();
+            ImportAndInspectRig();          // Step 5b: rigged passenger with separate limbs
+            BuildRiggedPassengerPrefab();
             BuildFxPrefab(confetti, sparkle);
             AssetDatabase.SaveAssets();
-        }
-
-        private static void UpgradePassengerPrefab()
-        {
-            GameObject root = PrefabUtility.LoadPrefabContents(PassengerPrefabPath);
-            try
-            {
-                Transform visual = root.transform.Find("Visual");
-                if (visual == null)
-                {
-                    visual = new GameObject("Visual").transform;
-                    visual.SetParent(root.transform, false);
-                    root.transform.Find("Body").SetParent(visual, false);
-                    root.transform.Find("Cap").SetParent(visual, false);
-                }
-                Renderer body = visual.Find("Body").GetComponent<Renderer>();
-                Renderer cap = visual.Find("Cap").GetComponent<Renderer>();
-                foreach (Renderer r in new[] { body, cap })
-                {
-                    r.shadowCastingMode = ShadowCastingMode.Off; // crowds use the blob shadow (mobile)
-                    r.receiveShadows = false;
-                }
-
-                Transform oldShadow = root.transform.Find("Shadow");
-                if (oldShadow != null) Object.DestroyImmediate(oldShadow.gameObject);
-                var shadow = new GameObject("Shadow");
-                shadow.transform.SetParent(root.transform, false);
-                shadow.transform.SetLocalPositionAndRotation(new Vector3(0f, 0.015f, 0f), Quaternion.Euler(90f, 0f, 0f));
-                shadow.transform.localScale = new Vector3(0.62f, 0.62f, 1f);
-                shadow.AddComponent<MeshFilter>().sharedMesh = Resources.GetBuiltinResource<Mesh>("Quad.fbx");
-                var sr = shadow.AddComponent<MeshRenderer>();
-                sr.sharedMaterial = AssetDatabase.LoadAssetAtPath<Material>($"{MaterialsDir}/ContactShadow.mat");
-                sr.shadowCastingMode = ShadowCastingMode.Off;
-                sr.receiveShadows = false;
-
-                if (!root.TryGetComponent(out PassengerView view)) view = root.AddComponent<PassengerView>();
-                Wire(view, ("visual", visual), ("body", body), ("cap", cap));
-                PrefabUtility.SaveAsPrefabAsset(root, PassengerPrefabPath);
-            }
-            finally
-            {
-                PrefabUtility.UnloadPrefabContents(root);
-            }
         }
 
         private static void BuildFxPrefab(Material confettiMat, Material sparkleMat)
