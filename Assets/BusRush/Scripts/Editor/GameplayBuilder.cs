@@ -28,7 +28,7 @@ namespace BusRush.EditorTools
         /// <summary>Minimum tap target: 48 dp on the 390 dp reference width = 48 / 34 cells across.</summary>
         private const float MinTapWidth = 48f / BoardGeometry.PixelsPerCell;
 
-        [MenuItem("Tools/Bus Rush/Build Gameplay (Steps 3-4)")]
+        [MenuItem("Tools/Bus Rush/Build Gameplay (Steps 3-5)")]
         public static void BuildAll()
         {
             Directory.CreateDirectory(TexturesDir);
@@ -43,6 +43,7 @@ namespace BusRush.EditorTools
             EnablePaletteEmission();
             UpgradeVehiclePrefabs(shadow);
             BuildStep4();
+            BuildStep5();
             SetShadowDistance(60f);
             AssetDatabase.SaveAssets();
 
@@ -367,7 +368,9 @@ namespace BusRush.EditorTools
             gridGo.AddComponent<LotGridView>();
 
             GameSession session = board.AddComponent<GameSession>();
-            UIKit.Wire(session, ("board", boardView), ("world", manager), ("bays", BuildBayManager(board)));
+            (CrowdView crowd, GameFx fx) = BuildCrowdAndFx(board);
+            UIKit.Wire(session, ("board", boardView), ("world", manager), ("bays", BuildBayManager(board)),
+                ("crowd", crowd), ("fx", fx), ("debugAutoDepart", false));
             InputController input = board.AddComponent<InputController>();
             UIKit.Wire(input, ("viewCamera", cam), ("session", session));
 

@@ -14,6 +14,23 @@ namespace BusRush
         public int rows = 10;
         public List<VehicleData> vehicles = new List<VehicleData>();
 
+        /// <summary>Vehicle indices in the order the generator guarantees they can leave the board.</summary>
+        public List<int> exitOrder = new List<int>();
+
+        /// <summary>Passenger colours, front of the queue first. Per colour it sums to that colour's vehicle capacity.</summary>
+        public List<GameColor> queue = new List<GameColor>();
+
+        public Dictionary<GameColor, int> QueueCountPerColor()
+        {
+            var result = new Dictionary<GameColor, int>();
+            foreach (GameColor c in queue)
+            {
+                result.TryGetValue(c, out int n);
+                result[c] = n + 1;
+            }
+            return result;
+        }
+
         /// <summary>
         /// Total seat capacity per colour. The crowd (later step) spawns exactly this many passengers of each colour,
         /// so every vehicle can be filled.

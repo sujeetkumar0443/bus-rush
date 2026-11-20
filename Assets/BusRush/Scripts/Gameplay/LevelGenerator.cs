@@ -69,6 +69,12 @@ namespace BusRush.Gameplay
 
             AssignColors(rng, placed, s.colorCount);
 
+            // Generator exit order = reverse placement (each path only crosses vehicles that leave earlier).
+            var generatorExitOrder = new List<int>();
+            for (int i = placed.Count - 1; i >= 0; i--) generatorExitOrder.Add(i);
+
+            List<GameColor> queue = BuildQueue(rng, placed, generatorExitOrder, columns, rows, out List<int> parkOrder);
+
             return new LevelData
             {
                 level = level,
@@ -76,8 +82,103 @@ namespace BusRush.Gameplay
                 worldIndex = (level - 1) % 3,
                 columns = columns,
                 rows = rows,
-                vehicles = placed
+                vehicles = placed,
+                exitOrder = parkOrder,
+                queue = queue
             };
+        }
+
+        public const int QueueChunkVehicles = 3;
+        public const int QueueGroupSize = 4;
+
+        /// <summary>
+        /// Passenger queue built together with a play-through of the greedy player (see <see cref="GameSimulator"/>), in
+        /// chunks of up to 3 parked vehicles, earliest generator exit order first:
+        /// <list type="bullet">
+        /// <item>Each chunk starts with one "trigger" passenger per vehicle, in a colour no parked vehicle can take, so the
+        /// player has to park exactly that vehicle: the lowest-index free vehicle of that colour, which is the one the
+        /// greedy player picks.</item>
+        /// <item>The chunk's remaining passengers follow in groups of 4, shuffled (seeded) across the chunk's vehicles.</item>
+        /// </list>
+        /// Every passenger can therefore board when they reach the front, the level is winnable with 4 open bays (one
+        /// kept spare), and per colour the queue equals the total vehicle capacity.
+        /// </summary>
+        private static List<GameColor> BuildQueue(System.Random rng, List<VehicleData> vehicles, List<int> exitOrder,
+                                                  int columns, int rows, out List<int> parkOrder)
+        {
+            var queue = new List<GameColor>();
+            parkOrder = new List<int>();
+            var board = new BoardState(columns, rows);
+            var onBoard = new HashSet<int>();
+            for (int i = 0; i < vehicles.Count; i++)
+            {
+                board.Occupy(i, vehicles[i]);
+                onBoard.Add(i);
+            }
+
+            while (onBoard.Count > 0)
+            {
+                // Park up to 3 vehicles, each with a colour no other vehicle in the chunk has.
+                var chunk = new List<int>();
+                var chunkColors = new HashSet<GameColor>();
+                while (chunk.Count < QueueChunkVehicles)
+                {
+                    int pick = -1;
+                    foreach (int id in exitOrder) // earliest exit first
+                    {
+                        if (!onBoard.Contains(id)) continue;
+                        VehicleData v = vehicles[id];
+                        if (chunkColors.Contains(v.color) || !board.IsPathClear(v)) continue;
+                        pick = LowestFreeOfColor(vehicles, board, onBoard, v.color); // what the greedy player parks
+                        break;
+                    }
+                    if (pick < 0) break;
+
+                    VehicleData pv = vehicles[pick];
+                    board.Free(pick, pv);
+                    onBoard.Remove(pick);
+                    chunk.Add(pick);
+                    chunkColors.Add(pv.color);
+                    parkOrder.Add(pick);
+                    queue.Add(pv.color); // trigger passenger: makes the player park this vehicle
+                }
+
+                if (chunk.Count == 0)
+                {
+                    throw new System.InvalidOperationException("Queue builder found no free vehicle; board is not solvable.");
+                }
+
+                // Remaining seats of the chunk in shuffled groups of 4.
+                var groups = new List<List<GameColor>>();
+                foreach (int id in chunk)
+                {
+                    int remaining = vehicles[id].Capacity - 1;
+                    for (int g = 0; g < remaining; g += QueueGroupSize)
+                    {
+                        int n = Mathf.Min(QueueGroupSize, remaining - g);
+                        var group = new List<GameColor>(n);
+                        for (int k = 0; k < n; k++) group.Add(vehicles[id].color);
+                        groups.Add(group);
+                    }
+                }
+                for (int i = groups.Count - 1; i > 0; i--)
+                {
+                    int j = rng.Next(i + 1);
+                    (groups[i], groups[j]) = (groups[j], groups[i]);
+                }
+                foreach (List<GameColor> g in groups) queue.AddRange(g);
+            }
+            return queue;
+        }
+
+        private static int LowestFreeOfColor(List<VehicleData> vehicles, BoardState board, HashSet<int> onBoard, GameColor color)
+        {
+            int best = -1;
+            foreach (int id in onBoard)
+            {
+                if (vehicles[id].color == color && board.IsPathClear(vehicles[id]) && (best < 0 || id < best)) best = id;
+            }
+            return best;
         }
 
         private static VehicleType PickType(System.Random rng, Settings s)

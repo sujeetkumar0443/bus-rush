@@ -10,6 +10,9 @@ namespace BusRush.UI
         [SerializeField] private Button restartButton;
         [SerializeField] private Button pauseButton;
         [SerializeField] private TMP_Text levelText;
+        [SerializeField] private TMP_Text passengersText;
+
+        private int shownPassengers = -1;
 
         private void Awake()
         {
@@ -31,6 +34,16 @@ namespace BusRush.UI
         private void OnDisable()
         {
             SaveSystem.Changed -= Refresh;
+        }
+
+        private void Update()
+        {
+            if (passengersText == null) return;
+            Gameplay.GameSession session = Gameplay.GameSession.Current;
+            int left = session != null ? session.PassengersLeft : 0;
+            if (left == shownPassengers) return;
+            shownPassengers = left;
+            passengersText.text = $"Passengers left {left}";
         }
 
         private void OnDestroy()

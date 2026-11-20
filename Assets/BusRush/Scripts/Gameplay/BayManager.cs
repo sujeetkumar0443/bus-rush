@@ -143,6 +143,7 @@ namespace BusRush.Gameplay
             // Out of the slot: the bay can take the next vehicle.
             bay.Vehicle = null;
             bay.Departing = false;
+            bay.ResetFilled();
 
             yield return motion.Drive(RouteBuilder.ToWorld(RouteBuilder.BuildDriveOff(bay.Index)),
                                       false, departSpeedMultiplier, false, true, clampToScreen: false);

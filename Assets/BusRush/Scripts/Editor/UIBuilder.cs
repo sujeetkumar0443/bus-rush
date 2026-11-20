@@ -271,6 +271,8 @@ namespace BusRush.EditorTools
             Place(levelPill.Root, 0.5f, 1f, 0f, -14f, 170f, 50f, 0.5f, 1f);
             TextMeshProUGUI level = Label(levelPill.Face, "Label", "Level 1", 28f, TextStyle.Heading);
             Stretch(level.rectTransform, 10f, 0f, 10f, 0f);
+            TextMeshProUGUI passengers = Label(safe, "PassengersLeft", "Passengers left 0", 15f, TextStyle.Body);
+            Place(passengers.rectTransform, 0.5f, 1f, 0f, -66f, 180f, 20f, 0.5f, 1f);
 
             // Booster row
             RectTransform row = Rect(safe, "BoosterRow");
@@ -291,7 +293,8 @@ namespace BusRush.EditorTools
             Wire(toast.Root.gameObject.AddComponent<Toast>(), ("label", toastLabel));
 
             GameHUD hud = go.AddComponent<GameHUD>();
-            Wire(hud, ("restartButton", restart.Button), ("pauseButton", pause.Button), ("levelText", level));
+            Wire(hud, ("restartButton", restart.Button), ("pauseButton", pause.Button), ("levelText", level),
+                ("passengersText", passengers));
             return go;
         }
 

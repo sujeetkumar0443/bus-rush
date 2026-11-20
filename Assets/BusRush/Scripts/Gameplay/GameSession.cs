@@ -6,8 +6,8 @@ using UnityEngine;
 namespace BusRush.Gameplay
 {
     /// <summary>
-    /// One play of the current level: generates the board (seed = level * 7919), routes tapped vehicles to the bays,
-    /// counts moves / wrong taps, and decides win (board and bays empty) or lose (open bays full, nothing can leave).
+    /// One play of the current level: board (seed = level * 7919), road to the bays, the passenger queue boarding
+    /// matching vehicles, full vehicles leaving, and win / lose.
     /// </summary>
     public sealed class GameSession : MonoBehaviour
     {
@@ -15,12 +15,19 @@ namespace BusRush.Gameplay
 
         [SerializeField] private BoardView board;
         [SerializeField] private BayManager bays;
+        [SerializeField] private CrowdView crowd;
+        [SerializeField] private GameFx fx;
         [SerializeField] private WorldManager world;
-        [SerializeField] private float levelCompleteDelay = 0.5f;
-        [Tooltip("TEMPORARY until the crowd exists (Step 5): parked vehicles leave on their own after this delay.")]
-        [SerializeField] private bool debugAutoDepart = true;
+        [SerializeField] private float boardingInterval = 0.12f;
+        [SerializeField] private float fullDepartDelay = 0.35f;
+        [SerializeField] private float confettiToPopupDelay = 0.8f;
+        [SerializeField] private float loseDelay = 0.6f;
+        [Tooltip("Debug: parked vehicles leave on their own after a delay, full or not.")]
+        [SerializeField] private bool debugAutoDepart;
         [SerializeField] private float autoDepartDelay = 3f;
 
+        private float boardingTimer;
+        private float loseTimer;
         private bool outOfSpaceShown;
 
         public int Level { get; private set; }
@@ -28,13 +35,18 @@ namespace BusRush.Gameplay
         public int Moves { get; private set; }
         public int ExitedCount { get; private set; }
         public int DepartedCount { get; private set; }
+        public int BoardedCount { get; private set; }
         public int WrongTaps { get; private set; }
         public int NoBayTaps { get; private set; }
         public bool IsCleared { get; private set; }
+        public bool IsLost { get; private set; }
         public BoardView Board => board;
         public BayManager Bays => bays;
+        public CrowdView Crowd => crowd;
 
-        /// <summary>Parked vehicles depart automatically after <see cref="autoDepartDelay"/> (test loop until Step 5).</summary>
+        /// <summary>Passengers still to board (in the queue or walking to a seat).</summary>
+        public int PassengersLeft => crowd != null ? crowd.PassengersLeft : 0;
+
         public bool DebugAutoDepart
         {
             get => debugAutoDepart;
@@ -42,14 +54,11 @@ namespace BusRush.Gameplay
             {
                 if (debugAutoDepart == value) return;
                 debugAutoDepart = value;
-                if (value)
+                if (!value) return;
+                foreach (BayState b in bays.Bays)
                 {
-                    foreach (BayState b in bays.Bays)
-                    {
-                        if (b.IsParked) StartCoroutine(AutoDepart(b));
-                    }
+                    if (b.IsParked) StartCoroutine(AutoDepart(b));
                 }
-                CheckLose();
             }
         }
 
@@ -57,6 +66,7 @@ namespace BusRush.Gameplay
         public event Action<BayState> OnVehicleParked;
         public event Action<BayState> OnVehicleDeparted;
         public event Action OnLevelCleared;
+        public event Action OnLevelLost;
 
         private void Awake()
         {
@@ -82,12 +92,26 @@ namespace BusRush.Gameplay
             board.VehicleLeftBoard += _ => ExitedCount++;
             board.BoardCleared += CheckWin;
             board.Build(LevelData, new RoadExitBehaviour(bays));
+            crowd.Build(LevelData.queue);
             OutOfSpacePopup.BayPurchased += HandleBayPurchased;
 
             if (GameManager.Instance != null && GameManager.Instance.State != GameState.Playing)
             {
                 GameManager.Instance.SetState(GameState.Playing);
             }
+        }
+
+        private void Update()
+        {
+            if (IsCleared) return;
+
+            boardingTimer += Time.deltaTime;
+            if (boardingTimer >= boardingInterval)
+            {
+                boardingTimer = 0f;
+                TryBoardFront();
+            }
+            UpdateLose(Time.deltaTime);
         }
 
         public void OnVehicleTapped(VehicleView vehicle)
@@ -111,11 +135,60 @@ namespace BusRush.Gameplay
             }
         }
 
+        // ------------------------------------------------------------------ boarding
+
+        /// <summary>The bay a passenger of this colour would board right now (closest to full first), or null.</summary>
+        public BayState FindSeat(GameColor color)
+        {
+            BayState best = null;
+            foreach (BayState b in bays.Bays)
+            {
+                if (!b.CanBoard(color)) continue;
+                if (best == null || b.Filled + b.SeatsReserved > best.Filled + best.SeatsReserved) best = b;
+            }
+            return best;
+        }
+
+        private void TryBoardFront()
+        {
+            if (!crowd.FrontAtGate) return;
+            BayState bay = FindSeat(crowd.FrontColor);
+            if (bay == null) return; // the queue waits; nobody skips ahead
+
+            GameColor color = crowd.FrontColor;
+            VehicleView vehicle = bay.Vehicle;
+            bay.SeatsReserved++;
+            var seat = new Vector2(ScreenRef.BayX(bay.Index), ScreenRef.BayY - 6f);
+            crowd.BoardFront(seat, () => OnPassengerArrived(bay, vehicle, color));
+        }
+
+        private void OnPassengerArrived(BayState bay, VehicleView vehicle, GameColor color)
+        {
+            if (bay.Vehicle != vehicle) return; // safety: vehicle left (debug auto-depart)
+            bay.SeatsReserved = Mathf.Max(0, bay.SeatsReserved - 1);
+            bay.SetFilled(bay.Filled + 1);
+            BoardedCount++;
+
+            Tween.Scale(vehicle, vehicle.transform, Vector3.one * 1.06f, Vector3.one, 0.1f, Ease.OutQuad);
+            if (fx != null) fx.Sparkle(ScreenRef.RefToWorld(ScreenRef.BayX(bay.Index), ScreenRef.BayY) + Vector3.up * 0.6f, GameColors.GetColor(color));
+
+            if (bay.Filled >= bay.Capacity && !bay.Full)
+            {
+                bay.Full = true;
+                StartCoroutine(DepartWhenFull(bay));
+            }
+        }
+
+        private IEnumerator DepartWhenFull(BayState bay)
+        {
+            yield return new WaitForSeconds(fullDepartDelay);
+            bay.DepartVehicle();
+        }
+
         private void HandleParked(BayState bay)
         {
             OnVehicleParked?.Invoke(bay);
             if (debugAutoDepart) StartCoroutine(AutoDepart(bay));
-            CheckLose();
         }
 
         private void HandleDeparted(BayState bay)
@@ -130,15 +203,15 @@ namespace BusRush.Gameplay
         {
             VehicleView vehicle = bay.Vehicle;
             yield return new WaitForSeconds(autoDepartDelay);
-            if (bay.IsParked && bay.Vehicle == vehicle) bay.DepartVehicle();
+            if (bay.IsParked && bay.Vehicle == vehicle && !bay.Full && bay.SeatsReserved == 0) bay.DepartVehicle();
         }
 
-        /// <summary>Placeholder until boarding exists: a parked vehicle can only leave via the debug auto-depart.</summary>
-        private bool CanAnyVehicleDepart => debugAutoDepart;
+        // ------------------------------------------------------------------ win / lose
 
         private void CheckWin()
         {
             if (IsCleared || board.RemainingCount > 0 || !bays.AllEmpty) return;
+            if (crowd.QueueCount > 0 || crowd.WalkerCount > 0) return;
             IsCleared = true;
 
             // Progress is saved as soon as the level is won; the popup only grants the coins.
@@ -146,26 +219,50 @@ namespace BusRush.Gameplay
             SaveSystem.Commit();
 
             OnLevelCleared?.Invoke();
+            if (fx != null) fx.Confetti();
             StartCoroutine(ShowLevelComplete());
         }
 
-        private void CheckLose()
+        /// <summary>
+        /// Stuck: vehicles left on the board, every open bay holds a parked vehicle, nothing is moving or walking, and no
+        /// parked vehicle can take the queue front. Must hold for <see cref="loseDelay"/> seconds.
+        /// </summary>
+        public bool IsStuck()
         {
-            if (IsCleared || outOfSpaceShown || board.RemainingCount == 0) return;
-            if (!bays.AllOpenOccupied || bays.HasFreeBay || CanAnyVehicleDepart) return;
+            if (board.RemainingCount == 0 || !bays.AllOpenOccupied || bays.HasFreeBay) return false;
+            if (bays.Movers > 0 || crowd.WalkerCount > 0) return false;
+            foreach (BayState b in bays.Bays) if (b.Full || b.Departing) return false;
+            if (!crowd.HasFront) return false;
+            return FindSeat(crowd.FrontColor) == null;
+        }
+
+        private void UpdateLose(float dt)
+        {
+            if (outOfSpaceShown || !IsStuck())
+            {
+                loseTimer = 0f;
+                return;
+            }
+            loseTimer += dt;
+            if (loseTimer < loseDelay) return;
 
             outOfSpaceShown = true;
+            IsLost = true;
+            OnLevelLost?.Invoke();
+            Toast.Show("All bays are full and nobody in line matches.");
             if (UIManager.Instance != null) UIManager.Instance.Open<OutOfSpacePopup>();
         }
 
         private void HandleBayPurchased()
         {
-            if (bays.UnlockNextBay()) outOfSpaceShown = false;
+            if (!bays.UnlockNextBay()) return;
+            outOfSpaceShown = false;
+            IsLost = false;
         }
 
         private IEnumerator ShowLevelComplete()
         {
-            yield return new WaitForSecondsRealtime(levelCompleteDelay);
+            yield return new WaitForSecondsRealtime(confettiToPopupDelay);
             if (UIManager.Instance == null) yield break;
             int coins = GameConfig.Instance != null ? GameConfig.Instance.levelCompleteCoins : 50;
             UIManager.Instance.Get<LevelCompletePopup>().Setup(Level, 3, coins);
@@ -181,9 +278,16 @@ namespace BusRush.Gameplay
             SceneLoader.LoadGame();
         }
 
+        /// <summary>Debug: empties the board and the queue and sends parked vehicles away, which wins the level.</summary>
         public void DebugClearBoard()
         {
+            crowd.Build(Array.Empty<GameColor>());
+            foreach (BayState b in bays.Bays)
+            {
+                if (b.IsParked && !b.Full) b.DepartVehicle();
+            }
             board.DebugClear();
+            CheckWin();
         }
     }
 }

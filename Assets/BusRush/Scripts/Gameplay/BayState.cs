@@ -25,9 +25,19 @@ namespace BusRush.Gameplay
         public bool Reserved { get; internal set; }
         public bool Departing { get; internal set; }
 
+        /// <summary>Passengers walking to this vehicle (seat taken, not yet aboard).</summary>
+        public int SeatsReserved { get; internal set; }
+
+        /// <summary>Every seat filled; the vehicle is about to leave.</summary>
+        public bool Full { get; internal set; }
+
         public bool IsFree => Kind == BayKind.Open && Vehicle == null && !Reserved && !Departing;
         public bool IsParked => Vehicle != null && !Reserved && !Departing;
         public int Capacity => Vehicle != null && Vehicle.Data != null ? Vehicle.Data.Capacity : 0;
+
+        /// <summary>Parked, not full, and a seat is still free for a passenger of <paramref name="color"/>.</summary>
+        public bool CanBoard(GameColor color) =>
+            IsParked && !Full && Vehicle.Data.color == color && Filled + SeatsReserved < Capacity;
 
         /// <summary>Passengers on board; updates the "n/cap" pill.</summary>
         public void SetFilled(int count)
@@ -36,7 +46,12 @@ namespace BusRush.Gameplay
             if (View != null) View.SetPill(Filled, Capacity);
         }
 
-        internal void ResetFilled() => Filled = 0;
+        internal void ResetFilled()
+        {
+            Filled = 0;
+            SeatsReserved = 0;
+            Full = false;
+        }
 
         /// <summary>Backs the parked vehicle out and drives it off screen; pays out its capacity in coins.</summary>
         public void DepartVehicle()
