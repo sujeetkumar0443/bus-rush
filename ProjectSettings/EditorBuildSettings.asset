@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!1045 &1
+EditorBuildSettings:
+  m_ObjectHideFlags: 0
+  serializedVersion: 2
+  m_Scenes:
+  - enabled: 1
+    path: Assets/BusRush/Scenes/Boot.unity
+    guid: 6162a5ff6e295914d8974fc95f626074
+  - enabled: 1
+    path: Assets/BusRush/Scenes/Home.unity
+    guid: 41abc7349db8d1c4daf1fd57fa810cb1
+  - enabled: 1
+    path: Assets/BusRush/Scenes/Game.unity
+    guid: f06e8777a5430f94ea807ebf54ec9aa4
+  m_configObjects:
+    com.unity.input.settings.actions: {fileID: -944628639613478452, guid: 052faaac586de48259a63d0c4782560b, type: 3}

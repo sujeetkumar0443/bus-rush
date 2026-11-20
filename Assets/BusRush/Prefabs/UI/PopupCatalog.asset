@@ -1,0 +1,21 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 6544a8d3861b4b64d959cf2716c09cd5, type: 3}
+  m_Name: PopupCatalog
+  m_EditorClassIdentifier: Assembly-CSharp::BusRush.UI.PopupCatalog
+  popups:
+  - {fileID: 3009296960788159997, guid: e57f2e4b981773e49abd59dd4e08f503, type: 3}
+  - {fileID: 4235204783931595115, guid: c88ab432cb9d89849aa202c855472ba2, type: 3}
+  - {fileID: 3754715334338084477, guid: 31713869c9bddb847a64f6244280df93, type: 3}
+  - {fileID: 1927241328895114849, guid: 30c1a0d4aaf1a49469dd4c81a0bad5b0, type: 3}
+  - {fileID: 6515653010613969418, guid: 3f51d0c1abf58e94d99806a9168d7efe, type: 3}
+  - {fileID: 3881270492217380935, guid: e5383d7dc6bd0f940bf38592ec41c46a, type: 3}
