@@ -14,6 +14,8 @@ namespace BusRush.UI
         [SerializeField] private UIButton claimButton;
         [SerializeField] private TMP_Text claimLabel;
         [SerializeField] private UIButton nextButton;
+        [Tooltip("Optional one-off note (e.g. after level 100).")]
+        [SerializeField] private TMP_Text noteText;
 
         private int completedLevel = 1;
         private int starCount = 3;
@@ -26,6 +28,15 @@ namespace BusRush.UI
             base.Awake();
             claimButton.Button.onClick.AddListener(Claim);
             nextButton.Button.onClick.AddListener(NextLevel);
+        }
+
+        /// <summary>Shows (or hides, when null/empty) a one-off note under the reward.</summary>
+        public void SetNote(string note)
+        {
+            if (noteText == null) return;
+            bool show = !string.IsNullOrEmpty(note);
+            noteText.gameObject.SetActive(show);
+            if (show) noteText.text = note;
         }
 
         /// <summary>
@@ -57,6 +68,7 @@ namespace BusRush.UI
         protected override void OnClosed()
         {
             hasSetup = false;
+            SetNote(null);
         }
 
         private void Play()

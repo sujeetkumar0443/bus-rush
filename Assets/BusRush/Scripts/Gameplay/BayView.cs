@@ -37,6 +37,8 @@ namespace BusRush.Gameplay
 
         public void ShowPill(bool visible) => pill.SetActive(visible);
 
+        public Vector3 PillWorldPosition => pill.transform.position;
+
         public void SetPill(int filled, int capacity) => pillText.text = $"{filled}/{capacity}";
 
         /// <summary>Tap on a locked bay. The purchase flow arrives in a later step.</summary>

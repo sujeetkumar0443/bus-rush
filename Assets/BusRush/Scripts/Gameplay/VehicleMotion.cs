@@ -10,7 +10,6 @@ namespace BusRush.Gameplay
     /// </summary>
     public sealed class VehicleMotion : MonoBehaviour
     {
-        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
         private static readonly List<VehicleMotion> Moving = new List<VehicleMotion>();
 
         [SerializeField] private Transform model;
@@ -34,8 +33,11 @@ namespace BusRush.Gameplay
         [SerializeField] private float bobAmplitude = 0.008f;
         [SerializeField] private float bobFrequency = 1.3f;
 
-        [SerializeField] private Color headColor = new Color(1f, 0.93f, 0.7f, 0.55f);
-        [SerializeField] private Color tailColor = new Color(1f, 0.15f, 0.1f, 1f);
+        [Header("Light glows (shared materials, swapped instead of property blocks so they batch)")]
+        [SerializeField] private Material headGlowOn;
+        [SerializeField] private Material headGlowDim;
+        [SerializeField] private Material tailGlowOn;
+        [SerializeField] private Material tailGlowDim;
 
         private VehicleView view;
         private Quaternion modelBaseRotation;
@@ -44,7 +46,6 @@ namespace BusRush.Gameplay
         private float yawVelocity;
         private float pitch;
         private float roll;
-        private MaterialPropertyBlock block;
         private Coroutine bob;
 
         public bool IsMoving { get; private set; }
@@ -62,8 +63,8 @@ namespace BusRush.Gameplay
                 modelBaseRotation = model.localRotation;
                 modelBasePosition = model.localPosition;
             }
-            SetGlow(headGlow, headColor, 0f);
-            SetGlow(tailGlow, tailColor, 0f);
+            SetGlow(headGlow, headGlowOn, headGlowDim, 0f);
+            SetGlow(tailGlow, tailGlowOn, tailGlowDim, 0f);
             if (exhaust != null) exhaust.SetMode(VehicleExhaust.Mode.Off);
         }
 
@@ -134,8 +135,8 @@ namespace BusRush.Gameplay
 
                 float s01 = Speed / Mathf.Max(0.01f, follower.MaxSpeed);
                 if (exhaust != null) exhaust.SetSpeed(s01);
-                SetGlow(headGlow, headColor, reverse ? 0.3f : 1f);
-                SetGlow(tailGlow, tailColor, follower.IsBraking || reverse ? 1f : 0.35f);
+                SetGlow(headGlow, headGlowOn, headGlowDim, reverse ? 0.3f : 1f);
+                SetGlow(tailGlow, tailGlowOn, tailGlowDim, follower.IsBraking || reverse ? 1f : 0.35f);
                 yield return null;
             }
 
@@ -148,15 +149,15 @@ namespace BusRush.Gameplay
                                                                       (reverse ? -follower.Tangent : follower.Tangent).z) * Mathf.Rad2Deg, 0f);
                 yawVelocity = 0f;
                 ApplyTilt(0f, 0f, 1f);
-                SetGlow(tailGlow, tailColor, 0f);
+                SetGlow(tailGlow, tailGlowOn, tailGlowDim, 0f);
             }
         }
 
         /// <summary>Parked: lights off, tiny suspension bob, occasional idle puff.</summary>
         public void Park()
         {
-            SetGlow(headGlow, headColor, 0f);
-            SetGlow(tailGlow, tailColor, 0f);
+            SetGlow(headGlow, headGlowOn, headGlowDim, 0f);
+            SetGlow(tailGlow, tailGlowOn, tailGlowDim, 0f);
             if (exhaust != null) exhaust.SetMode(VehicleExhaust.Mode.Idle);
             StopBob();
             bob = StartCoroutine(Bob());
@@ -245,16 +246,15 @@ namespace BusRush.Gameplay
             return cap;
         }
 
-        private void SetGlow(Renderer r, Color baseColor, float intensity)
+        /// <summary>Off (0), dim (below 1) or full (1): swaps shared materials, no per-renderer property blocks.</summary>
+        private static void SetGlow(Renderer r, Material on, Material dim, float intensity)
         {
             if (r == null) return;
-            bool on = intensity > 0.01f;
-            if (r.enabled != on) r.enabled = on;
-            if (!on) return;
-            block ??= new MaterialPropertyBlock();
-            r.GetPropertyBlock(block);
-            block.SetColor(BaseColorId, new Color(baseColor.r, baseColor.g, baseColor.b, baseColor.a * intensity));
-            r.SetPropertyBlock(block);
+            bool visible = intensity > 0.01f;
+            if (r.enabled != visible) r.enabled = visible;
+            if (!visible) return;
+            Material m = intensity >= 0.99f || dim == null ? on : dim;
+            if (m != null && r.sharedMaterial != m) r.sharedMaterial = m;
         }
 
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]

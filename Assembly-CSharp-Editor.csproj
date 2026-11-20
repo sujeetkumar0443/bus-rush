@@ -52,6 +52,7 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.6.7f1\Editor\Data\BCLExtensions\TargetingPacks\netstandard2.1\analyzers\dotnet\roslyn4.0\cs\System.Text.Json.SourceGeneration.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\BusRush\Scripts\Editor\GameplayBuilder.Step6.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\GameplayBuilder.Step5b.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\UIBuilder.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\BusRushSetup.cs" />
@@ -59,10 +60,12 @@
     <Compile Include="Assets\BusRush\Scripts\Editor\GameplayBuilder.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\UIKit.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\UIBuilder.Popups.cs" />
-    <Compile Include="Assets\BusRush\Scripts\Editor\Step5PlayTest.cs" />
+    <Compile Include="Assets\BusRush\Scripts\Editor\Step6PlayTest.cs" />
     <Compile Include="Assets\BusRush\Tests\Editor\LevelGeneratorTests.cs" />
+    <Compile Include="Assets\BusRush\Tests\Editor\LevelPlanTests.cs" />
     <Compile Include="Assets\BusRush\Tests\Editor\RouteBuilderTests.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\GameplayBuilder.Step5.cs" />
+    <Compile Include="Assets\BusRush\Scripts\Editor\AllocProbe.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\RenderCapture.cs" />
     <Compile Include="Assets\TutorialInfo\Editor\ReadmeEditor.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\UIArtGenerator.cs" />

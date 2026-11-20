@@ -542,6 +542,16 @@ namespace BusRush.EditorTools
                     L(Union(Arc(0.5f, 0.5f, 0.27f, 155f, 205f, 0.035f, 8), Arc(0.5f, 0.5f, 0.36f, 160f, 200f, 0.035f, 8),
                             Arc(0.5f, 0.5f, 0.27f, -25f, 25f, 0.035f, 8), Arc(0.5f, 0.5f, 0.36f, -20f, 20f, 0.035f, 8)), white)
                 },
+                // Pointing hand (white glove), fingertip near (0.34, 0.9) so the hint can anchor it there.
+                ["hand"] = new[]
+                {
+                    L(Union(Seg(0.34f, 0.5f, 0.34f, 0.86f, 0.075f),
+                            B(0.5f, 0.36f, 0.21f, 0.2f, 0.09f),
+                            Seg(0.48f, 0.5f, 0.48f, 0.6f, 0.07f), Seg(0.6f, 0.47f, 0.6f, 0.56f, 0.068f), Seg(0.7f, 0.42f, 0.7f, 0.5f, 0.062f),
+                            Seg(0.3f, 0.36f, 0.2f, 0.48f, 0.065f)), white),
+                    L(B(0.52f, 0.12f, 0.19f, 0.065f, 0.03f), blue),
+                    Shine(Seg(0.31f, 0.62f, 0.31f, 0.8f, 0.022f), 0.6f)
+                },
                 ["video"] = new[]
                 {
                     L(B(0.44f, 0.5f, 0.3f, 0.22f, 0.06f), white),

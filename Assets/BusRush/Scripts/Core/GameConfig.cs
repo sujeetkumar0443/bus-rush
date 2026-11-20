@@ -15,6 +15,10 @@ namespace BusRush
             public GameColor id;
             public Color color;
             public Material material;
+            [Tooltip("Shared passenger body material for this colour (SRP Batcher friendly, no property blocks).")]
+            public Material passengerBody;
+            [Tooltip("Shared passenger cap material (darker shade of the body colour).")]
+            public Material passengerCap;
         }
 
         [Header("Grid")]

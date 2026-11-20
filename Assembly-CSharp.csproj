@@ -78,10 +78,12 @@
     <Compile Include="Assets\BusRush\Scripts\Gameplay\VehicleView.cs" />
     <Compile Include="Assets\BusRush\Scripts\Core\GameConfig.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Popups\SettingsPopup.cs" />
+    <Compile Include="Assets\BusRush\Scripts\Data\LevelPlan.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Popup.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Screens\LevelPathView.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Screens\GameHUD.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Toast.cs" />
+    <Compile Include="Assets\BusRush\Scripts\UI\LevelBanner.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Rotator.cs" />
     <Compile Include="Assets\TutorialInfo\Readme.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\FloatingText.cs" />
@@ -89,6 +91,7 @@
     <Compile Include="Assets\BusRush\Scripts\UI\Screens\HomeScreen.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\VehicleMotion.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Popups\OutOfSpacePopup.cs" />
+    <Compile Include="Assets\BusRush\Scripts\UI\HintView.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\BayManager.cs" />
     <Compile Include="Assets\BusRush\Scripts\Data\Direction.cs" />
     <Compile Include="Assets\BusRush\Scripts\Core\DailyRewards.cs" />
@@ -103,6 +106,7 @@
     <Compile Include="Assets\BusRush\Scripts\Gameplay\BoardGeometry.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\BayState.cs" />
     <Compile Include="Assets\BusRush\Scripts\Core\MonetizationPlaceholder.cs" />
+    <Compile Include="Assets\BusRush\Scripts\Gameplay\TutorialController.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\LivesText.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\GameSimulator.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\RouteBuilder.cs" />

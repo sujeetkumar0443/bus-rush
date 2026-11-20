@@ -55,9 +55,9 @@ namespace BusRush.Gameplay
                 if (debugAutoDepart == value) return;
                 debugAutoDepart = value;
                 if (!value) return;
-                foreach (BayState b in bays.Bays)
+                for (int i = 0; i < bays.Bays.Count; i++)
                 {
-                    if (b.IsParked) StartCoroutine(AutoDepart(b));
+                    if (bays.Bays[i].IsParked) StartCoroutine(AutoDepart(bays.Bays[i]));
                 }
             }
         }
@@ -114,10 +114,15 @@ namespace BusRush.Gameplay
             UpdateLose(Time.deltaTime);
         }
 
+        /// <summary>Every resolved vehicle tap (tutorial, analytics).</summary>
+        public event Action<VehicleView, TapResult> OnTap;
+
         public void OnVehicleTapped(VehicleView vehicle)
         {
             if (IsCleared) return;
-            switch (board.TryMove(vehicle))
+            TapResult result = board.TryMove(vehicle);
+            OnTap?.Invoke(vehicle, result);
+            switch (result)
             {
                 case TapResult.Moved:
                     Moves++;
@@ -141,8 +146,9 @@ namespace BusRush.Gameplay
         public BayState FindSeat(GameColor color)
         {
             BayState best = null;
-            foreach (BayState b in bays.Bays)
+            for (int i = 0; i < bays.Bays.Count; i++) // indexed: no enumerator allocation (runs every frame)
             {
+                BayState b = bays.Bays[i];
                 if (!b.CanBoard(color)) continue;
                 if (best == null || b.Filled + b.SeatsReserved > best.Filled + best.SeatsReserved) best = b;
             }
@@ -231,7 +237,7 @@ namespace BusRush.Gameplay
         {
             if (board.RemainingCount == 0 || !bays.AllOpenOccupied || bays.HasFreeBay) return false;
             if (bays.Movers > 0 || crowd.WalkerCount > 0) return false;
-            foreach (BayState b in bays.Bays) if (b.Full || b.Departing) return false;
+            for (int i = 0; i < bays.Bays.Count; i++) if (bays.Bays[i].Full || bays.Bays[i].Departing) return false;
             if (!crowd.HasFront) return false;
             return FindSeat(crowd.FrontColor) == null;
         }
@@ -260,12 +266,33 @@ namespace BusRush.Gameplay
             IsLost = false;
         }
 
+        /// <summary>3 stars with no wrong taps, 2 with up to 2, otherwise 1.</summary>
+        public static int StarsFor(int wrongTaps) => wrongTaps == 0 ? 3 : wrongTaps <= 2 ? 2 : 1;
+
+        /// <summary>Coins for a win: base + 10 per star.</summary>
+        public static int CoinsFor(int stars)
+        {
+            int baseCoins = GameConfig.Instance != null ? GameConfig.Instance.levelCompleteCoins : 50;
+            return baseCoins + 10 * stars;
+        }
+
+        public const string FinishedAllNote = "You finished all levels! More are coming";
+
+        public int Stars { get; private set; }
+
         private IEnumerator ShowLevelComplete()
         {
+            Stars = StarsFor(WrongTaps);
+            SaveSystem.Data.SetBestStars(Level, Stars);
+            bool finishedAll = Level == LevelPlan.PlannedLevels && !SaveSystem.Data.finishedAllShown;
+            if (finishedAll) SaveSystem.Data.finishedAllShown = true;
+            SaveSystem.Commit();
+
             yield return new WaitForSecondsRealtime(confettiToPopupDelay);
             if (UIManager.Instance == null) yield break;
-            int coins = GameConfig.Instance != null ? GameConfig.Instance.levelCompleteCoins : 50;
-            UIManager.Instance.Get<LevelCompletePopup>().Setup(Level, 3, coins);
+            LevelCompletePopup popup = UIManager.Instance.Get<LevelCompletePopup>();
+            popup.Setup(Level, Stars, CoinsFor(Stars));
+            popup.SetNote(finishedAll ? FinishedAllNote : null);
             UIManager.Instance.Open<LevelCompletePopup>();
         }
 
@@ -282,9 +309,9 @@ namespace BusRush.Gameplay
         public void DebugClearBoard()
         {
             crowd.Build(Array.Empty<GameColor>());
-            foreach (BayState b in bays.Bays)
+            for (int i = 0; i < bays.Bays.Count; i++)
             {
-                if (b.IsParked && !b.Full) b.DepartVehicle();
+                if (bays.Bays[i].IsParked && !bays.Bays[i].Full) bays.Bays[i].DepartVehicle();
             }
             board.DebugClear();
             CheckWin();

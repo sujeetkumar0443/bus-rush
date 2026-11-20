@@ -244,6 +244,15 @@ namespace BusRush.EditorTools
             Place(shine.rectTransform, 0.5f, 1f, 0f, -5f, 38f, 22f, 0.5f, 1f);
             shine.type = Image.Type.Sliced;
             MakePill(shine, 22f);
+            Image nodeLock = IconImg(node, "Lock", "lock", 22f);
+            Place(nodeLock.rectTransform, 1f, 0f, 2f, 2f, 22f, 22f, 1f, 0f);
+            RectTransform starRow = Rect(node, "Stars");
+            Place(starRow, 0.5f, 0f, 0f, -16f, 60f, 18f, 0.5f, 0.5f);
+            for (int k = 0; k < 3; k++)
+            {
+                Image st = IconImg(starRow, "Star" + (k + 1), "star", 18f);
+                Place(st.rectTransform, 0.5f, 0.5f, (k - 1) * 18f, k == 1 ? 3f : 0f, 18f, 18f);
+            }
             TextMeshProUGUI number = Label(node, "Number", "1", 28f, TextStyle.Heading);
             Place(number.rectTransform, 0.5f, 1f, 0f, -2f, 60f, 58f, 0.5f, 1f);
             node.gameObject.SetActive(false);
@@ -283,6 +292,8 @@ namespace BusRush.EditorTools
             for (int i = 0; i < 3; i++) BoosterButton(row, types[i], icons[i], names[i], (i - 1) * 104f);
 
             BuildDebugPanel(safe);
+            LevelBanner banner = BuildLevelBanner(safe);
+            BuildHints(go.transform);
 
             // Toast pill ("No free bay!") above the lot.
             Chunk toast = Chunky(safe, "Toast", DarkNavy, NavyLip, 230f, 46f, -1f, 4f, false, true, false);
@@ -294,8 +305,57 @@ namespace BusRush.EditorTools
 
             GameHUD hud = go.AddComponent<GameHUD>();
             Wire(hud, ("restartButton", restart.Button), ("pauseButton", pause.Button), ("levelText", level),
-                ("passengersText", passengers));
+                ("passengersText", passengers), ("banner", banner));
             return go;
+        }
+
+        private static LevelBanner BuildLevelBanner(RectTransform safe)
+        {
+            RectTransform holder = Rect(safe, "LevelBanner");
+            Place(holder, 0.5f, 0.5f, 0f, 120f, 300f, 90f);
+            Chunk pill = Chunky(holder, "Banner", Navy, NavyLip, 280f, 78f, 26f, 7f, false, true, true);
+            Place(pill.Root, 0.5f, 0.5f, 0f, 0f, 280f, 78f);
+            TextMeshProUGUI title = Label(pill.Face, "Title", "Level 1", 40f, TextStyle.Heading);
+            Stretch(title.rectTransform, 10f, 4f, 10f, 4f);
+            Chunk tag = Chunky(pill.Root, "BossTag", Red, RedLip, 150f, 32f, -1f, 4f, false, false, false);
+            Place(tag.Root, 0.5f, 0f, 0f, -14f, 150f, 32f, 0.5f, 0.5f);
+            TextMeshProUGUI subtitle = Label(tag.Face, "Label", "BOSS LEVEL", 18f, TextStyle.Heading);
+            Stretch(subtitle.rectTransform, 6f, 0f, 6f, 0f);
+
+            LevelBanner banner = holder.gameObject.AddComponent<LevelBanner>();
+            Wire(banner, ("banner", pill.Root), ("title", title), ("subtitle", subtitle));
+            return banner;
+        }
+
+        /// <summary>Tutorial / idle hint layer: pointing hand + speech bubble (white, navy outline, Lilita One).</summary>
+        private static void BuildHints(Transform canvasRoot)
+        {
+            RectTransform area = Stretch(Rect(canvasRoot, "Hints"));
+
+            RectTransform hand = Rect(area, "Hand");
+            Place(hand, 0.5f, 0.5f, 0f, 0f, 0f, 0f);
+            Image handImg = IconImg(hand, "Visual", "hand", 72f);
+            // Fingertip of the icon (~0.34, 0.9 of the image) sits on the hand's anchor point.
+            handImg.rectTransform.pivot = new Vector2(0.34f, 0.9f);
+            handImg.rectTransform.anchoredPosition = Vector2.zero;
+
+            RectTransform bubble = Rect(area, "Bubble");
+            Place(bubble, 0.5f, 0.5f, 0f, 0f, 240f, 62f);
+            Image tail = Img(bubble, "Tail", Round, Navy, 3f);
+            Place(tail.rectTransform, 0.5f, 0.5f, 0f, -29f, 20f, 20f);
+            Image tailFill = Img(tail.transform, "Fill", Round, Color.white, 2f);
+            Stretch(tailFill.rectTransform, 3f, 3f, 3f, 3f);
+            Image outline = Img(bubble, "Outline", Round, Navy, 20f);
+            Stretch(outline.rectTransform);
+            Image fill = Img(outline.transform, "Fill", Round, Color.white, 17f);
+            Stretch(fill.rectTransform, 3f, 3f, 3f, 3f);
+            TextMeshProUGUI text = Label(fill.transform, "Text", "Tap a car!", 21f, TextStyle.HeadingPlain, Navy);
+            text.textWrappingMode = TextWrappingModes.Normal;
+            Stretch(text.rectTransform, 10f, 4f, 10f, 4f);
+            tail.transform.SetAsFirstSibling();
+
+            HintView view = area.gameObject.AddComponent<HintView>();
+            Wire(view, ("area", area), ("hand", hand), ("bubble", bubble), ("bubbleText", text), ("bubbleTail", tail.rectTransform));
         }
 
         private static void BoosterButton(RectTransform row, BoosterType type, string icon, string label, float x)

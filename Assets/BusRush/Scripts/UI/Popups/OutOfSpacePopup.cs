@@ -7,7 +7,7 @@ namespace BusRush.UI
 {
     /// <summary>
     /// Shown when every open bay is full. "+1 Bay" for coins (real) or via a rewarded ad (placeholder, logs only);
-    /// "Give up" loses the level.
+    /// Retry restarts the level, Home leaves it.
     /// </summary>
     public sealed class OutOfSpacePopup : Popup
     {
@@ -27,7 +27,8 @@ namespace BusRush.UI
         [SerializeField] private UIButton coinsButton;
         [SerializeField] private TMP_Text coinsPrice;
         [SerializeField] private UIButton adButton;
-        [SerializeField] private Button giveUpButton;
+        [SerializeField] private Button retryButton;
+        [SerializeField] private Button homeButton;
         [SerializeField] private TMP_Text feedbackText;
 
         [SerializeField] private Color openFace = Color.white;
@@ -40,7 +41,8 @@ namespace BusRush.UI
             base.Awake();
             coinsButton.Button.onClick.AddListener(BuyWithCoins);
             adButton.Button.onClick.AddListener(() => MonetizationPlaceholder.ShowRewarded("out_of_space_extra_bay"));
-            giveUpButton.onClick.AddListener(GiveUp);
+            retryButton.onClick.AddListener(Retry);
+            homeButton.onClick.AddListener(GoHome);
         }
 
         protected override void OnOpening()
@@ -85,7 +87,14 @@ namespace BusRush.UI
             }
         }
 
-        private void GiveUp()
+        /// <summary>Restarts the same level (it was not won, so the saved level is unchanged).</summary>
+        private void Retry()
+        {
+            Close();
+            SceneLoader.LoadGame();
+        }
+
+        private void GoHome()
         {
             if (GameManager.Instance != null) GameManager.Instance.SetState(GameState.Lost);
             Close();

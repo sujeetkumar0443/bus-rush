@@ -13,18 +13,29 @@ namespace BusRush.Gameplay
     {
         private static readonly int BaseMapId = Shader.PropertyToID("_BaseMap");
 
+        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
+
         [SerializeField] private CameraFitter fitter;
         [SerializeField] private float margin = 1f;
         [SerializeField] private float height = -0.02f;
+        [Tooltip("Transparent copy on top, used to fade the previous world out when the world changes.")]
+        [SerializeField] private MeshRenderer overlay;
 
         private Mesh mesh;
         private MaterialPropertyBlock block;
+        private MaterialPropertyBlock overlayBlock;
+        private Coroutine fade;
 
         private void Awake()
         {
             mesh = new Mesh { name = "WorldBackground" };
             mesh.MarkDynamic();
             GetComponent<MeshFilter>().sharedMesh = mesh;
+            if (overlay != null)
+            {
+                overlay.GetComponent<MeshFilter>().sharedMesh = mesh;
+                overlay.enabled = false;
+            }
             transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
             transform.localScale = Vector3.one;
             Rebuild();
@@ -52,6 +63,31 @@ namespace BusRush.Gameplay
             r.GetPropertyBlock(block);
             block.SetTexture(BaseMapId, texture);
             r.SetPropertyBlock(block);
+        }
+
+        /// <summary>Shows <paramref name="to"/> and fades <paramref name="from"/> out on top of it.</summary>
+        public void Crossfade(Texture from, Texture to, float seconds)
+        {
+            SetTexture(to);
+            if (overlay == null || seconds <= 0f) return;
+            if (fade != null) StopCoroutine(fade);
+            fade = StartCoroutine(FadeOut(from, seconds));
+        }
+
+        private System.Collections.IEnumerator FadeOut(Texture from, float seconds)
+        {
+            overlayBlock ??= new MaterialPropertyBlock();
+            overlay.enabled = true;
+            for (float t = 0f; t < seconds; t += Time.unscaledDeltaTime)
+            {
+                overlay.GetPropertyBlock(overlayBlock);
+                overlayBlock.SetTexture(BaseMapId, from);
+                overlayBlock.SetColor(BaseColorId, new Color(1f, 1f, 1f, 1f - t / seconds));
+                overlay.SetPropertyBlock(overlayBlock);
+                yield return null;
+            }
+            overlay.enabled = false;
+            fade = null;
         }
 
         private void OnFitted(CameraFitter _) => Rebuild();

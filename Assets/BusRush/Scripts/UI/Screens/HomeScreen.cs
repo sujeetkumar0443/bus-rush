@@ -74,21 +74,13 @@ namespace BusRush.UI
                 if (canClaim) badgePulse = Tween.Pulse(this, dailyBadge.transform, 0.15f, 0.8f);
             }
 
-            GameConfig config = GameConfig.Instance;
-            if (config != null && config.TryGetNextUnlock(data.level, out GameConfig.Unlock next, out int previous))
-            {
-                float span = Mathf.Max(1, next.level - previous);
-                float k = Mathf.Clamp01((data.level - previous) / span);
-                unlockFill.anchorMax = new Vector2(Mathf.Lerp(0.08f, 1f, k), unlockFill.anchorMax.y);
-                unlockText.text = "Next: " + next.name;
-                unlockProgressText.text = $"{data.level}/{next.level}";
-            }
-            else
-            {
-                unlockFill.anchorMax = new Vector2(1f, unlockFill.anchorMax.y);
-                unlockText.text = "Everything unlocked!";
-                unlockProgressText.text = string.Empty;
-            }
+            // Progress toward the next 10th-level milestone (a Boss level).
+            int milestone = ((data.level - 1) / 10 + 1) * 10;
+            int previous = milestone - 10;
+            float k = Mathf.Clamp01((data.level - 1 - previous) / 10f);
+            unlockFill.anchorMax = new Vector2(Mathf.Lerp(0.08f, 1f, k), unlockFill.anchorMax.y);
+            unlockText.text = $"Next: Boss level {milestone}";
+            unlockProgressText.text = $"{data.level}/{milestone}";
         }
     }
 }

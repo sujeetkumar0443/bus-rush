@@ -5,14 +5,12 @@ namespace BusRush.Gameplay
 {
     /// <summary>
     /// One rigged passenger (separate Torso / Head / Cap / ArmL / ArmR / LegL / LegR, pivots at the joints).
-    /// Colours via MaterialPropertyBlock (cap = darker shade). The pose is driven by <see cref="CrowdView"/> from its
-    /// single update loop through <see cref="Pose"/>; there is no Update per person.
+    /// Colours via shared per-colour Body / Cap materials (sharedMaterial, no property blocks) so the SRP Batcher can
+    /// batch the crowd. The pose is driven by <see cref="CrowdView"/> from its single update loop through
+    /// <see cref="Pose"/>; there is no Update per person.
     /// </summary>
     public sealed class PassengerView : MonoBehaviour
     {
-        private static readonly int BaseColorId = Shader.PropertyToID("_BaseColor");
-        private static MaterialPropertyBlock block;
-
         [SerializeField] private Transform torso;
         [SerializeField] private Transform head;
         [SerializeField] private Transform armL;
@@ -62,19 +60,9 @@ namespace BusRush.Gameplay
         public void SetColor(GameColor color)
         {
             Color = color;
-            Tint(bodyRenderers, GameColors.GetColor(color));
-            Tint(capRenderers, GameColors.GetCapColor(color));
-        }
-
-        private static void Tint(Renderer[] renderers, Color c)
-        {
-            block ??= new MaterialPropertyBlock();
-            foreach (Renderer r in renderers)
-            {
-                r.GetPropertyBlock(block);
-                block.SetColor(BaseColorId, c);
-                r.SetPropertyBlock(block);
-            }
+            if (!GameColors.TryGetPassengerMaterials(color, out Material body, out Material cap)) return;
+            foreach (Renderer r in bodyRenderers) r.sharedMaterial = body;
+            foreach (Renderer r in capRenderers) r.sharedMaterial = cap;
         }
 
         /// <summary>

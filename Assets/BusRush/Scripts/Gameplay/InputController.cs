@@ -22,13 +22,14 @@ namespace BusRush.Gameplay
 
         public bool InputEnabled { get; set; } = true;
 
+        /// <summary>Any press anywhere (UI included); used by the idle hint timer.</summary>
+        public event System.Action AnyPointerDown;
+
         private void Update()
         {
-            if (!CanAcceptInput()) return;
-            if (TryGetTap(out Vector2 position, out int pointerId) && !IsOverUI(pointerId))
-            {
-                HandleTap(position);
-            }
+            if (!TryGetTap(out Vector2 position, out int pointerId)) return;
+            AnyPointerDown?.Invoke();
+            if (CanAcceptInput() && !IsOverUI(pointerId)) HandleTap(position);
         }
 
         public bool CanAcceptInput()

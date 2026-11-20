@@ -93,6 +93,31 @@ namespace BusRush
             }
         }
 
+        /// <summary>
+        /// Passenger body colour: the palette colour, with pink and blue lifted a little so small figures read as bright
+        /// as the vehicles of the same colour.
+        /// </summary>
+        public static Color GetPassengerBodyColor(GameColor color)
+        {
+            Color c = GetColor(color);
+            if (color != GameColor.Pink && color != GameColor.Blue) return c;
+            Color.RGBToHSV(c, out float h, out float s, out float v);
+            return Color.HSVToRGB(h, s * 0.9f, Mathf.Min(1f, v * 1.12f));
+        }
+
+        public static bool TryGetPassengerMaterials(GameColor color, out Material body, out Material cap)
+        {
+            GameConfig config = GameConfig.Instance;
+            if (config != null && config.TryGetPaletteEntry(color, out GameConfig.PaletteEntry e) && e.passengerBody != null)
+            {
+                body = e.passengerBody;
+                cap = e.passengerCap != null ? e.passengerCap : e.passengerBody;
+                return true;
+            }
+            body = cap = null;
+            return false;
+        }
+
         /// <summary>Tints a renderer's base colour without creating a material instance.</summary>
         public static void SetTint(Renderer renderer, Color color)
         {

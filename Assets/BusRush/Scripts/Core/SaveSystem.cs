@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace BusRush
@@ -28,7 +29,40 @@ namespace BusRush
 
         public bool adsRemoved;
 
+        /// <summary>Best stars per level (index = level - 1; 0 = not completed).</summary>
+        public List<int> levelStars = new List<int>();
+
+        /// <summary>Bit n set = tutorial of level n already completed (never shown again).</summary>
+        public int tutorialFlags;
+
+        /// <summary>"You finished all levels" note already shown.</summary>
+        public bool finishedAllShown;
+
         public static SaveData CreateDefault() => new SaveData();
+
+        public int GetStars(int level)
+        {
+            int i = level - 1;
+            return levelStars != null && i >= 0 && i < levelStars.Count ? levelStars[i] : 0;
+        }
+
+        /// <summary>Stores the stars if better than the previous best. Returns the best.</summary>
+        public int SetBestStars(int level, int stars)
+        {
+            levelStars ??= new List<int>();
+            int i = level - 1;
+            if (i < 0) return 0;
+            while (levelStars.Count <= i) levelStars.Add(0);
+            levelStars[i] = Mathf.Max(levelStars[i], Mathf.Clamp(stars, 0, 3));
+            return levelStars[i];
+        }
+
+        public bool IsTutorialDone(int level) => level >= 1 && level < 31 && (tutorialFlags & (1 << level)) != 0;
+
+        public void MarkTutorialDone(int level)
+        {
+            if (level >= 1 && level < 31) tutorialFlags |= 1 << level;
+        }
 
         public int GetBooster(BoosterType type)
         {

@@ -27,6 +27,8 @@ namespace BusRush.Gameplay
         [SerializeField] private float walkSpeedPx = 85f;
         [SerializeField] private float boardSpeedPx = 420f;
         [SerializeField] private float minBoardTime = 0.25f;
+        [Tooltip("Level intro: the crowd starts this far back and walks in (85 px = 1 s).")]
+        [SerializeField] private float introWalkPx = 85f;
         [SerializeField] private float passengerHeight = 0.81f;
         [Tooltip("Model height of the Passenger prefab (for scaling to passengerHeight).")]
         [SerializeField] private float modelHeight = 0.779f;
@@ -45,6 +47,7 @@ namespace BusRush.Gameplay
         {
             public Person person;
             public List<Vector2> path;
+            public List<float> lengths; // cumulative, computed once (no per-frame allocation)
             public float length;
             public float time;
             public float duration;
@@ -65,6 +68,10 @@ namespace BusRush.Gameplay
         public bool HasFront => queue.Count > 0;
         public GameColor FrontColor => queue[0].color;
         public bool FrontAtGate => queue.Count > 0 && queue[0].s <= FrontRadius;
+
+        /// <summary>World position of the person at the front of the queue (the gate if nobody is visible).</summary>
+        public Vector3 FrontWorldPosition =>
+            queue.Count > 0 && queue[0].view != null ? queue[0].view.transform.position : ScreenRef.RefToWorld(Gate);
 
         /// <summary>Queue index of the next passenger of this colour (int.MaxValue if none).</summary>
         public int DistanceToColor(GameColor color)
@@ -91,7 +98,8 @@ namespace BusRush.Gameplay
             for (int n = 0; n < colors.Count; n++)
             {
                 var p = new Person { color = colors[n], arm = n % 2, lane = (n / 2) % 5 };
-                p.s = TargetS(n, p.lane);
+                // Level intro: everyone starts a little further up the track and walks in (~1 s at walk speed).
+                p.s = TargetS(n, p.lane) + introWalkPx;
                 p.lateral = TargetLateral(p);
                 queue.Add(p);
             }
@@ -108,11 +116,13 @@ namespace BusRush.Gameplay
             if (p.view == null) Spawn(p, false);
 
             var path = new List<Vector2> { ArmPoint(p.arm, p.s, p.lateral, out _), Gate, targetRef };
-            float length = Vector2.Distance(path[0], path[1]) + Vector2.Distance(path[1], path[2]);
+            float d1 = Vector2.Distance(path[0], path[1]);
+            float length = d1 + Vector2.Distance(path[1], path[2]);
             walkers.Add(new Walker
             {
                 person = p,
                 path = path,
+                lengths = new List<float> { 0f, d1, length },
                 length = length,
                 duration = Mathf.Max(minBoardTime, length / boardSpeedPx),
                 onArrive = onArrive
@@ -148,7 +158,7 @@ namespace BusRush.Gameplay
                 Walker w = walkers[i];
                 w.time += dt;
                 float k = Mathf.Clamp01(w.time / w.duration);
-                Vector2 pos = PolylinePoint(w.path, k * w.length, out Vector2 dir);
+                Vector2 pos = PolylinePoint(w.path, k * w.length, out Vector2 dir, w.lengths);
                 Place(w.person.view, pos, dir, dt);
                 w.person.view.Pose(dt, boardSpeedPx, true);
                 if (k >= 1f)

@@ -11,6 +11,7 @@ namespace BusRush.UI
         [SerializeField] private Button pauseButton;
         [SerializeField] private TMP_Text levelText;
         [SerializeField] private TMP_Text passengersText;
+        [SerializeField] private LevelBanner banner;
 
         private int shownPassengers = -1;
 
@@ -26,9 +27,18 @@ namespace BusRush.UI
             Refresh();
         }
 
-        private void Start()
+        private System.Collections.IEnumerator Start()
         {
             if (UIManager.Instance != null) UIManager.Instance.BackPressedWithNoPopup += OpenPause;
+
+            // Level intro banner, once the session has picked its level.
+            yield return null;
+            Gameplay.GameSession session = Gameplay.GameSession.Current;
+            if (banner != null && session != null && session.Level > 0)
+            {
+                Refresh();
+                banner.Play(session.Level, LevelPlan.Get(session.Level).tier);
+            }
         }
 
         private void OnDisable()

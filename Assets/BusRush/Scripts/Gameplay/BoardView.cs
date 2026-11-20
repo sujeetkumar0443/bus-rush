@@ -37,7 +37,8 @@ namespace BusRush.Gameplay
 
         public BoardState State => state;
         public int RemainingCount => vehicles.Count;
-        public IEnumerable<VehicleView> Vehicles => vehicles.Values;
+        /// <summary>Vehicles on the board (struct enumerator: no allocation in foreach).</summary>
+        public Dictionary<int, VehicleView>.ValueCollection Vehicles => vehicles.Values;
 
         public void Build(LevelData level, IVehicleExitBehaviour exit)
         {

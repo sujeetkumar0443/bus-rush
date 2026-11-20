@@ -5,14 +5,19 @@ using UnityEngine.UI;
 
 namespace BusRush.UI
 {
-    /// <summary>Zig-zag path of level circles on Home. Current level is highlighted and pulses.</summary>
+    /// <summary>
+    /// Zig-zag path of level circles on Home: the last completed level (with its best stars), the current level
+    /// (highlighted, pulsing) and the next 4 levels (grey, locked).
+    /// </summary>
     [RequireComponent(typeof(RectTransform))]
     public sealed class LevelPathView : MonoBehaviour
     {
         [SerializeField] private RectTransform nodeTemplate;
         [SerializeField] private RectTransform dotTemplate;
-        [SerializeField, Min(2)] private int visibleNodes = 5;
-        [SerializeField] private float[] zigzag = { 0f, -0.2f, 0.16f, -0.18f, 0.14f };
+        [SerializeField, Min(1)] private int upcomingLevels = 4;
+        [SerializeField] private float[] zigzag = { 0f, -0.2f, 0.16f, -0.18f, 0.14f, -0.12f };
+        [SerializeField] private Color starOn = Color.white;
+        [SerializeField] private Color starOff = new Color(0.12f, 0.16f, 0.27f, 0.3f);
         [SerializeField] private float currentScale = 1.3f;
 
         [SerializeField] private Color doneFace = new Color32(0x3C, 0xC3, 0x5B, 0xFF);
@@ -54,6 +59,7 @@ namespace BusRush.UI
 
             int current = Mathf.Max(1, SaveSystem.Data.level);
             int first = Mathf.Max(1, current - 1);
+            int visibleNodes = current - first + 1 + upcomingLevels;
             float nodeSize = nodeTemplate.rect.height;
             float bottom = r.yMin + nodeSize * currentScale * 0.6f;
             float top = r.yMax - nodeSize * 0.6f;
@@ -92,6 +98,17 @@ namespace BusRush.UI
                 node.Find("Face").GetComponent<Image>().color = isCurrent ? currentFace : done ? doneFace : futureFace;
                 node.Find("Number").GetComponent<TMP_Text>().text = level.ToString();
                 node.Find("Ring").gameObject.SetActive(isCurrent);
+                node.Find("Lock").gameObject.SetActive(!done && !isCurrent);
+                Transform starRow = node.Find("Stars");
+                starRow.gameObject.SetActive(done);
+                if (done)
+                {
+                    int best = SaveSystem.Data.GetStars(level);
+                    for (int k = 0; k < starRow.childCount; k++)
+                    {
+                        starRow.GetChild(k).GetComponent<Image>().color = k < best ? starOn : starOff;
+                    }
+                }
 
                 if (isCurrent)
                 {

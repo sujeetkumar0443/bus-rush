@@ -1,11 +1,14 @@
+using System.Collections.Generic;
 using TMPro;
 using UnityEngine;
 
 namespace BusRush.Gameplay
 {
-    /// <summary>World-space "+N" that rises and fades, facing the camera.</summary>
+    /// <summary>World-space "+N" that rises and fades, facing the camera. Pooled.</summary>
     public sealed class FloatingText : MonoBehaviour
     {
+        private static readonly Stack<FloatingText> Pool = new Stack<FloatingText>();
+
         private TextMeshPro text;
         private Vector3 start;
         private float age;
@@ -14,21 +17,31 @@ namespace BusRush.Gameplay
 
         public static FloatingText Spawn(Vector3 position, string message, TMP_FontAsset font, Material material, Color color, float size = 5f)
         {
-            var go = new GameObject("FloatingText");
-            go.transform.position = position;
-            if (Camera.main != null) go.transform.rotation = Camera.main.transform.rotation;
-            var t = go.AddComponent<TextMeshPro>();
+            FloatingText ft = null;
+            while (Pool.Count > 0 && ft == null) ft = Pool.Pop(); // entries die with their scene
+            if (ft == null)
+            {
+                var go = new GameObject("FloatingText");
+                TextMeshPro created = go.AddComponent<TextMeshPro>();
+                created.alignment = TextAlignmentOptions.Center;
+                created.textWrappingMode = TextWrappingModes.NoWrap;
+                created.rectTransform.sizeDelta = new Vector2(4f, 1.5f);
+                ft = go.AddComponent<FloatingText>();
+                ft.text = created;
+            }
+
+            TextMeshPro t = ft.text;
             if (font != null) t.font = font;
             if (material != null) t.fontSharedMaterial = material;
             t.text = message;
             t.fontSize = size;
             t.color = color;
-            t.alignment = TextAlignmentOptions.Center;
-            t.textWrappingMode = TextWrappingModes.NoWrap;
-            t.rectTransform.sizeDelta = new Vector2(4f, 1.5f);
-            var ft = go.AddComponent<FloatingText>();
-            ft.text = t;
+            ft.transform.position = position;
+            ft.transform.localScale = Vector3.one;
+            if (Camera.main != null) ft.transform.rotation = Camera.main.transform.rotation;
             ft.start = position;
+            ft.age = 0f;
+            ft.gameObject.SetActive(true);
             return ft;
         }
 
@@ -42,7 +55,14 @@ namespace BusRush.Gameplay
             Color c = text.color;
             c.a = k < 0.6f ? 1f : 1f - (k - 0.6f) / 0.4f;
             text.color = c;
-            if (age >= Lifetime) Destroy(gameObject);
+            if (age >= Lifetime)
+            {
+                gameObject.SetActive(false);
+                Pool.Push(this);
+            }
         }
+
+        [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.SubsystemRegistration)]
+        private static void ResetStatics() => Pool.Clear();
     }
 }

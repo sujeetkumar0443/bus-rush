@@ -26,18 +26,18 @@ namespace BusRush.Gameplay
 
         public static int SeedFor(int level) => level * 7919;
 
+        /// <summary>Generator settings from the difficulty curve in <see cref="LevelPlan"/>.</summary>
         public static Settings SettingsFor(int level)
         {
-            level = Mathf.Max(1, level);
-            float t = Mathf.Clamp01((level - 1) / 29f); // 0 at level 1, 1 at level 30+
+            LevelSpec spec = LevelPlan.Get(level);
             return new Settings
             {
-                vehicleCount = Mathf.Min(34, Mathf.RoundToInt(8f + (level - 1) * 0.76f)),
-                vanShare = Mathf.Lerp(0.15f, 0.3f, t),
-                busShare = Mathf.Lerp(0.05f, 0.3f, t),
-                colorCount = Mathf.Min(7, 3 + (level - 1) / 4),
-                maxFill = Mathf.Lerp(0.45f, 0.84f, t),
-                blockBias = Mathf.Lerp(0.6f, 4f, t)
+                vehicleCount = spec.vehicleCount,
+                vanShare = spec.vanShare,
+                busShare = spec.busShare,
+                colorCount = spec.colorCount,
+                maxFill = spec.density,
+                blockBias = spec.blockBias
             };
         }
 
@@ -79,7 +79,7 @@ namespace BusRush.Gameplay
             {
                 level = level,
                 seed = seed,
-                worldIndex = (level - 1) % 3,
+                worldIndex = LevelPlan.WorldIndex(level),
                 columns = columns,
                 rows = rows,
                 vehicles = placed,

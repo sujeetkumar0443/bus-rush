@@ -386,13 +386,17 @@ namespace BusRush.EditorTools
             Image play = IconImg(next.Face, "Icon", "play", 30f);
             Place(play.rectTransform, 1f, 0.5f, -22f, 0f, 30f, 30f, 1f, 0.5f);
 
+            TextMeshProUGUI note = Label(s.Face, "Note", "", 16f, TextStyle.BodyPlain, Navy);
+            Top(note.rectTransform, 402f, w - 40f, 22f);
+            note.gameObject.SetActive(false);
+
             RectTransform mrec = Rect(s.Face, "MrecSlot");
-            Top(mrec, 416f, 300f, 250f);
+            Top(mrec, 430f, 300f, 250f);
 
             Wire(s.Root.GetComponent<LevelCompletePopup>(),
                 ("stars", stars), ("levelText", level), ("rewardText", rewardText), ("rewardRoot", reward),
                 ("claimButton", claim.UIButton), ("claimLabel", claim.Face.Find("Label").GetComponent<TextMeshProUGUI>()),
-                ("nextButton", next.UIButton), ("closeOnDimClick", false), ("closeOnBack", false));
+                ("nextButton", next.UIButton), ("noteText", note), ("closeOnDimClick", false), ("closeOnBack", false));
             return s.Root;
         }
 
@@ -400,7 +404,7 @@ namespace BusRush.EditorTools
 
         private static GameObject BuildOutOfSpace()
         {
-            const float w = 350f, h = 440f;
+            const float w = 350f, h = 470f;
             Shell s = PopupShell<OutOfSpacePopup>("OutOfSpacePopup", w, h, "OUT OF SPACE!", Red, RedLip, false);
 
             TextMeshProUGUI sub = Label(s.Face, "Subtitle", "All parking bays are full!", 19f, TextStyle.BodyPlain, TextGrey);
@@ -446,16 +450,17 @@ namespace BusRush.EditorTools
             TextMeshProUGUI feedback = Label(s.Face, "Feedback", "", 16f, TextStyle.BodyPlain, Red);
             Top(feedback.rectTransform, 356f, w - 40f, 20f);
 
-            RectTransform giveUpRt = Rect(s.Face, "GiveUpButton");
-            Top(giveUpRt, 378f, 160f, 36f);
-            Image hit = giveUpRt.gameObject.AddComponent<Image>();
-            hit.color = new Color(1f, 1f, 1f, 0f);
-            Button giveUp = giveUpRt.gameObject.AddComponent<Button>();
-            giveUp.transition = Selectable.Transition.None;
-            giveUp.targetGraphic = hit;
-            giveUpRt.gameObject.AddComponent<UIButton>();
-            TextMeshProUGUI giveUpLabel = Label(giveUpRt, "Label", "<u>Give up</u>", 20f, TextStyle.BodyPlain, Red);
-            Stretch(giveUpLabel.rectTransform);
+            Chunk retry = Chunky(s.Face, "RetryButton", Gold, GoldLip, 170f, 56f, 18f, 6f, true);
+            Top(retry.Root, 382f, 170f, 56f, -60f);
+            Image retryIcon = IconImg(retry.Face, "Icon", "restart", 30f);
+            Place(retryIcon.rectTransform, 0f, 0.5f, 14f, 0f, 30f, 30f, 0f, 0.5f);
+            TextMeshProUGUI retryLabel = Label(retry.Face, "Label", "RETRY", 26f, TextStyle.Heading);
+            Stretch(retryLabel.rectTransform, 46f, 0f, 8f, 0f);
+
+            Chunk home = Chunky(s.Face, "HomeButton", Blue, BlueLip, 110f, 56f, 18f, 6f, true);
+            Top(home.Root, 382f, 110f, 56f, 95f);
+            Image homeIcon = IconImg(home.Face, "Icon", "home", 32f);
+            Place(homeIcon.rectTransform, 0.5f, 0.5f, 0f, 0f, 32f, 32f);
 
             OutOfSpacePopup popup = s.Root.GetComponent<OutOfSpacePopup>();
             Wire(popup, ("bays", bays));
@@ -465,7 +470,7 @@ namespace BusRush.EditorTools
                 Wire(popup, (p + "face", bayParts[i].face), (p + "car", bayParts[i].car), (p + "lockIcon", bayParts[i].lockIcon),
                     (p + "plusBadge", bayParts[i].plus));
             }
-            Wire(popup, ("coinsButton", coins.UIButton), ("coinsPrice", price), ("adButton", ad.UIButton), ("giveUpButton", giveUp),
+            Wire(popup, ("coinsButton", coins.UIButton), ("coinsPrice", price), ("adButton", ad.UIButton), ("retryButton", retry.Button), ("homeButton", home.Button),
                 ("feedbackText", feedback), ("openFace", Color.white), ("lockedFace", Grey),
                 ("closeOnDimClick", false), ("closeOnBack", false));
             return s.Root;

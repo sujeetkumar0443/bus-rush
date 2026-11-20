@@ -28,7 +28,7 @@ namespace BusRush.EditorTools
         /// <summary>Minimum tap target: 48 dp on the 390 dp reference width = 48 / 34 cells across.</summary>
         private const float MinTapWidth = 48f / BoardGeometry.PixelsPerCell;
 
-        [MenuItem("Tools/Bus Rush/Build Gameplay (Steps 3-5)")]
+        [MenuItem("Tools/Bus Rush/Build Gameplay (Steps 3-6)")]
         public static void BuildAll()
         {
             Directory.CreateDirectory(TexturesDir);
@@ -44,6 +44,7 @@ namespace BusRush.EditorTools
             UpgradeVehiclePrefabs(shadow);
             BuildStep4();
             BuildStep5();
+            BuildStep6Assets();
             SetShadowDistance(60f);
             AssetDatabase.SaveAssets();
 
@@ -335,6 +336,11 @@ namespace BusRush.EditorTools
             cam.backgroundColor = new Color(0.84f, 0.86f, 0.9f);
             cam.nearClipPlane = 0.3f;
             cam.farClipPlane = 120f;
+
+            // Perf: no real-time shadows in the Game scene. The ground art is unlit (receives none) and every vehicle
+            // and passenger has a contact blob shadow, so the shadow pass only cost draw calls.
+            GameObject sun = Array.Find(scene.GetRootGameObjects(), g => g.name == "Directional Light");
+            if (sun != null) sun.GetComponent<Light>().shadows = LightShadows.None;
             if (!camGo.TryGetComponent(out CameraFitter fitter)) fitter = camGo.AddComponent<CameraFitter>();
             fitter.Fit(BoardGeometry.ReferenceWidth / BoardGeometry.ReferenceHeight);
 
@@ -373,6 +379,7 @@ namespace BusRush.EditorTools
                 ("crowd", crowd), ("fx", fx), ("debugAutoDepart", false));
             InputController input = board.AddComponent<InputController>();
             UIKit.Wire(input, ("viewCamera", cam), ("session", session));
+            WireStep6Scene(world, board, cam, session, input);
 
             EditorSceneManager.SaveScene(scene);
             EditorSceneManager.OpenScene("Assets/BusRush/Scenes/Boot.unity", OpenSceneMode.Single);
