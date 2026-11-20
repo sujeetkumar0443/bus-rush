@@ -11,12 +11,12 @@ using Object = UnityEngine.Object;
 namespace BusRush.EditorTools
 {
     /// <summary>
-    /// Step 3: gameplay board. Creates textures/materials/world themes, upgrades the vehicle prefabs
+    /// Steps 3-4: gameplay board, road, bays and smoke (see GameplayBuilder.Step4.cs). Creates textures/materials/world themes, upgrades the vehicle prefabs
     /// (VehicleView, enlarged tap box, contact shadow) and wires the Game scene (world background, lot grid, board,
     /// session, input). Idempotent. Order for a full rebuild: Step 1 setup -> Build UI -> Build Gameplay
     /// (Tools/Bus Rush/Rebuild Everything does exactly that).
     /// </summary>
-    public static class GameplayBuilder
+    public static partial class GameplayBuilder
     {
         private const string TexturesDir = "Assets/BusRush/Art/Textures";
         private const string MaterialsDir = "Assets/BusRush/Art/Materials";
@@ -28,7 +28,7 @@ namespace BusRush.EditorTools
         /// <summary>Minimum tap target: 48 dp on the 390 dp reference width = 48 / 34 cells across.</summary>
         private const float MinTapWidth = 48f / BoardGeometry.PixelsPerCell;
 
-        [MenuItem("Tools/Bus Rush/Build Gameplay (Step 3)")]
+        [MenuItem("Tools/Bus Rush/Build Gameplay (Steps 3-4)")]
         public static void BuildAll()
         {
             Directory.CreateDirectory(TexturesDir);
@@ -42,6 +42,7 @@ namespace BusRush.EditorTools
             Material shadow = CreateTransparentUnlit("ContactShadow", SaveTexture("contact_shadow", ShadowTexture(128), false), new Color(0.08f, 0.1f, 0.18f, 0.42f));
             EnablePaletteEmission();
             UpgradeVehiclePrefabs(shadow);
+            BuildStep4();
             SetShadowDistance(60f);
             AssetDatabase.SaveAssets();
 
@@ -366,7 +367,7 @@ namespace BusRush.EditorTools
             gridGo.AddComponent<LotGridView>();
 
             GameSession session = board.AddComponent<GameSession>();
-            UIKit.Wire(session, ("board", boardView), ("world", manager), ("viewCamera", cam));
+            UIKit.Wire(session, ("board", boardView), ("world", manager), ("bays", BuildBayManager(board)));
             InputController input = board.AddComponent<InputController>();
             UIKit.Wire(input, ("viewCamera", cam), ("session", session));
 

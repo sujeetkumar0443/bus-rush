@@ -12,9 +12,28 @@ namespace BusRush.UI
         [SerializeField] private Button outOfSpaceButton;
         [SerializeField] private Button nextLevelButton;
         [SerializeField] private Button clearBoardButton;
+        [SerializeField] private Button autoDepartButton;
+        [SerializeField] private TMPro.TMP_Text autoDepartLabel;
+
+        private void Start()
+        {
+            RefreshAutoDepart();
+        }
+
+        private void RefreshAutoDepart()
+        {
+            bool on = GameSession.Current != null && GameSession.Current.DebugAutoDepart;
+            autoDepartLabel.text = on ? "Auto depart: ON" : "Auto depart: OFF";
+        }
 
         private void Awake()
         {
+            autoDepartButton.onClick.AddListener(() =>
+            {
+                if (GameSession.Current == null) return;
+                GameSession.Current.DebugAutoDepart = !GameSession.Current.DebugAutoDepart;
+                RefreshAutoDepart();
+            });
             settingsButton.onClick.AddListener(Open<SettingsPopup>);
             levelCompleteButton.onClick.AddListener(Open<LevelCompletePopup>);
             outOfSpaceButton.onClick.AddListener(Open<OutOfSpacePopup>);

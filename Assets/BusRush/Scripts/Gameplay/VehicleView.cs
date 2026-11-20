@@ -28,9 +28,11 @@ namespace BusRush.Gameplay
         public VehicleData Data { get; private set; }
         public bool IsExiting { get; set; }
         public BoxCollider HitBox => hitBox;
+        public VehicleMotion Motion { get; private set; }
 
         private void Awake()
         {
+            Motion = GetComponent<VehicleMotion>();
             renderers = model != null ? model.GetComponentsInChildren<Renderer>() : GetComponentsInChildren<Renderer>();
             modelBaseScale = model != null ? model.localScale : Vector3.one;
         }
@@ -72,7 +74,10 @@ namespace BusRush.Gameplay
             Tween.Scale(this, transform, Vector3.zero, Vector3.one, 0.3f, Ease.OutBack, delay);
         }
 
-        /// <summary>Marks the vehicle as leaving: cancels bump feedback (it would fight the exit motion) and hides the shadow.</summary>
+        /// <summary>
+        /// Marks the vehicle as leaving the board: cancels bump feedback (it would fight the drive). The contact shadow
+        /// stays on and follows the vehicle around the road.
+        /// </summary>
         public void BeginExit()
         {
             if (feedback != null)
@@ -82,18 +87,23 @@ namespace BusRush.Gameplay
                 transform.position = BoardGeometry.VehicleCenter(Data);
             }
             IsExiting = true;
-            SetShadowVisible(false);
         }
 
-        /// <summary>Blocked tap: short nudge toward the blocker and back, then a quick shake.</summary>
-        public void Bump()
+        /// <summary>Blocked tap: short nudge toward the blocker and back, a quick shake and a small exhaust puff.</summary>
+        public void Bump() => StartFeedback(true);
+
+        /// <summary>No free bay: shake in place without moving forward.</summary>
+        public void Shake() => StartFeedback(false);
+
+        private void StartFeedback(bool nudge)
         {
             if (IsExiting) return;
             if (feedback != null) StopCoroutine(feedback);
-            feedback = StartCoroutine(BumpRoutine());
+            feedback = StartCoroutine(BumpRoutine(nudge));
+            if (Motion != null && Motion.Exhaust != null) Motion.Exhaust.Burst(Data.type == VehicleType.Bus ? 3 : 2);
         }
 
-        private IEnumerator BumpRoutine()
+        private IEnumerator BumpRoutine(bool nudge)
         {
             Vector3 rest = BoardGeometry.VehicleCenter(Data);
             Vector3 dir = Data.direction.ToWorld();
@@ -101,7 +111,7 @@ namespace BusRush.Gameplay
             const float bumpTime = 0.12f;
             const float bumpDistance = 0.22f;
 
-            for (float t = 0f; t < bumpTime; t += Time.deltaTime)
+            for (float t = 0f; nudge && t < bumpTime; t += Time.deltaTime)
             {
                 float k = Mathf.Sin(t / bumpTime * Mathf.PI); // out and back
                 transform.position = rest + dir * (bumpDistance * k);

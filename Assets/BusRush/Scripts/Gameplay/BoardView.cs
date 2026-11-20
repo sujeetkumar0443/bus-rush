@@ -8,7 +8,8 @@ namespace BusRush.Gameplay
     {
         Ignored,
         Moved,
-        Blocked
+        Blocked,
+        NoBay
     }
 
     /// <summary>Spawns the level's vehicles, owns the <see cref="BoardState"/> and resolves taps.</summary>
@@ -25,7 +26,13 @@ namespace BusRush.Gameplay
         private BoardState state;
         private IVehicleExitBehaviour exitBehaviour;
 
+        /// <summary>A vehicle started driving off the board (its cells are already free).</summary>
+        public event Action<VehicleView> VehicleLeftBoard;
+
+        /// <summary>The exit behaviour finished with a vehicle (e.g. it parked in a bay).</summary>
         public event Action<VehicleView> VehicleExited;
+
+        /// <summary>The last vehicle left the board (others may still be on the road / in bays).</summary>
         public event Action BoardCleared;
 
         public BoardState State => state;
@@ -57,43 +64,50 @@ namespace BusRush.Gameplay
 
         public bool IsPathClear(VehicleView v) => state != null && !v.IsExiting && state.IsPathClear(v.Data);
 
+        public bool CanExit(VehicleView v) => exitBehaviour != null && exitBehaviour.CanExit(v);
+
         public TapResult TryMove(VehicleView v)
         {
             if (v == null || v.IsExiting || state == null || !vehicles.ContainsKey(v.Id)) return TapResult.Ignored;
 
-            if (state.IsPathClear(v.Data, out int blockerId))
+            if (!state.IsPathClear(v.Data, out int blockerId))
             {
-                state.Free(v.Id, v.Data); // cells are free immediately so other vehicles can follow
-                v.BeginExit();
-                exitBehaviour.Exit(v, OnExited);
-                return TapResult.Moved;
+                v.Bump();
+                if (vehicles.TryGetValue(blockerId, out VehicleView blocker))
+                {
+                    blocker.Flash(blockedFlashColor, blockedFlashTime);
+                }
+                return TapResult.Blocked;
             }
 
-            v.Bump();
-            if (vehicles.TryGetValue(blockerId, out VehicleView blocker))
+            if (!exitBehaviour.CanExit(v))
             {
-                blocker.Flash(blockedFlashColor, blockedFlashTime);
+                v.Shake();
+                return TapResult.NoBay;
             }
-            return TapResult.Blocked;
-        }
 
-        private void OnExited(VehicleView v)
-        {
-            if (!vehicles.Remove(v.Id)) return;
-            VehicleExited?.Invoke(v);
-            Destroy(v.gameObject);
+            // Leaves the board right now: cells free, no longer tappable, owned by the exit behaviour.
+            state.Free(v.Id, v.Data);
+            vehicles.Remove(v.Id);
+            v.BeginExit();
+            v.transform.SetParent(null, true);
+            VehicleLeftBoard?.Invoke(v);
+            exitBehaviour.Exit(v, done => VehicleExited?.Invoke(done));
             if (vehicles.Count == 0) BoardCleared?.Invoke();
+            return TapResult.Moved;
         }
 
-        /// <summary>Debug: removes every vehicle at once and reports the board as cleared.</summary>
+        /// <summary>Debug: removes every vehicle still on the board at once.</summary>
         public void DebugClear()
         {
             if (vehicles.Count == 0) return;
             foreach (VehicleView v in new List<VehicleView>(vehicles.Values))
             {
                 state.Free(v.Id, v.Data);
-                OnExited(v);
+                Destroy(v.gameObject);
             }
+            vehicles.Clear();
+            BoardCleared?.Invoke();
         }
 
         private void Clear()

@@ -43,14 +43,32 @@ namespace BusRush.Gameplay
         public VehicleView HandleTap(Vector2 screenPosition)
         {
             VehicleView v = PickAt(screenPosition);
-            if (v != null && session != null) session.OnVehicleTapped(v);
-            return v;
+            if (v != null && session != null)
+            {
+                session.OnVehicleTapped(v);
+                return v;
+            }
+
+            // No vehicle: a locked bay?
+            for (int i = 0; i < lastHitCount; i++)
+            {
+                BayView bay = hits[i].collider.GetComponentInParent<BayView>();
+                if (bay != null && bay.Kind == BayKind.Locked)
+                {
+                    bay.RequestUnlock();
+                    break;
+                }
+            }
+            return null;
         }
+
+        private int lastHitCount;
 
         public VehicleView PickAt(Vector2 screenPosition)
         {
             Ray ray = viewCamera.ScreenPointToRay(screenPosition);
             int count = Physics.RaycastNonAlloc(ray, hits, maxRayDistance, ~0, QueryTriggerInteraction.Collide);
+            lastHitCount = count;
 
             var plane = new Plane(Vector3.up, new Vector3(0f, pickHeight, 0f));
             Vector3 pickPoint = plane.Raycast(ray, out float enter) ? ray.GetPoint(enter) : ray.origin;

@@ -26,6 +26,33 @@ MonoBehaviour:
   vipCost: 300
   arrangeCost: 200
   shuffleCost: 150
+  levelCompleteCoins: 50
+  extraBayCost: 200
+  freeCoinsAmount: 50
+  maxLives: 5
+  shuffleUnlockLevel: 13
+  dailyRewards:
+  - coins: 50
+    boosterPack: 0
+  - coins: 75
+    boosterPack: 0
+  - coins: 100
+    boosterPack: 0
+  - coins: 150
+    boosterPack: 0
+  - coins: 200
+    boosterPack: 0
+  - coins: 300
+    boosterPack: 0
+  - coins: 0
+    boosterPack: 1
+  unlocks:
+  - level: 13
+    name: Shuffle booster
+  - level: 20
+    name: Snow world
+  - level: 40
+    name: Beach world
   palette:
   - id: 0
     color: {r: 0.9098039, g: 0.26274508, b: 0.24705878, a: 1}

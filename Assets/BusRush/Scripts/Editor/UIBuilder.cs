@@ -282,6 +282,14 @@ namespace BusRush.EditorTools
 
             BuildDebugPanel(safe);
 
+            // Toast pill ("No free bay!") above the lot.
+            Chunk toast = Chunky(safe, "Toast", DarkNavy, NavyLip, 230f, 46f, -1f, 4f, false, true, false);
+            Place(toast.Root, 0.5f, 1f, 0f, -230f, 230f, 46f, 0.5f, 1f);
+            TextMeshProUGUI toastLabel = Label(toast.Face, "Label", "No free bay!", 22f, TextStyle.Body);
+            Stretch(toastLabel.rectTransform, 12f, 0f, 12f, 0f);
+            toast.Root.gameObject.AddComponent<CanvasGroup>();
+            Wire(toast.Root.gameObject.AddComponent<Toast>(), ("label", toastLabel));
+
             GameHUD hud = go.AddComponent<GameHUD>();
             Wire(hud, ("restartButton", restart.Button), ("pauseButton", pause.Button), ("levelText", level));
             return go;
@@ -325,29 +333,31 @@ namespace BusRush.EditorTools
         {
             Image panel = Img(safe, "DebugPanel (TEMP)", Round, new Color(0.12f, 0.16f, 0.27f, 0.75f), 12f);
             panel.raycastTarget = true;
-            Place(panel.rectTransform, 0f, 1f, 14f, -82f, 104f, 196f, 0f, 1f);
+            Place(panel.rectTransform, 0f, 1f, 14f, -78f, 104f, 202f, 0f, 1f); // ends above the bays
             TextMeshProUGUI title = Label(panel.transform, "Title", "DEBUG", 12f, TextStyle.BodyPlain, new Color(1f, 1f, 1f, 0.8f));
             Top(title.rectTransform, 4f, 96f, 16f);
 
             Button Small(string name, string text, float y)
             {
-                Chunk b = Chunky(panel.transform, name, Grey, GreyLip, 92f, 30f, 8f, 3f, true, false, false);
-                Top(b.Root, y, 92f, 30f);
+                Chunk b = Chunky(panel.transform, name, Grey, GreyLip, 92f, 26f, 8f, 3f, true, false, false);
+                Top(b.Root, y, 92f, 26f);
                 TextMeshProUGUI t = Label(b.Face, "Label", text, 13f, TextStyle.BodyPlain, DarkNavy);
                 Stretch(t.rectTransform, 4f, 0f, 4f, 0f);
                 return b.Button;
             }
 
-            Button settings = Small("SettingsButton", "Settings", 22f);
-            Button win = Small("LevelCompleteButton", "Level Complete", 56f);
-            Button space = Small("OutOfSpaceButton", "Out of Space", 90f);
-            Button next = Small("NextLevelButton", "Next level", 124f);
-            Button clear = Small("ClearBoardButton", "Clear board", 158f);
+            Button settings = Small("SettingsButton", "Settings", 20f);
+            Button win = Small("LevelCompleteButton", "Level Complete", 50f);
+            Button space = Small("OutOfSpaceButton", "Out of Space", 80f);
+            Button next = Small("NextLevelButton", "Next level", 110f);
+            Button clear = Small("ClearBoardButton", "Clear board", 140f);
+            Button autoDepart = Small("AutoDepartButton", "Auto depart: ON", 170f);
 
             panel.gameObject.AddComponent<DebugOnly>();
             DebugPopupPanel debug = panel.gameObject.AddComponent<DebugPopupPanel>();
             Wire(debug, ("settingsButton", settings), ("levelCompleteButton", win), ("outOfSpaceButton", space),
-                ("nextLevelButton", next), ("clearBoardButton", clear));
+                ("nextLevelButton", next), ("clearBoardButton", clear), ("autoDepartButton", autoDepart),
+                ("autoDepartLabel", autoDepart.transform.Find("Body/Face/Label").GetComponent<TextMeshProUGUI>()));
         }
 
         // ------------------------------------------------------------------ Splash
