@@ -255,6 +255,12 @@ namespace BusRush.EditorTools
         {
             var go = new GameObject("GameHUD");
             RootCanvas(go, 10);
+
+            // Wrong-tap flash covers the whole screen (outside the safe area too), behind the HUD controls.
+            Image flash = Img(go.transform, "WrongTapFlash", Vignette, new Color(1f, 0.1f, 0.1f, 0f));
+            Stretch(flash.rectTransform);
+            flash.gameObject.AddComponent<ScreenFlash>();
+
             RectTransform safe = SafeArea(go.transform);
 
             Chunk restart = IconButton(safe, "RestartButton", "restart", Blue, BlueLip, 54f, 58f, 34f, 16f);
@@ -319,7 +325,7 @@ namespace BusRush.EditorTools
         {
             Image panel = Img(safe, "DebugPanel (TEMP)", Round, new Color(0.12f, 0.16f, 0.27f, 0.75f), 12f);
             panel.raycastTarget = true;
-            Place(panel.rectTransform, 0f, 1f, 14f, -82f, 104f, 128f, 0f, 1f);
+            Place(panel.rectTransform, 0f, 1f, 14f, -82f, 104f, 196f, 0f, 1f);
             TextMeshProUGUI title = Label(panel.transform, "Title", "DEBUG", 12f, TextStyle.BodyPlain, new Color(1f, 1f, 1f, 0.8f));
             Top(title.rectTransform, 4f, 96f, 16f);
 
@@ -335,10 +341,13 @@ namespace BusRush.EditorTools
             Button settings = Small("SettingsButton", "Settings", 22f);
             Button win = Small("LevelCompleteButton", "Level Complete", 56f);
             Button space = Small("OutOfSpaceButton", "Out of Space", 90f);
+            Button next = Small("NextLevelButton", "Next level", 124f);
+            Button clear = Small("ClearBoardButton", "Clear board", 158f);
 
             panel.gameObject.AddComponent<DebugOnly>();
             DebugPopupPanel debug = panel.gameObject.AddComponent<DebugPopupPanel>();
-            Wire(debug, ("settingsButton", settings), ("levelCompleteButton", win), ("outOfSpaceButton", space));
+            Wire(debug, ("settingsButton", settings), ("levelCompleteButton", win), ("outOfSpaceButton", space),
+                ("nextLevelButton", next), ("clearBoardButton", clear));
         }
 
         // ------------------------------------------------------------------ Splash

@@ -126,6 +126,13 @@ namespace BusRush
 
         private static GameConfig instance;
 
+        /// <summary>Like <see cref="Instance"/> but returns null silently if the asset is missing.</summary>
+        public static GameConfig TryGet()
+        {
+            if (instance == null) instance = Resources.Load<GameConfig>(ResourcePath);
+            return instance;
+        }
+
         public static GameConfig Instance
         {
             get

@@ -38,7 +38,7 @@ namespace BusRush.EditorTools
 
         private const string FontsDir = "Assets/BusRush/Art/Fonts";
 
-        public static Sprite Round, Circle, Shadow, White, Sky, Rays, Glow, Ring, Cloud;
+        public static Sprite Round, Circle, Shadow, White, Sky, Rays, Glow, Ring, Cloud, Vignette;
         public static TMP_FontAsset Heading, Body, BodyBold, Fallback;
         public static Material HeadingOutline, BodyOutline;
 
@@ -67,6 +67,7 @@ namespace BusRush.EditorTools
             Glow = LoadSprite($"{d}/ui_glow.png");
             Ring = LoadSprite($"{d}/ui_ring.png");
             Cloud = LoadSprite($"{d}/ui_cloud.png");
+            Vignette = LoadSprite($"{d}/ui_vignette.png");
             IconCache.Clear();
 
             Fallback = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>($"{FontsDir}/Fredoka-SemiBold SDF.asset");

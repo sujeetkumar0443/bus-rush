@@ -55,8 +55,12 @@
     <Compile Include="Assets\BusRush\Scripts\Editor\UIBuilder.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\BusRushSetup.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\UIScreenshotTool.cs" />
+    <Compile Include="Assets\BusRush\Scripts\Editor\Step3PlayTest.cs" />
+    <Compile Include="Assets\BusRush\Scripts\Editor\GameplayBuilder.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\UIKit.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\UIBuilder.Popups.cs" />
+    <Compile Include="Assets\BusRush\Tests\Editor\LevelGeneratorTests.cs" />
+    <Compile Include="Assets\BusRush\Scripts\Editor\RenderCapture.cs" />
     <Compile Include="Assets\TutorialInfo\Editor\ReadmeEditor.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\UIArtGenerator.cs" />
   </ItemGroup>

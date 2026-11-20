@@ -40,7 +40,10 @@ namespace BusRush.UI
 
         private void Refresh()
         {
-            levelText.text = "Level " + SaveSystem.Data.level;
+            // The session's level, not the save: the save already points at the next level once the board is cleared.
+            Gameplay.GameSession session = Gameplay.GameSession.Current;
+            int level = session != null && session.Level > 0 ? session.Level : SaveSystem.Data.level;
+            levelText.text = "Level " + level;
         }
 
         private static void OpenPause()

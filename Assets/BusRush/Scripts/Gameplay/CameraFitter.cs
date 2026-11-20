@@ -3,42 +3,24 @@ using UnityEngine;
 namespace BusRush.Gameplay
 {
     /// <summary>
-    /// Keeps a world-space area (lot + road + bays, standing on the ground) fully visible on any aspect ratio.
-    /// Perspective cameras get their vertical FOV adjusted, orthographic ones their size.
-    /// Camera position and rotation are left as authored.
+    /// Orthographic board camera. Fits the reference view width (so the lot keeps the same horizontal screen
+    /// fractions on every aspect) and keeps the lot centre at the same vertical screen fraction. Taller screens
+    /// see more ground above/below; <see cref="WorldBackground"/> extends the art to cover it.
     /// </summary>
     [RequireComponent(typeof(Camera))]
     public sealed class CameraFitter : MonoBehaviour
     {
-        [Tooltip("Centre of the area on the ground that must stay visible (world space).")]
-        [SerializeField] private Vector3 areaCenter = new Vector3(0f, 0f, 6.5f);
-
-        [Tooltip("Size of the area (world space): X and Z on the ground, Y = height of the tallest object.")]
-        [SerializeField] private Vector3 areaSize = new Vector3(12f, 1.2f, 24f);
-
-        [Tooltip("Extra margin as a fraction of the screen (per side).")]
-        [SerializeField, Range(0f, 0.3f)] private float padding = 0.02f;
-
-        [SerializeField, Range(10f, 100f)] private float minFov = 20f;
-        [SerializeField, Range(10f, 100f)] private float maxFov = 75f;
+        [SerializeField] private float distance = 40f;
 
         private Camera cam;
         private int lastWidth;
         private int lastHeight;
+        private float lastAspect = -1f;
 
-        public Vector3 AreaCenter
-        {
-            get => areaCenter;
-            set => areaCenter = value;
-        }
+        /// <summary>Raised after the camera was refitted (background listens to cover the new view).</summary>
+        public event System.Action<CameraFitter> Fitted;
 
-        public Vector3 AreaSize
-        {
-            get => areaSize;
-            set => areaSize = value;
-        }
-
-        private Camera Cam => cam != null ? cam : cam = GetComponent<Camera>();
+        public Camera Camera => cam != null ? cam : cam = GetComponent<Camera>();
 
         private void Start()
         {
@@ -47,78 +29,61 @@ namespace BusRush.Gameplay
 
         private void LateUpdate()
         {
-            if (Screen.width != lastWidth || Screen.height != lastHeight)
+            if (Screen.width != lastWidth || Screen.height != lastHeight || !Mathf.Approximately(Camera.aspect, lastAspect))
             {
                 Fit();
             }
         }
 
-        /// <summary>Fits for the current screen.</summary>
         public void Fit()
         {
             lastWidth = Screen.width;
             lastHeight = Screen.height;
-            Fit(Cam.aspect);
+            Fit(Camera.aspect);
         }
 
         /// <summary>Fits for an explicit aspect ratio (width / height). Usable from editor tools.</summary>
         public void Fit(float aspect)
         {
-            if (Cam.orthographic)
-            {
-                Cam.orthographicSize = GetRequiredOrthographicSize(aspect);
-            }
-            else
-            {
-                Cam.fieldOfView = Mathf.Clamp(GetRequiredFieldOfView(aspect), minFov, maxFov);
-            }
+            lastAspect = aspect;
+            Camera c = Camera;
+            c.orthographic = true;
+            transform.rotation = Quaternion.Euler(BoardGeometry.CameraPitch, 0f, 0f);
+
+            // Fit by width. On screens wider than the reference (e.g. 9:16) keep the reference height instead, so the
+            // lot does not grow under the HUD; the background mirrors its edges to cover the extra width.
+            float referenceHeight = BoardGeometry.ViewWidth * BoardGeometry.ReferenceHeight / BoardGeometry.ReferenceWidth;
+            float viewHeight = Mathf.Max(BoardGeometry.ViewWidth / Mathf.Max(0.01f, aspect), referenceHeight);
+            float viewWidth = viewHeight * aspect;
+            c.orthographicSize = viewHeight * 0.5f;
+
+            // Ground point that must sit at the screen centre so the lot centre lands on its viewport fraction.
+            Vector2 lotVp = BoardGeometry.LotCenterViewport;
+            float screenOffsetX = (lotVp.x - 0.5f) * viewWidth;   // lot centre relative to screen centre, screen units
+            float screenOffsetY = (lotVp.y - 0.5f) * viewHeight;
+            var target = new Vector3(-screenOffsetX, 0f, -screenOffsetY / BoardGeometry.SinPitch);
+            transform.position = target - transform.forward * distance;
+
+            Fitted?.Invoke(this);
         }
 
-        /// <summary>Unclamped vertical FOV (degrees) needed to see the whole area at this aspect.</summary>
-        public float GetRequiredFieldOfView(float aspect)
+        /// <summary>Ground rectangle (world XZ) currently visible, assuming the ground plane y = 0.</summary>
+        public Rect VisibleGroundRect()
         {
-            float maxTanX = 0f;
-            float maxTanY = 0f;
-            for (int i = 0; i < 8; i++)
-            {
-                Vector3 p = transform.InverseTransformPoint(GetCorner(i));
-                if (p.z > 0.01f)
-                {
-                    maxTanX = Mathf.Max(maxTanX, Mathf.Abs(p.x) / p.z);
-                    maxTanY = Mathf.Max(maxTanY, Mathf.Abs(p.y) / p.z);
-                }
-            }
-
-            float tanHalf = Mathf.Max(maxTanY, maxTanX / aspect) * (1f + padding * 2f);
-            return 2f * Mathf.Atan(tanHalf) * Mathf.Rad2Deg;
+            Camera c = Camera;
+            float halfH = c.orthographicSize;
+            float halfW = halfH * c.aspect;
+            Vector3 center = GroundPointAtScreenCenter();
+            float halfDepth = halfH / BoardGeometry.SinPitch;
+            return new Rect(center.x - halfW, center.z - halfDepth, halfW * 2f, halfDepth * 2f);
         }
 
-        public float GetRequiredOrthographicSize(float aspect)
+        private Vector3 GroundPointAtScreenCenter()
         {
-            float maxX = 0f;
-            float maxY = 0f;
-            for (int i = 0; i < 8; i++)
-            {
-                Vector3 p = transform.InverseTransformPoint(GetCorner(i));
-                maxX = Mathf.Max(maxX, Mathf.Abs(p.x));
-                maxY = Mathf.Max(maxY, Mathf.Abs(p.y));
-            }
-            return Mathf.Max(maxY, maxX / aspect) * (1f + padding * 2f);
-        }
-
-        /// <summary>One of the 8 corners of the area. It stands on the ground (areaCenter.y) and extends up by areaSize.y.</summary>
-        public Vector3 GetCorner(int index)
-        {
-            return areaCenter + new Vector3(
-                (index & 1) == 0 ? -areaSize.x * 0.5f : areaSize.x * 0.5f,
-                (index & 2) == 0 ? 0f : areaSize.y,
-                (index & 4) == 0 ? -areaSize.z * 0.5f : areaSize.z * 0.5f);
-        }
-
-        private void OnDrawGizmosSelected()
-        {
-            Gizmos.color = new Color(1f, 0.85f, 0.1f, 0.9f);
-            Gizmos.DrawWireCube(areaCenter + 0.5f * areaSize.y * Vector3.up, areaSize);
+            Vector3 p = transform.position;
+            Vector3 f = transform.forward;
+            float t = -p.y / f.y;
+            return p + f * t;
         }
     }
 }

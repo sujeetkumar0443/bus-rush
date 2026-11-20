@@ -1,0 +1,228 @@
+using System;
+using System.Collections.Generic;
+using UnityEngine;
+
+namespace BusRush.Gameplay
+{
+    /// <summary>
+    /// Builds solvable boards by reverse placement. Vehicles are placed one at a time and a placement is only
+    /// accepted if its exit path is clear of every vehicle placed earlier. The exit order is therefore the reverse
+    /// of the placement order: each vehicle's path only crosses vehicles that leave before it.
+    /// Deterministic for a given (level, seed).
+    /// </summary>
+    public static class LevelGenerator
+    {
+        public struct Settings
+        {
+            public int vehicleCount;
+            public float vanShare;
+            public float busShare;
+            public int colorCount;
+            /// <summary>Maximum share of board cells that may be occupied.</summary>
+            public float maxFill;
+            /// <summary>How strongly placements that block earlier vehicles are preferred (puzzle depth).</summary>
+            public float blockBias;
+        }
+
+        public static int SeedFor(int level) => level * 7919;
+
+        public static Settings SettingsFor(int level)
+        {
+            level = Mathf.Max(1, level);
+            float t = Mathf.Clamp01((level - 1) / 29f); // 0 at level 1, 1 at level 30+
+            return new Settings
+            {
+                vehicleCount = Mathf.Min(34, Mathf.RoundToInt(8f + (level - 1) * 0.76f)),
+                vanShare = Mathf.Lerp(0.15f, 0.3f, t),
+                busShare = Mathf.Lerp(0.05f, 0.3f, t),
+                colorCount = Mathf.Min(7, 3 + (level - 1) / 4),
+                maxFill = Mathf.Lerp(0.45f, 0.84f, t),
+                blockBias = Mathf.Lerp(0.6f, 4f, t)
+            };
+        }
+
+        public static LevelData Generate(int level) => Generate(level, SeedFor(level));
+
+        public static LevelData Generate(int level, int seed, int columns = 9, int rows = 10)
+        {
+            Settings s = SettingsFor(level);
+            var rng = new System.Random(seed);
+            var board = new BoardState(columns, rows);
+            var placed = new List<VehicleData>();
+            int maxCells = Mathf.FloorToInt(s.maxFill * columns * rows);
+            int usedCells = 0;
+
+            for (int i = 0; i < s.vehicleCount; i++)
+            {
+                VehicleType type = PickType(rng, s);
+                VehicleData v = Place(rng, board, placed, type, s.blockBias, maxCells - usedCells);
+                if (v == null && type != VehicleType.Car)
+                {
+                    v = Place(rng, board, placed, VehicleType.Car, s.blockBias, maxCells - usedCells);
+                }
+                if (v == null) break; // board is as full as it can get
+
+                board.Occupy(placed.Count, v);
+                placed.Add(v);
+                usedCells += v.Length;
+            }
+
+            AssignColors(rng, placed, s.colorCount);
+
+            return new LevelData
+            {
+                level = level,
+                seed = seed,
+                worldIndex = (level - 1) % 3,
+                columns = columns,
+                rows = rows,
+                vehicles = placed
+            };
+        }
+
+        private static VehicleType PickType(System.Random rng, Settings s)
+        {
+            double r = rng.NextDouble();
+            if (r < s.busShare) return VehicleType.Bus;
+            if (r < s.busShare + s.vanShare) return VehicleType.Van;
+            return VehicleType.Car;
+        }
+
+        /// <summary>Evaluates every head cell and direction; picks a valid one weighted toward blocking earlier vehicles.</summary>
+        private static VehicleData Place(System.Random rng, BoardState board, List<VehicleData> placed, VehicleType type,
+                                         float blockBias, int cellsLeft)
+        {
+            if (VehicleSpecs.Length(type) > cellsLeft) return null;
+
+            // Cells each earlier vehicle needs to drive through.
+            var pathOwners = new Dictionary<Vector2Int, int>();
+            for (int i = 0; i < placed.Count; i++)
+            {
+                foreach (Vector2Int c in board.PathCells(placed[i]))
+                {
+                    pathOwners.TryGetValue(c, out int n);
+                    pathOwners[c] = n + 1;
+                }
+            }
+
+            var candidates = new List<(VehicleData v, double w)>();
+            double total = 0;
+            for (int row = 0; row < board.Rows; row++)
+            {
+                for (int col = 0; col < board.Columns; col++)
+                {
+                    foreach (Direction d in DirectionExtensions.All)
+                    {
+                        var v = new VehicleData(type, GameColor.Red, col, row, d);
+                        if (!board.CanPlace(v) || !board.IsPathClear(v)) continue;
+
+                        int blocks = 0;
+                        foreach (Vector2Int c in v.Cells())
+                        {
+                            if (pathOwners.TryGetValue(c, out int n)) blocks += n;
+                        }
+                        double w = 1.0 + blockBias * blocks;
+                        candidates.Add((v, w));
+                        total += w;
+                    }
+                }
+            }
+
+            if (candidates.Count == 0) return null;
+            double pick = rng.NextDouble() * total;
+            foreach ((VehicleData v, double w) in candidates)
+            {
+                pick -= w;
+                if (pick <= 0) return v;
+            }
+            return candidates[candidates.Count - 1].v;
+        }
+
+        /// <summary>Picks <paramref name="colorCount"/> colours and balances total capacity across them.</summary>
+        private static void AssignColors(System.Random rng, List<VehicleData> vehicles, int colorCount)
+        {
+            var palette = new List<GameColor>((GameColor[])Enum.GetValues(typeof(GameColor)));
+            for (int i = palette.Count - 1; i > 0; i--)
+            {
+                int j = rng.Next(i + 1);
+                (palette[i], palette[j]) = (palette[j], palette[i]);
+            }
+            int k = Mathf.Clamp(colorCount, 1, Mathf.Min(palette.Count, Mathf.Max(1, vehicles.Count)));
+            var load = new int[k];
+
+            // Largest vehicles first, each to the colour with the least capacity so far (random tie-break).
+            var order = new List<int>();
+            for (int i = 0; i < vehicles.Count; i++) order.Add(i);
+            order.Sort((a, b) =>
+            {
+                int c = vehicles[b].Capacity.CompareTo(vehicles[a].Capacity);
+                return c != 0 ? c : a.CompareTo(b);
+            });
+
+            foreach (int i in order)
+            {
+                int best = 0;
+                int ties = 1;
+                for (int c = 1; c < k; c++)
+                {
+                    if (load[c] < load[best])
+                    {
+                        best = c;
+                        ties = 1;
+                    }
+                    else if (load[c] == load[best] && rng.Next(++ties) == 0)
+                    {
+                        best = c;
+                    }
+                }
+                vehicles[i].color = palette[best];
+                load[best] += vehicles[i].Capacity;
+            }
+        }
+    }
+
+    /// <summary>Greedy solver: repeatedly removes any vehicle whose path is clear. Removal never blocks anything,
+    /// so if this gets stuck the board is unsolvable.</summary>
+    public static class LevelSolver
+    {
+        public static bool IsSolvable(LevelData level, out List<int> exitOrder)
+        {
+            exitOrder = new List<int>();
+            var board = new BoardState(level.columns, level.rows);
+            for (int i = 0; i < level.vehicles.Count; i++)
+            {
+                if (!board.CanPlace(level.vehicles[i])) return false;
+                board.Occupy(i, level.vehicles[i]);
+            }
+
+            var remaining = new List<int>();
+            for (int i = 0; i < level.vehicles.Count; i++) remaining.Add(i);
+
+            bool progress = true;
+            while (remaining.Count > 0 && progress)
+            {
+                progress = false;
+                for (int k = remaining.Count - 1; k >= 0; k--)
+                {
+                    int id = remaining[k];
+                    if (!board.IsPathClear(level.vehicles[id])) continue;
+                    board.Free(id, level.vehicles[id]);
+                    exitOrder.Add(id);
+                    remaining.RemoveAt(k);
+                    progress = true;
+                }
+            }
+            return remaining.Count == 0;
+        }
+
+        /// <summary>Vehicles that can leave right now on a fresh board.</summary>
+        public static int InitiallyFree(LevelData level)
+        {
+            var board = new BoardState(level.columns, level.rows);
+            for (int i = 0; i < level.vehicles.Count; i++) board.Occupy(i, level.vehicles[i]);
+            int n = 0;
+            foreach (VehicleData v in level.vehicles) if (board.IsPathClear(v)) n++;
+            return n;
+        }
+    }
+}

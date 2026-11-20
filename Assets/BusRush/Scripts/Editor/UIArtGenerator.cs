@@ -49,6 +49,7 @@ namespace BusRush.EditorTools
             Save("ui_glow", Glow(256), false);
             Save("ui_ring", Ring(256, 0.42f, 0.06f), false);
             Save("ui_cloud", Cloud(256, 128), false);
+            Save("ui_vignette", Vignette(256), false);
             Save("ui_lip_shine", VerticalGradient(8, 64, new Color(1, 1, 1, 0.0f), new Color(1, 1, 1, 0.35f)), false);
 
             // ---- icons
@@ -193,6 +194,26 @@ namespace BusRush.EditorTools
                     float r = new Vector2((x + 0.5f) / size - 0.5f, (y + 0.5f) / size - 0.5f).magnitude * 2f;
                     float a = Mathf.Clamp01(1f - r);
                     px[y * size + x] = new Color(1f, 1f, 1f, a * a);
+                }
+            }
+            t.SetPixels(px);
+            t.Apply();
+            return t;
+        }
+
+        /// <summary>White at the edges, transparent in the middle (tinted red by the wrong-tap flash).</summary>
+        private static Texture2D Vignette(int size)
+        {
+            Texture2D t = NewTex(size, size);
+            var px = new Color[size * size];
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++)
+                {
+                    var p = new Vector2((x + 0.5f) / size - 0.5f, (y + 0.5f) / size - 0.5f) * 2f;
+                    float r = Mathf.Max(Mathf.Abs(p.x), Mathf.Abs(p.y)) * 0.6f + p.magnitude * 0.4f;
+                    float a = Mathf.SmoothStep(0f, 1f, Mathf.InverseLerp(0.45f, 1.05f, r));
+                    px[y * size + x] = new Color(1f, 1f, 1f, a);
                 }
             }
             t.SetPixels(px);

@@ -67,10 +67,6 @@ namespace BusRush.EditorTools
         private const float RefWidth = 390f;
         private const float RefHeight = 844f;
 
-        // Background placement: the image is laid flat on the ground. Lot = bottom part of the image.
-        private const float WorldWidthUnits = 12f;           // image width in world units
-        private const float LotCenterPixelY = 1214f;         // lot centre in the 780x1688 image (from top)
-
         private static readonly StringBuilder Report = new StringBuilder();
 
         // ------------------------------------------------------------------ entry points
@@ -320,7 +316,9 @@ namespace BusRush.EditorTools
                 ti.mipmapEnabled = false;
                 ti.maxTextureSize = 2048;
                 ti.textureCompression = TextureImporterCompression.Compressed;
-                ti.wrapMode = TextureWrapMode.Clamp;
+                // Mirror once on both axes: the background extends the art beyond its edges on taller / wider screens.
+                ti.wrapModeU = TextureWrapMode.MirrorOnce;
+                ti.wrapModeV = TextureWrapMode.MirrorOnce;
                 ti.SaveAndReimport();
             }
         }
@@ -334,7 +332,8 @@ namespace BusRush.EditorTools
             uint[] hex = { 0xE8433F, 0x3B7BE8, 0xF5C518, 0x3DBE5A, 0x8E5AD8, 0xF26BAE, 0x2FC4D8 };
             for (int i = 0; i < names.Length; i++)
             {
-                mats[names[i]] = Lit(names[i], GameColors.Hex(hex[i]), 0.45f);
+                // Emission enabled at black so gameplay can flash vehicles via MaterialPropertyBlock.
+                mats[names[i]] = Lit(names[i], GameColors.Hex(hex[i]), 0.45f, emission: Color.black);
             }
 
             mats["Glass"] = Lit("Glass", GameColors.Hex(0x2B3646), 0.85f);
@@ -344,17 +343,6 @@ namespace BusRush.EditorTools
             // Extra slots present on the models that the brief's list does not cover:
             mats["TailLight"] = Lit("TailLight", GameColors.Hex(0xFF3B30), 0.5f, emission: GameColors.Hex(0xFF3B30) * 0.8f);
             mats["Arrow"] = Lit("Arrow", Color.white, 0.3f);
-
-            Material bg = LoadOrCreateMaterial("World_City", "Universal Render Pipeline/Lit");
-            bg.SetTexture("_BaseMap", AssetDatabase.LoadAssetAtPath<Texture2D>(WorldsDir + "/world_city.jpg"));
-            bg.SetColor("_BaseColor", new Color(0.88f, 0.88f, 0.88f, 1f));
-            bg.SetFloat("_Smoothness", 0f);
-            bg.SetFloat("_SpecularHighlights", 0f);
-            bg.EnableKeyword("_SPECULARHIGHLIGHTS_OFF");
-            bg.SetFloat("_EnvironmentReflections", 0f);
-            bg.EnableKeyword("_ENVIRONMENTREFLECTIONS_OFF");
-            EditorUtility.SetDirty(bg);
-            mats["World_City"] = bg;
 
             AssetDatabase.SaveAssets();
             return mats;
@@ -837,40 +825,12 @@ namespace BusRush.EditorTools
             return cam;
         }
 
+        /// <summary>
+        /// Minimal Game scene world: light + orthographic board camera. The background, lot grid and board are added by
+        /// the Step 3 builder (Tools/Bus Rush/Build Gameplay (Step 3)).
+        /// </summary>
         private static void BuildGameWorld()
         {
-            var cfg = AssetDatabase.LoadAssetAtPath<GameConfig>(ConfigPath);
-            float cell = cfg.cellSize;
-
-            // Background: world_city laid flat; the empty lot part of the image sits under the 9x10 grid.
-            var tex = AssetDatabase.LoadAssetAtPath<Texture2D>(WorldsDir + "/world_city.jpg");
-            float pxPerUnit = tex.width / WorldWidthUnits;
-            float worldLength = tex.height / pxPerUnit;
-            float bgCenterZ = (LotCenterPixelY - tex.height * 0.5f) / pxPerUnit;   // lot centre is at z = 0
-            float bgTopZ = bgCenterZ + worldLength * 0.5f;
-
-            GameObject bg = GameObject.CreatePrimitive(PrimitiveType.Quad);
-            bg.name = "Background (placeholder)";
-            Object.DestroyImmediate(bg.GetComponent<Collider>());
-            bg.transform.SetPositionAndRotation(new Vector3(0f, -0.01f, bgCenterZ), Quaternion.Euler(90f, 0f, 0f));
-            bg.transform.localScale = new Vector3(WorldWidthUnits, worldLength, 1f);
-            var bgRenderer = bg.GetComponent<MeshRenderer>();
-            bgRenderer.sharedMaterial = AssetDatabase.LoadAssetAtPath<Material>(MaterialsDir + "/World_City.mat");
-            bgRenderer.shadowCastingMode = ShadowCastingMode.Off;
-
-            // Lot root + temporary spawner.
-            var lot = new GameObject("Lot");
-            var spawner = new GameObject("TestPrefabSpawner (TEMP - remove in Step 3)");
-            spawner.transform.SetParent(lot.transform, false);
-            var sp = spawner.AddComponent<TestPrefabSpawner>();
-            var spSo = new SerializedObject(sp);
-            spSo.FindProperty("carPrefab").objectReferenceValue = AssetDatabase.LoadAssetAtPath<GameObject>($"{VehiclePrefabsDir}/Car.prefab");
-            spSo.FindProperty("vanPrefab").objectReferenceValue = AssetDatabase.LoadAssetAtPath<GameObject>($"{VehiclePrefabsDir}/Van.prefab");
-            spSo.FindProperty("busPrefab").objectReferenceValue = AssetDatabase.LoadAssetAtPath<GameObject>($"{VehiclePrefabsDir}/Bus.prefab");
-            spSo.FindProperty("passengerPrefab").objectReferenceValue = AssetDatabase.LoadAssetAtPath<GameObject>($"{CharacterPrefabsDir}/Passenger.prefab");
-            spSo.ApplyModifiedPropertiesWithoutUndo();
-
-            // Light
             var lightGo = new GameObject("Directional Light");
             var light = lightGo.AddComponent<Light>();
             light.type = LightType.Directional;
@@ -880,51 +840,17 @@ namespace BusRush.EditorTools
             light.shadowStrength = 0.55f;
             lightGo.transform.rotation = Quaternion.Euler(55f, 115f, 0f);
 
-            // Camera: pitch 62, aimed at the centre of lot + road + passenger track.
-            float lotHalfZ = cfg.gridHeight * cell * 0.5f;
-            float areaMinZ = -lotHalfZ - 0.6f * cell;
-            float areaMaxZ = bgTopZ;
-            var areaCenter = new Vector3(0f, 0f, (areaMinZ + areaMaxZ) * 0.5f);
-            var areaSize = new Vector3(cfg.gridWidth * cell + 1.4f * cell, 1.2f, areaMaxZ - areaMinZ);
-
             var camGo = new GameObject("Main Camera") { tag = "MainCamera" };
             var cam = camGo.AddComponent<Camera>();
             cam.clearFlags = CameraClearFlags.SolidColor;
             cam.backgroundColor = GameColors.Hex(0xD5DAE6);
-            cam.orthographic = false;
             cam.nearClipPlane = 0.3f;
             cam.farClipPlane = 200f;
-            camGo.transform.rotation = Quaternion.Euler(62f, 0f, 0f);
-
             var fitter = camGo.AddComponent<CameraFitter>();
-            fitter.AreaCenter = areaCenter;
-            fitter.AreaSize = areaSize;
+            fitter.Fit(RefWidth / RefHeight);
+            SetUrpShadowDistance(60f);
 
-            // Pick the distance where the reference portrait screen needs ~42 deg vertical FOV.
-            const float targetFov = 42f;
-            float aspect = RefWidth / RefHeight;
-            float lo = 5f, hi = 200f;
-            for (int i = 0; i < 40; i++)
-            {
-                float mid = (lo + hi) * 0.5f;
-                camGo.transform.position = areaCenter - camGo.transform.forward * mid;
-                if (fitter.GetRequiredFieldOfView(aspect) > targetFov) lo = mid; else hi = mid;
-            }
-            camGo.transform.position = areaCenter - camGo.transform.forward * hi;
-            camGo.transform.position = new Vector3(0f, (float)Math.Round(camGo.transform.position.y, 2), (float)Math.Round(camGo.transform.position.z, 2));
-            fitter.Fit(aspect);
-
-            float maxDist = 0f;
-            for (int i = 0; i < 8; i++)
-            {
-                maxDist = Mathf.Max(maxDist, Vector3.Distance(camGo.transform.position, fitter.GetCorner(i)));
-            }
-            float shadowDistance = Mathf.Ceil(maxDist + 5f);
-            SetUrpShadowDistance(shadowDistance);
-
-            Report.AppendLine($"Game camera: pos {Fmt(camGo.transform.position)}, rot (62,0,0), FOV {cam.fieldOfView:F1} at 390x844; " +
-                              $"fit area centre {Fmt(areaCenter)} size {Fmt(areaSize)}; URP shadow distance -> {shadowDistance}.");
-            Report.AppendLine($"Background quad: {WorldWidthUnits} x {worldLength:F2} at z {bgCenterZ:F2} (image top at z {bgTopZ:F2}).");
+            Report.AppendLine($"Game camera: orthographic, pos {Fmt(camGo.transform.position)}, rot (58,0,0), size {cam.orthographicSize:F2} at 390x844.");
         }
 
         private static Transform CreateCanvas(TMP_FontAsset font, string label)

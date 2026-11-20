@@ -177,50 +177,7 @@ namespace BusRush.EditorTools
                 Debug.LogError($"[UIScreenshotTool] Button '{name}' not found under {root.name}");
             }
 
-            private static IEnumerator Capture(string name, int w, int h)
-            {
-                Camera cam = Camera.main;
-                var rt = new RenderTexture(w, h, 24, RenderTextureFormat.ARGB32) { antiAliasing = 4 };
-                rt.Create();
-
-                var switched = new List<Canvas>();
-                foreach (Canvas c in Object.FindObjectsByType<Canvas>(FindObjectsInactive.Exclude))
-                {
-                    if (!c.isRootCanvas || c.renderMode != RenderMode.ScreenSpaceOverlay || c.GetComponent<ScreenFader>() != null) continue;
-                    c.renderMode = RenderMode.ScreenSpaceCamera;
-                    c.worldCamera = cam;
-                    c.planeDistance = 1f;
-                    switched.Add(c);
-                }
-
-                cam.targetTexture = rt;
-                CameraFitter fitter = cam.GetComponent<CameraFitter>();
-                yield return null;
-                yield return null;
-                if (fitter != null) fitter.Fit(w / (float)h);
-                Canvas.ForceUpdateCanvases();
-                cam.Render();
-
-                RenderTexture prev = RenderTexture.active;
-                RenderTexture.active = rt;
-                var tex = new Texture2D(w, h, TextureFormat.RGB24, false);
-                tex.ReadPixels(new Rect(0, 0, w, h), 0, 0);
-                tex.Apply();
-                RenderTexture.active = prev;
-                File.WriteAllBytes($"{OutputDir}/{name}.png", tex.EncodeToPNG());
-                Object.Destroy(tex);
-
-                cam.targetTexture = null;
-                rt.Release();
-                Object.Destroy(rt);
-                foreach (Canvas c in switched)
-                {
-                    if (c != null) c.renderMode = RenderMode.ScreenSpaceOverlay;
-                }
-                if (fitter != null) fitter.Fit();
-                yield return null;
-                Debug.Log("[UIScreenshotTool] saved " + name);
-            }
+            private static IEnumerator Capture(string name, int w, int h) => RenderCapture.Capture(OutputDir, name, w, h);
         }
     }
 }
