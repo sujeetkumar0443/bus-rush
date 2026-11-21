@@ -72,6 +72,19 @@ namespace BusRush.EditorTools
                 var map = (GameObject)PrefabUtility.InstantiatePrefab(mapPrefab, homeScene);
                 map.SetActive(false); // opened by the Road Map button / after a win
                 Wire(homeInstance.GetComponent<HomeScreen>(), ("roadMap", map.GetComponent<RoadMapScreen>()));
+                // Reward screens over the map (Step R9).
+                RemoveRoots(homeScene, "GiftChestScreen", "NewWorldScreen");
+                GameObject chestPrefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{PrefabDir}/GiftChestScreen.prefab");
+                GameObject worldPrefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{PrefabDir}/NewWorldScreen.prefab");
+                if (chestPrefab != null && worldPrefab != null)
+                {
+                    var chest = (GameObject)PrefabUtility.InstantiatePrefab(chestPrefab, homeScene);
+                    var world = (GameObject)PrefabUtility.InstantiatePrefab(worldPrefab, homeScene);
+                    chest.SetActive(false);
+                    world.SetActive(false);
+                    Wire(map.GetComponent<RoadMapScreen>(), ("giftChest", chest.GetComponent<GiftChestScreen>()),
+                        ("newWorld", world.GetComponent<NewWorldScreen>()));
+                }
             }
             FindRoot(homeScene, "Main Camera").GetComponent<Camera>().backgroundColor = UIArtGenerator.Hex(0x4AB3F4);
             EditorSceneManager.SaveScene(homeScene);

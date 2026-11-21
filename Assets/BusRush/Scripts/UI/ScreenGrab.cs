@@ -49,6 +49,20 @@ namespace BusRush.UI
             if (hide != null) hide.enabled = wasEnabled;
         }
 
+        /// <summary>A soft (1/8 size, down/up blitted) copy of a texture, e.g. a world map behind the New World screen.</summary>
+        public static RenderTexture BlurTexture(Texture source)
+        {
+            int w = Mathf.Max(8, source.width / 8), h = Mathf.Max(8, source.height / 8);
+            var result = new RenderTexture(w, h, 0, RenderTextureFormat.ARGB32) { filterMode = FilterMode.Bilinear };
+            var small = RenderTexture.GetTemporary(Mathf.Max(4, w / 2), Mathf.Max(4, h / 2), 0, RenderTextureFormat.ARGB32);
+            small.filterMode = FilterMode.Bilinear;
+            Graphics.Blit(source, result);
+            Graphics.Blit(result, small);
+            Graphics.Blit(small, result);
+            RenderTexture.ReleaseTemporary(small);
+            return result;
+        }
+
         /// <summary>Frees a grab shown on <paramref name="target"/>.</summary>
         public static void Release(RawImage target)
         {

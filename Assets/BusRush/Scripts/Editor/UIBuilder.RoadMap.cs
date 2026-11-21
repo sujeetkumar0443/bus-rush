@@ -266,7 +266,8 @@ namespace BusRush.EditorTools
                 ("seamTemplate", seamT),
                 ("bus", bus), ("busRumble", rumble), ("busImage", busImg), ("busPuffs", puffs),
                 ("trailGlow", trailGlow), ("trailMarch", trailMarch),
-                ("homeButton", homeButton), ("worldNumberText", worldNum), ("worldNameText", worldName), ("toastFontProbe", toastLabel));
+                ("homeButton", homeButton), ("worldNumberText", worldNum), ("worldNameText", worldName), ("toastFontProbe", toastLabel),
+                ("coinTarget", (RectTransform)coin.transform.parent));
             root.SetActive(false);
             return root;
         }
@@ -373,7 +374,9 @@ namespace BusRush.EditorTools
             hit.color = new Color(0f, 0f, 0f, 0f);
             Image img = ShadowedImg(chest, "ChestImage", UiV2Sprite("Map/chest_closed.png"), 4f, 0.35f);
             RectTransform imgRt = Box((RectTransform)img.transform.parent, 2f, 0f, 56f, 48f, 0.5f, 0.5f);
-            imgRt.gameObject.AddComponent<UiLoopBob>();
+            UiLoopBob bob = imgRt.gameObject.AddComponent<UiLoopBob>();
+            Wire(chest.gameObject.AddComponent<MapChestView>(), ("image", img), ("shadow", imgRt.Find("DropShadow").GetComponent<Image>()),
+                ("bob", bob), ("closedSprite", UiV2Sprite("Map/chest_closed.png")), ("openSprite", UiV2Sprite("Map/chest_open.png")));
             RectTransform tag = V2Box(chest, "Gift", 10f, H(0x7A4A16), H(0x7A4A16), null, 2f, H(0xFFE27A), 0f);
             Box(tag, 11f, 44f, 38f, 18f);
             V2Text(tag, "Text", "Gift", 11f, true, H(0xFFE27A));

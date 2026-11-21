@@ -53,6 +53,12 @@ namespace BusRush.UI
         [SerializeField] private TMP_Text worldNumberText;
         [SerializeField] private TMP_Text worldNameText;
         [SerializeField] private TMP_Text toastFontProbe;
+        [Tooltip("Coin icon of the map's coin pill (target of coin flies).")]
+        [SerializeField] private RectTransform coinTarget;
+
+        [Header("Reward screens (Home scene, wired by the builder)")]
+        [SerializeField] private GiftChestScreen giftChest;
+        [SerializeField] private NewWorldScreen newWorld;
 
         public float Clock { get; private set; }
         /// <summary>Seconds into the unlock timeline (design times), or negative when no unlock is playing.</summary>
@@ -85,6 +91,8 @@ namespace BusRush.UI
         // ------------------------------------------------------------------ open / close
 
         private bool dragged;
+        private int pendingWorld; // world whose sign stays locked until its New World screen has shown
+        private Coroutine rewards;
 
         private void Awake()
         {
@@ -135,6 +143,9 @@ namespace BusRush.UI
             trailGlow.gameObject.SetActive(unlockLevel > 0);
             trailMarch.gameObject.SetActive(unlockLevel > 0);
 
+            if (rewards != null) StopCoroutine(rewards);
+            rewards = null;
+            pendingWorld = unlockLevel > 0 && MapRewards.WorldDue(SaveSystem.Data, unlockLevel + 1) ? MapRewards.WorldOf(unlockLevel + 1) : 0;
             int focus = unlockLevel > 0 ? unlockLevel : current;
             Canvas.ForceUpdateCanvases();
             SetScrollY(TargetScrollFor(geo.ContentAt(unlockLevel > 0 ? busArc : geo.LevelArc(focus), out _).y));
@@ -156,7 +167,12 @@ namespace BusRush.UI
         {
             Clock += Time.deltaTime;
             float ut = UnlockTime;
-            if (ut >= UnlockEnd) unlockLevel = 0;
+            if (ut >= UnlockEnd)
+            {
+                int won = unlockLevel;
+                unlockLevel = 0;
+                rewards = StartCoroutine(AfterUnlock(won));
+            }
 
             if (unlockLevel > 0)
             {
@@ -306,8 +322,11 @@ namespace BusRush.UI
             {
                 Vector2 p = geo.NodeContent(chestLevel);
                 ((RectTransform)tv.chest.transform).anchoredPosition = p + new Vector2(-104f, 40f);
+                bool claimed = MapRewards.ChestClaimed(SaveSystem.Data, chestLevel);
+                tv.chest.GetComponent<MapChestView>().SetClaimed(claimed);
                 tv.chest.onClick.RemoveAllListeners();
-                tv.chest.onClick.AddListener(() => Toast.Show($"Gift after level {chestLevel}"));
+                tv.chest.onClick.AddListener(() => Toast.Show(MapRewards.ChestClaimed(SaveSystem.Data, chestLevel)
+                    ? "Gift collected" : $"Gift after level {chestLevel}"));
             }
 
             bool seam = index > 0;
@@ -317,9 +336,15 @@ namespace BusRush.UI
                 ((RectTransform)tv.seam.transform).anchoredPosition = new Vector2(0f, y0);
                 int firstLevel = index * RoadMapGeometry.LevelsPerTile + 1;
                 string name = WorldNames[index % WorldNames.Length];
-                tv.seam.Setup(index + 1, name, firstLevel, firstLevel > current);
+                bool locked = firstLevel > current || pendingWorld == index + 1;
+                tv.seam.Setup(index + 1, name, firstLevel, locked);
                 tv.seam.Button.onClick.RemoveAllListeners();
-                tv.seam.Button.onClick.AddListener(() => Toast.Show($"World {index + 1}: {name}"));
+                tv.seam.Button.onClick.AddListener(() =>
+                {
+                    // Unlocked: preview the New World screen; locked: just its name.
+                    if (firstLevel <= current && pendingWorld != index + 1 && newWorld != null) newWorld.Show(index + 1, null);
+                    else Toast.Show($"World {index + 1}: {name}");
+                });
             }
             return tv;
         }
@@ -351,6 +376,44 @@ namespace BusRush.UI
                 tv.nodes[i].Tapped += OnNodeTapped;
             }
             return tv;
+        }
+
+        // ------------------------------------------------------------------ rewards after an unlock
+
+        /// <summary>After the unlock of <paramref name="won"/>: its gift chest (bounce, then the screen), then a new world.</summary>
+        private System.Collections.IEnumerator AfterUnlock(int won)
+        {
+            SaveData d = SaveSystem.Data;
+            if (giftChest != null && MapRewards.ChestDue(d, won))
+            {
+                if (tiles.TryGetValue(RoadMapGeometry.TileOf(won), out TileView tv) && tv.chest.gameObject.activeSelf)
+                {
+                    yield return tv.chest.GetComponent<MapChestView>().Bounce3();
+                }
+                bool done = false;
+                giftChest.Show(won, coinTarget, () => done = true);
+                while (!done) yield return null;
+                RefreshTiles();
+            }
+            if (newWorld != null && MapRewards.WorldDue(d, won + 1))
+            {
+                int world = MapRewards.WorldOf(won + 1);
+                MapRewards.MarkWorldShown(d, world);
+                SaveSystem.Commit();
+                bool done = false;
+                newWorld.Show(world, () => done = true);
+                while (!done) yield return null;
+            }
+            pendingWorld = 0;
+            RefreshTiles();
+            rewards = null;
+        }
+
+        /// <summary>Rebuilds the visible tiles (chest / sign state changed).</summary>
+        private void RefreshTiles()
+        {
+            foreach (TileView tv in new List<TileView>(tiles.Values)) Release(tv);
+            UpdateTiles();
         }
 
         // ------------------------------------------------------------------ taps

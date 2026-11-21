@@ -44,6 +44,27 @@ namespace BusRush.Tests
         }
 
         [Test]
+        public void Path_IsContinuousAcrossTileSeams()
+        {
+            // The bus drive 10 -> 11 (and 20 -> 21 ...) crosses a seam: consecutive 1 px arc samples never jump > 4 px.
+            var geo = new RoadMapGeometry(File.ReadAllText(JsonPath));
+            for (int seam = 1; seam <= 3; seam++)
+            {
+                float from = seam * geo.TileArc - 120f, to = seam * geo.TileArc + 120f;
+                Vector2 prev = geo.ContentAt(from, out _);
+                float maxJump = 0f;
+                for (float a = from + 1f; a <= to; a += 1f)
+                {
+                    Vector2 p = geo.ContentAt(a, out Vector2 dir);
+                    maxJump = Mathf.Max(maxJump, Vector2.Distance(prev, p));
+                    Assert.Greater(dir.y, 0f, "the road keeps going up across the seam");
+                    prev = p;
+                }
+                Assert.LessOrEqual(maxJump, 4f, $"seam {seam}: biggest step {maxJump:0.00} px");
+            }
+        }
+
+        [Test]
         public void Design_Level5_MatchesMockPosition()
         {
             // RoadMap.dc.html: level 5 box 66x54 at (217.1, 2101.0) in a 2537 px column whose bottom is tile 0's bottom.

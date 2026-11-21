@@ -492,6 +492,9 @@ namespace BusRush.EditorTools
                 case bool b:
                     p.boolValue = b;
                     break;
+                case Vector3 v3 when p.propertyType == SerializedPropertyType.Vector2:
+                    p.vector2Value = v3;
+                    break;
                 case Vector3 v3:
                     p.vector3Value = v3;
                     break;

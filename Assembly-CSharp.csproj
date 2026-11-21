@@ -52,6 +52,7 @@
     <Analyzer Include="C:\Program Files\Unity\Hub\Editor\6000.6.7f1\Editor\Data\BCLExtensions\TargetingPacks\netstandard2.1\analyzers\dotnet\roslyn4.0\cs\System.Text.Json.SourceGeneration.dll" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="Assets\BusRush\Scripts\UI\Screens\GiftChestScreen.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Popups\BoosterPopup.cs" />
     <Compile Include="Assets\BusRush\Scripts\Core\SceneLoader.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Screens\BayLockOverlay.cs" />
@@ -63,6 +64,7 @@
     <Compile Include="Assets\BusRush\Scripts\UI\UiSkew.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\PopupCatalog.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Map\MapNodeView.cs" />
+    <Compile Include="Assets\BusRush\Scripts\UI\Screens\NewWorldScreen.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\GameFx.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\WorldBackground.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\LotGridView.cs" />
@@ -116,9 +118,11 @@
     <Compile Include="Assets\BusRush\Scripts\Gameplay\BayView.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Screens\LevelFailedScreen.cs" />
     <Compile Include="Assets\BusRush\Scripts\Data\BoosterType.cs" />
+    <Compile Include="Assets\BusRush\Scripts\Gameplay\MapRewards.cs" />
     <Compile Include="Assets\BusRush\Scripts\Core\PerfOverlay.cs" />
     <Compile Include="Assets\BusRush\Scripts\Core\BootLoader.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\BoardGeometry.cs" />
+    <Compile Include="Assets\BusRush\Scripts\UI\Map\MapChestView.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\BayState.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\UiFitWidthToText.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Popups\LuckySpinPopup.cs" />

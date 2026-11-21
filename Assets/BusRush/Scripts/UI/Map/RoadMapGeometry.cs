@@ -39,10 +39,36 @@ namespace BusRush.UI
 
             Points = new Vector2[pts.Count / 2];
             Arc = new float[Points.Length];
-            for (int i = 0; i < Points.Length; i++)
+            for (int i = 0; i < Points.Length; i++) Points[i] = ImageToTile(pts[2 * i], pts[2 * i + 1]);
+            BlendSeam(Points);
+            for (int i = 1; i < Points.Length; i++) Arc[i] = Arc[i - 1] + Vector2.Distance(Points[i - 1], Points[i]);
+        }
+
+        /// <summary>Arc length over which the line is eased at each tile end so it meets the next tile's start.</summary>
+        public const float SeamBlend = 60f;
+
+        /// <summary>
+        /// The drawn road leaves the top of a tile ~5 px left of where it enters the next tile's bottom. Ease both ends
+        /// towards their midpoint (smoothstep over SeamBlend px of arc) so the bus path and dashes continue across seams.
+        /// </summary>
+        private static void BlendSeam(Vector2[] p)
+        {
+            float dx = p[0].x - p[p.Length - 1].x; // next tile's start minus this tile's end
+            float fromStart = 0f;
+            for (int i = 0; i < p.Length; i++)
             {
-                Points[i] = ImageToTile(pts[2 * i], pts[2 * i + 1]);
-                if (i > 0) Arc[i] = Arc[i - 1] + Vector2.Distance(Points[i - 1], Points[i]);
+                if (i > 0) fromStart += Vector2.Distance(p[i - 1], p[i]);
+                if (fromStart >= SeamBlend) break;
+                float k = 1f - Mathf.SmoothStep(0f, 1f, fromStart / SeamBlend);
+                p[i].x -= dx * 0.5f * k;
+            }
+            float fromEnd = 0f;
+            for (int i = p.Length - 1; i >= 0; i--)
+            {
+                if (i < p.Length - 1) fromEnd += Vector2.Distance(p[i + 1], p[i]);
+                if (fromEnd >= SeamBlend) break;
+                float k = 1f - Mathf.SmoothStep(0f, 1f, fromEnd / SeamBlend);
+                p[i].x += dx * 0.5f * k;
             }
         }
 

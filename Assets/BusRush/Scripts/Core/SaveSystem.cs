@@ -37,6 +37,12 @@ namespace BusRush
         /// <summary>Highest level whose Road Map unlock animation has already played (never replays).</summary>
         public int mapUnlockShown;
 
+        /// <summary>Levels whose Road Map gift chest was collected (5, 15, 25...).</summary>
+        public List<int> giftChestsClaimed = new List<int>();
+
+        /// <summary>Highest world (1-based) whose "New World" screen has been shown; world 1 needs none.</summary>
+        public int worldsShown = 1;
+
         /// <summary>Best stars per level (index = level - 1; 0 = not completed).</summary>
         public List<int> levelStars = new List<int>();
 

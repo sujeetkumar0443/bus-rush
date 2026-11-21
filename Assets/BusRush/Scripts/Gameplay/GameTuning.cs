@@ -68,6 +68,9 @@ namespace BusRush.Gameplay
 
         public const int LuckySpinsPerDay = 3;
 
+        /// <summary>Road Map gift chest (levels 5, 15, 25...): coins + one booster rotating VIP -> Arrange -> Shuffle.</summary>
+        public const int GiftChestCoins = 100;
+
         /// <summary>Wheel segments clockwise from the top (as the design), each 45 degrees.</summary>
         public static readonly RewardSpec[] LuckySpinSegments =
         {

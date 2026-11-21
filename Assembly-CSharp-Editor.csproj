@@ -61,6 +61,7 @@
     <Compile Include="Assets\BusRush\Scripts\Editor\GameplayBuilder.Step5b.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\UIBuilder.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\AndroidBuild.cs" />
+    <Compile Include="Assets\BusRush\Scripts\Editor\UIBuilder.Rewards.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\UIBuilder.LevelFailed.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\BusRushSetup.cs" />
     <Compile Include="Assets\BusRush\Tests\Editor\DailyAndSpinTests.cs" />
@@ -78,6 +79,7 @@
     <Compile Include="Assets\BusRush\Scripts\Editor\UIBuilder.Settings.cs" />
     <Compile Include="Assets\BusRush\Tests\Editor\ExtraBayOfferTests.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\Step6PlayTest.cs" />
+    <Compile Include="Assets\BusRush\Tests\Editor\MapRewardsTests.cs" />
     <Compile Include="Assets\BusRush\Tests\Editor\BoosterTests.cs" />
     <Compile Include="Assets\BusRush\Tests\Editor\LevelGeneratorTests.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\HudScreenshotTool.cs" />
@@ -88,6 +90,7 @@
     <Compile Include="Assets\BusRush\Scripts\Editor\LevelCompleteScreenshotTool.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\AllocProbe.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\RenderCapture.cs" />
+    <Compile Include="Assets\BusRush\Scripts\Editor\RewardsScreenshotTool.cs" />
     <Compile Include="Assets\TutorialInfo\Editor\ReadmeEditor.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\UIArtGenerator.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\GameplayBuilder.Step4.cs" />
