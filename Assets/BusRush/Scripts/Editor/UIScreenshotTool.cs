@@ -123,7 +123,7 @@ namespace BusRush.EditorTools
                 yield return new WaitForSecondsRealtime(0.5f);
                 Debug.Log($"[UIScreenshotTool] Pause: state={GameManager.Instance.State}, timeScale={Time.timeScale}");
                 yield return Capture("08_pause", 390, 844);
-                ClickButton(UIManager.Instance.Get<SettingsPopup>().transform, "ResumeButton");
+                ClickButton(UIManager.Instance.Get<PausePopup>().transform, "ResumeButton");
                 yield return new WaitForSecondsRealtime(0.3f);
                 Debug.Log($"[UIScreenshotTool] Resume: state={GameManager.Instance.State}, timeScale={Time.timeScale}");
 

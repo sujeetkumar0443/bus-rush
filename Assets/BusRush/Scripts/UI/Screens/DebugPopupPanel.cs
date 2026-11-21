@@ -34,7 +34,7 @@ namespace BusRush.UI
                 GameSession.Current.DebugAutoDepart = !GameSession.Current.DebugAutoDepart;
                 RefreshAutoDepart();
             });
-            settingsButton.onClick.AddListener(Open<SettingsPopup>);
+            settingsButton.onClick.AddListener(Open<PausePopup>); // in-game settings = the pause screen
             levelCompleteButton.onClick.AddListener(() =>
             {
                 LevelCompleteScreen screen = LevelCompleteScreen.Find();

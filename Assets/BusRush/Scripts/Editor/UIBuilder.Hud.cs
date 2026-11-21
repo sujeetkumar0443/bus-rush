@@ -58,11 +58,15 @@ namespace BusRush.EditorTools
         {
             RectTransform pill = V2Box(safe, "CoinPill", 17f, Color.white, H(0xFFF1CF), null, 3f, H(0x7A4A16), 0f);
             // Design: coin at x 300, pill padding 0 10 0 26 (+3 border); kept clear of the 200 px level badge.
-            Place(pill, 1f, 1f, -4f, -27f, 74f, 34f, 1f, 1f);
+            Place(pill, 1f, 1f, -4f, -27f, 66f, 34f, 1f, 1f);
             TextMeshProUGUI coinText = V2Text(pill, "Count", "300", 20f, true, H(0x5A3410), null, TextAlignmentOptions.Left);
             Stretch(coinText.rectTransform, 29f, 0f, 6f, 2f);
+            coinText.enableAutoSizing = true; // "1.2K" / "123K" shrink a little instead of widening the pill
+            coinText.fontSizeMax = 20f;
+            coinText.fontSizeMin = 13f;
             coinText.gameObject.AddComponent<CoinText>();
-            Wire(pill.gameObject.AddComponent<UiFitWidthToText>(), ("text", coinText), ("padding", 42f), ("minWidth", 60f));
+            // Width cap 66: the coin (pill left - 22) never reaches the 200 px level badge (ends at x 295 of 390).
+            Wire(pill.gameObject.AddComponent<UiFitWidthToText>(), ("text", coinText), ("padding", 42f), ("minWidth", 56f), ("maxWidth", 66f));
             Image coin = ShadowedImg(pill, "Coin", UiV2Sprite("Icons/coin.png"), 3f, 0.25f);
             Place((RectTransform)coin.transform.parent, 0f, 0.5f, 0f, 0f, 44f, 47f);
             Wire(coinText.GetComponent<CoinText>(), ("punchTarget", coin.transform.parent));

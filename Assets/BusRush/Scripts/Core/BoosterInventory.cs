@@ -90,6 +90,9 @@ namespace BusRush
         /// <summary>Raised for every request (an audio manager subscribes later).</summary>
         public static event Action<string> Requested;
 
-        public static void Play(string id) => Requested?.Invoke(id);
+        public static void Play(string id)
+        {
+            if (SaveSystem.Data.soundOn) Requested?.Invoke(id); // "Sound" off in Settings mutes every effect at once
+        }
     }
 }

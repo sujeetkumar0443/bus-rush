@@ -52,9 +52,22 @@ namespace BusRush.UI
             text.text = Format(value);
         }
 
+        /// <summary>Compact coin text: 999, 1.2K, 12K, 123K, 1.2M, 12M (one decimal only below 10, truncated, never rounded up).</summary>
         public static string Format(int value)
         {
-            return value.ToString("N0", CultureInfo.InvariantCulture);
+            if (value < 1000) return value.ToString(CultureInfo.InvariantCulture);
+            return value < 1000000 ? Short(value, 1000, "K") : Short(value, 1000000, "M");
+        }
+
+        private static string Short(int value, int unit, string suffix)
+        {
+            if (value < 10 * unit)
+            {
+                int tenths = value / (unit / 10);
+                return (tenths % 10 == 0 ? (tenths / 10).ToString(CultureInfo.InvariantCulture)
+                    : (tenths / 10f).ToString("0.0", CultureInfo.InvariantCulture)) + suffix;
+            }
+            return (value / unit).ToString(CultureInfo.InvariantCulture) + suffix;
         }
     }
 }

@@ -53,6 +53,7 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\BusRush\Scripts\Editor\GameplayBuilder.Step6.cs" />
+    <Compile Include="Assets\BusRush\Scripts\Editor\SettingsScreenshotTool.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\UIBuilder.Splash.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\RoadMapScreenshotTool.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\HomeScreenshotTool.cs" />
@@ -69,6 +70,7 @@
     <Compile Include="Assets\BusRush\Scripts\Editor\UIBuilder.Popups.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\UIBuilder.RoadMap.cs" />
     <Compile Include="Assets\BusRush\Tests\Editor\TrafficScheduleTests.cs" />
+    <Compile Include="Assets\BusRush\Scripts\Editor\UIBuilder.Settings.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\Step6PlayTest.cs" />
     <Compile Include="Assets\BusRush\Tests\Editor\BoosterTests.cs" />
     <Compile Include="Assets\BusRush\Tests\Editor\LevelGeneratorTests.cs" />

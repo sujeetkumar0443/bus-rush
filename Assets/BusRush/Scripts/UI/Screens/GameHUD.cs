@@ -88,7 +88,7 @@ namespace BusRush.UI
 
         private static void OpenPause()
         {
-            if (UIManager.Instance != null) UIManager.Instance.Open<SettingsPopup>();
+            if (UIManager.Instance != null && !UIManager.Instance.IsOpen<PausePopup>()) UIManager.Instance.Open<PausePopup>();
         }
     }
 }

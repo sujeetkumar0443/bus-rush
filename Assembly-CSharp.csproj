@@ -73,7 +73,6 @@
     <Compile Include="Assets\BusRush\Scripts\Gameplay\BoosterController.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\UiGradient.cs" />
     <Compile Include="Assets\BusRush\Scripts\Core\SaveSystem.cs" />
-    <Compile Include="Assets\BusRush\Scripts\UI\SwitchToggle.cs" />
     <Compile Include="Assets\BusRush\Scripts\Core\GameColor.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\ScreenRef.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\ScreenGrab.cs" />
@@ -86,6 +85,7 @@
     <Compile Include="Assets\BusRush\Scripts\UI\Popups\SettingsPopup.cs" />
     <Compile Include="Assets\BusRush\Scripts\Data\LevelPlan.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Popup.cs" />
+    <Compile Include="Assets\BusRush\Scripts\UI\Popups\V2Popup.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Screens\LevelCompleteScreen.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Screens\GameHUD.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Toast.cs" />
@@ -126,6 +126,7 @@
     <Compile Include="Assets\BusRush\Scripts\Data\LevelData.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\UiTheme.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Map\RoadMapScreen.cs" />
+    <Compile Include="Assets\BusRush\Scripts\UI\Popups\PausePopup.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\IVehicleExitBehaviour.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\TrafficSchedule.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\BoosterLogic.cs" />
@@ -136,6 +137,7 @@
     <Compile Include="Assets\BusRush\Scripts\UI\UIButton.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Screens\SplashController.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Map\UiPolyline.cs" />
+    <Compile Include="Assets\BusRush\Scripts\UI\SettingsRow.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\BoardView.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\CrowdView.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\GameTuning.cs" />

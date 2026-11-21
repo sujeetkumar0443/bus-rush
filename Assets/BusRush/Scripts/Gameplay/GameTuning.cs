@@ -56,6 +56,10 @@ namespace BusRush.Gameplay
         public const int WinCoinsBase = 20;
         public const int WinCoinsPerStar = 5;
 
+        /// <summary>Settings popup links (placeholders until the real pages exist).</summary>
+        public const string PrivacyPolicyUrl = "https://example.com/busrush/privacy";
+        public const string TermsOfUseUrl = "https://example.com/busrush/terms";
+
         /// <summary>A booster pressed while vehicles move or passengers board waits up to this long for a calm board.</summary>
         public const float BoosterCalmWaitSeconds = 1f;
 

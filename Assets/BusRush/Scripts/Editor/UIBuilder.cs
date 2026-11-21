@@ -30,7 +30,8 @@ namespace BusRush.EditorTools
 
             Popup[] popups =
             {
-                SavePopup(BuildSettings()),
+                SavePopup(BuildSettingsPopup()),
+                SavePopup(BuildPausePopup()),
                 SavePopup(BuildDaily()),
                 SavePopup(BuildBoosterPopup()),
                 SavePopup(BuildOutOfSpace()),
