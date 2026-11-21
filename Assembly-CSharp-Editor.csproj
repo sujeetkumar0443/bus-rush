@@ -75,6 +75,8 @@
     <Compile Include="Assets\BusRush\Tests\Editor\LevelPlanTests.cs" />
     <Compile Include="Assets\BusRush\Tests\Editor\RouteBuilderTests.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\GameplayBuilder.Step5.cs" />
+    <Compile Include="Assets\BusRush\Scripts\Editor\UIBuilder.LevelComplete.cs" />
+    <Compile Include="Assets\BusRush\Scripts\Editor\LevelCompleteScreenshotTool.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\AllocProbe.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\RenderCapture.cs" />
     <Compile Include="Assets\TutorialInfo\Editor\ReadmeEditor.cs" />

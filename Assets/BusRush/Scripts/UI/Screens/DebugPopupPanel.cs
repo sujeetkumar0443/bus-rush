@@ -35,7 +35,12 @@ namespace BusRush.UI
                 RefreshAutoDepart();
             });
             settingsButton.onClick.AddListener(Open<SettingsPopup>);
-            levelCompleteButton.onClick.AddListener(Open<LevelCompletePopup>);
+            levelCompleteButton.onClick.AddListener(() =>
+            {
+                LevelCompleteScreen screen = LevelCompleteScreen.Find();
+                int level = GameSession.Current != null ? GameSession.Current.Level : SaveSystem.Data.level;
+                if (screen != null) screen.Show(level, 3, GameSession.CoinsFor(3));
+            });
             outOfSpaceButton.onClick.AddListener(Open<OutOfSpacePopup>);
             nextLevelButton.onClick.AddListener(() =>
             {

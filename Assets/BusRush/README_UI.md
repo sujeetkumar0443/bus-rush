@@ -21,7 +21,6 @@ Reference resolution 390×844, Canvas Scaler *Scale With Screen Size*, match 0.5
 | `SettingsPopup` | – | Settings from Home; Pause (Home / Restart / Resume) in Game. |
 | `DailyRewardPopup` | – | 7 day cards, Claim (real save logic), x2 (ad placeholder). |
 | `BoosterPopup` | – | VIP / Arrange / Shuffle tabs, owned count, buy with coins. Empty `Icon3D` image slot for the 3D icon. |
-| `LevelCompletePopup` | – | Rays, 3 stars, coin reward, Claim, Next Level, empty `MrecSlot` (300×250). |
 | `OutOfSpacePopup` | – | 8 mini bays, +1 Bay for coins or ad placeholder, Give up. |
 
 ## Opening popups from code
@@ -34,9 +33,8 @@ UIManager.Instance.Open<DailyRewardPopup>();
 UIManager.Instance.Open<BoosterPopup>().Select(BoosterType.Arrange);
 UIManager.Instance.Open<OutOfSpacePopup>();
 
-// Level complete with explicit values (otherwise: current level, 3 stars, GameConfig.levelCompleteCoins)
-UIManager.Instance.Get<LevelCompletePopup>().Setup(level: 7, starsEarned: 2, coins: 50);
-UIManager.Instance.Open<LevelCompletePopup>();
+// Level complete (UI v2 full-screen overlay in the Game scene, not a popup)
+LevelCompleteScreen.Find().Show(level: 7, starsEarned: 2, reward: 50);
 
 UIManager.Instance.CloseTop();   // or popup.Close(); Android back / Escape also closes the top popup
 UIManager.Instance.CloseAll();

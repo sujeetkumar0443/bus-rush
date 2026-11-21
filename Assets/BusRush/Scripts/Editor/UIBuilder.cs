@@ -33,7 +33,6 @@ namespace BusRush.EditorTools
                 SavePopup(BuildSettings()),
                 SavePopup(BuildDaily()),
                 SavePopup(BuildBoosters()),
-                SavePopup(BuildLevelComplete()),
                 SavePopup(BuildOutOfSpace()),
                 SavePopup(BuildFreeCoins())
             };
@@ -52,6 +51,7 @@ namespace BusRush.EditorTools
             GameObject hud = Save(BuildHud(), "GameHUD");
             GameObject splash = Save(BuildSplash(), "Splash");
             Save(BuildRoadMap(), "RoadMap");
+            Save(BuildLevelCompleteScreen(), "LevelCompleteScreen");
 
             AssetDatabase.SaveAssets();
             WireScenes(splash, home, hud, uiManager);
@@ -264,12 +264,7 @@ namespace BusRush.EditorTools
 
             WireHome(home, uiManager);
 
-            // Game
-            Scene game = EditorSceneManager.OpenScene($"{ScenesDir}/Game.unity", OpenSceneMode.Single);
-            RemoveRoots(game, "Canvas", "GameHUD", "UIManager");
-            PrefabUtility.InstantiatePrefab(hud, game);
-            PrefabUtility.InstantiatePrefab(uiManager, game);
-            EditorSceneManager.SaveScene(game);
+            WireGame(hud, uiManager);
 
             EditorSceneManager.OpenScene($"{ScenesDir}/Boot.unity", OpenSceneMode.Single);
         }

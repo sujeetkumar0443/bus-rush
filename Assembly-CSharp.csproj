@@ -84,6 +84,7 @@
     <Compile Include="Assets\BusRush\Scripts\UI\Popups\SettingsPopup.cs" />
     <Compile Include="Assets\BusRush\Scripts\Data\LevelPlan.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Popup.cs" />
+    <Compile Include="Assets\BusRush\Scripts\UI\Screens\LevelCompleteScreen.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Screens\GameHUD.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Toast.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Map\MapDragWatcher.cs" />
@@ -136,13 +137,13 @@
     <Compile Include="Assets\BusRush\Scripts\Gameplay\BoardView.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\CrowdView.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\GameTuning.cs" />
-    <Compile Include="Assets\BusRush\Scripts\UI\Popups\LevelCompletePopup.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\GameSession.cs" />
     <Compile Include="Assets\BusRush\Scripts\Core\ScreenFader.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\BoardState.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\SceneLoadButton.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\InputController.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Screens\BoosterButtonView.cs" />
+    <Compile Include="Assets\BusRush\Scripts\UI\CoinFly.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="Assets\TextMesh Pro\Shaders\TMPro.cginc" />

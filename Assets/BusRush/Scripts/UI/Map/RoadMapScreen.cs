@@ -130,7 +130,7 @@ namespace BusRush.UI
             }
             else
             {
-                busArc = current > 1 ? geo.LevelArc(current - 1) : 0f;
+                busArc = ParkArc(current); // where the last unlock left it, facing along the road
             }
             trailGlow.gameObject.SetActive(unlockLevel > 0);
             trailMarch.gameObject.SetActive(unlockLevel > 0);
@@ -163,8 +163,9 @@ namespace BusRush.UI
                 // Bus: drives N -> just before N+1 in 2.4 s from 0.6 s (smoothstep), trail marches and fades out.
                 float k = Mathf.Clamp01((ut - 0.6f) / 2.4f);
                 float s = k * k * (3f - 2f * k);
-                busArc = Mathf.Lerp(geo.LevelArc(unlockLevel), geo.LevelArc(unlockLevel + 1) - StopBeforeNext, s);
-                float trailAlpha = ut < 2.295f ? 1f : Mathf.Clamp01(1f - (ut - 2.295f) / 0.405f);
+                busArc = Mathf.Lerp(geo.LevelArc(unlockLevel), ParkArc(unlockLevel + 1), s);
+                // The trail stays until the bus arrives (3.0 s), then fades out over 0.3 s.
+                float trailAlpha = ut < 3f ? 1f : Mathf.Clamp01(1f - (ut - 3f) / 0.3f);
                 SetAlpha(trailGlow, 0.35f * trailAlpha);
                 SetAlpha(trailMarch, trailAlpha);
                 trailMarch.DashOffset = -38f * (Clock / 0.6f % 1f);
@@ -203,6 +204,9 @@ namespace BusRush.UI
                 }
             }
         }
+
+        /// <summary>The bus waits just before the level to play (the same spot an unlock drive ends on).</summary>
+        private float ParkArc(int level) => Mathf.Max(0f, geo.LevelArc(level) - StopBeforeNext);
 
         private void PlaceBus(float driveTime)
         {

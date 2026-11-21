@@ -308,11 +308,9 @@ namespace BusRush.Gameplay
             SaveSystem.Commit();
 
             yield return new WaitForSecondsRealtime(confettiToPopupDelay);
-            if (UIManager.Instance == null) yield break;
-            LevelCompletePopup popup = UIManager.Instance.Get<LevelCompletePopup>();
-            popup.Setup(Level, Stars, CoinsFor(Stars));
-            popup.SetNote(finishedAll ? FinishedAllNote : null);
-            UIManager.Instance.Open<LevelCompletePopup>();
+            if (UIManager.Instance != null) UIManager.Instance.CloseAll();
+            LevelCompleteScreen screen = LevelCompleteScreen.Find();
+            if (screen != null) screen.Show(Level, Stars, CoinsFor(Stars), finishedAll ? FinishedAllNote : null);
         }
 
         // ------------------------------------------------------------------ debug

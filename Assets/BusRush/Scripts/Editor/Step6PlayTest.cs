@@ -113,7 +113,8 @@ namespace BusRush.EditorTools
                     Time.timeScale = 1f;
                     yield return new WaitForSecondsRealtime(1.2f);
 
-                    bool popup = UIManager.Instance != null && UIManager.Instance.IsOpen<LevelCompletePopup>();
+                    LevelCompleteScreen complete = LevelCompleteScreen.Find();
+                    bool popup = complete != null && complete.IsOpen;
                     bool ok = s.IsCleared && popup && s.BoardedCount == passengers && s.PassengersLeft == 0 &&
                               s.Board.RemainingCount == 0 && s.Bays.AllEmpty && SaveSystem.Data.level == level + 1 &&
                               SaveSystem.Data.GetStars(level) == 3;
