@@ -13,9 +13,6 @@ namespace BusRush.Gameplay
         /// <summary>How far past the right screen edge departing vehicles drive.</summary>
         public const float OffscreenRightPx = 160f;
 
-        /// <summary>Sideways offset while reversing out of a bay before driving off to the right.</summary>
-        public const float ReverseOutPx = 34f;
-
         public static Vector2 VehicleCenterRef(VehicleData v)
         {
             Vector2Int h = v.Head, t = v.Tail;
@@ -25,6 +22,23 @@ namespace BusRush.Gameplay
         public static Vector2 ParkPointRef(VehicleType type, int bayIndex)
         {
             return new Vector2(ScreenRef.BayX(bayIndex), ScreenRef.ParkCenterY(type));
+        }
+
+        /// <summary>
+        /// True if the arrival route to this bay has room for the turn in: straight up into it, or a straight run along
+        /// the arrival lane of at least the vehicle's length before turning up (so its tail is on the lane, not over the
+        /// lot, while it turns).
+        /// </summary>
+        public static bool TurnInRoomOk(VehicleData v, int bayIndex)
+        {
+            List<Vector2> pts = Build(v, bayIndex);
+            if (pts.Count < 3) return true;
+            Vector2 turn = pts[pts.Count - 2];           // (bayX, TOPY)
+            Vector2 join = pts[pts.Count - 3];           // where the route joined the arrival lane
+            if (Mathf.Abs(turn.y - ScreenRef.TopY) > 0.5f || Mathf.Abs(join.y - ScreenRef.TopY) > 0.5f) return true;
+            float run = Mathf.Abs(turn.x - join.x);
+            float length = VehicleSpecs.Length(v.type) * BoardGeometry.PixelsPerCell * ScreenRef.VehicleVisualScale;
+            return run < 1f || run >= length;
         }
 
         public static List<Vector2> Build(VehicleData v, int bayIndex)
@@ -61,27 +75,19 @@ namespace BusRush.Gameplay
             return Clean(pts);
         }
 
-        /// <summary>Leg 1 (driven in reverse): back out of the bay onto TOPY, swinging left so the nose points right.</summary>
-        public static List<Vector2> BuildReverseOut(VehicleType type, int bayIndex)
+        /// <summary>
+        /// Departure: drive forward out of the top of the slot onto the strip above the bays (DEPART_Y) and off to the
+        /// right. Departures never share the arrival lane, so the two flows cannot meet head-on.
+        /// </summary>
+        public static List<Vector2> BuildDeparture(VehicleType type, int bayIndex)
         {
             float x = ScreenRef.BayX(bayIndex);
             return Clean(new List<Vector2>
             {
                 ParkPointRef(type, bayIndex),
-                new Vector2(x, ScreenRef.TopY),
-                new Vector2(x - ReverseOutPx, ScreenRef.TopY)
+                new Vector2(x, ScreenRef.DepartY),
+                new Vector2(ScreenRef.Width + OffscreenRightPx, ScreenRef.DepartY)
             });
-        }
-
-        /// <summary>Leg 2: drive right along TOPY and off screen.</summary>
-        public static List<Vector2> BuildDriveOff(int bayIndex)
-        {
-            float x = ScreenRef.BayX(bayIndex) - ReverseOutPx;
-            return new List<Vector2>
-            {
-                new Vector2(x, ScreenRef.TopY),
-                new Vector2(ScreenRef.Width + OffscreenRightPx, ScreenRef.TopY)
-            };
         }
 
         /// <summary>Removes duplicate points and points lying on a straight line between their neighbours.</summary>

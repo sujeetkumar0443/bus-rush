@@ -85,6 +85,7 @@
     <Compile Include="Assets\BusRush\Scripts\UI\Toast.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\LevelBanner.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Rotator.cs" />
+    <Compile Include="Assets\BusRush\Scripts\Gameplay\TrafficRules.cs" />
     <Compile Include="Assets\TutorialInfo\Readme.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\FloatingText.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\CameraFitter.cs" />
@@ -118,6 +119,7 @@
     <Compile Include="Assets\BusRush\Scripts\UI\UIButton.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\BoardView.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\CrowdView.cs" />
+    <Compile Include="Assets\BusRush\Scripts\Gameplay\GameTuning.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Popups\LevelCompletePopup.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\GameSession.cs" />
     <Compile Include="Assets\BusRush\Scripts\Core\ScreenFader.cs" />

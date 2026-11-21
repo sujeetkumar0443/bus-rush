@@ -18,13 +18,19 @@ namespace BusRush.Gameplay
         public const float Width = BoardGeometry.ReferenceWidth;
         public const float Height = BoardGeometry.ReferenceHeight;
 
-        /// <summary>Road loop lanes.</summary>
-        public const float TopY = 350f;
-        public const float BotY = 712f;
+        /// <summary>
+        /// Road loop lanes (City v2 art): arrivals drive on the dashed lane between the bay slots (y 268..374) and the
+        /// lot (y 392+), so they never cut through parked vehicles; the bottom lane follows the dashed line below the lot.
+        /// </summary>
+        public const float TopY = 385f;
+        public const float BotY = 719f;
+
+        /// <summary>Road strip above the bays: full vehicles leave forward onto it and drive off to the right.</summary>
+        public const float DepartY = 254f;
         public const float LeftX = 19f;
         public const float RightX = 371f;
 
-        /// <summary>Parking bays: 8 slots, vehicles park facing up with their front at <see cref="BayY"/>.</summary>
+        /// <summary>Parking bays: 8 slots, vehicles park facing up, centred in the slot (BayY: boarding / label reference).</summary>
         public const float BayY = 292f;
         public const float BayX0 = 37f;
         public const float BaySpacing = 45f;
@@ -70,7 +76,14 @@ namespace BusRush.Gameplay
             return VehicleSpecs.Length(type) * BoardGeometry.PixelsPerCell * BoardGeometry.SinPitch * VehicleVisualScale;
         }
 
-        /// <summary>Reference y of a parked vehicle's centre (front at <see cref="BayY"/>).</summary>
-        public static float ParkCenterY(VehicleType type) => BayY + VehicleLengthPx(type) * 0.5f;
+        /// <summary>Painted bay slot (City v2 art): y 268..374.</summary>
+        public const float SlotTopY = 268f;
+        public const float SlotBottomY = 374f;
+
+        /// <summary>
+        /// Reference y of a parked vehicle's centre: centred in the painted slot, so even a bus (80 px) keeps ~12 px
+        /// clear of the arrival lane behind it and of the departure strip in front.
+        /// </summary>
+        public static float ParkCenterY(VehicleType type) => (SlotTopY + SlotBottomY) * 0.5f;
     }
 }

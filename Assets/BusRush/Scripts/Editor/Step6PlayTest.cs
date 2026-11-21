@@ -55,6 +55,7 @@ namespace BusRush.EditorTools
         {
             private int errors;
             private int mispicks;
+            private int overlapFrames;
 
             private void OnEnable() => Application.logMessageReceived += OnLog;
             private void OnDisable() => Application.logMessageReceived -= OnLog;
@@ -90,6 +91,7 @@ namespace BusRush.EditorTools
                     yield return MeasurePerf();
                 }
                 if (Env("BUSRUSH_SHOTS", false)) yield return Screenshots();
+                if (Env("BUSRUSH_CITYV2", false)) yield return CityV2Checks();
 
                 int won = 0, total = Mathf.Max(0, last - first + 1);
                 for (int level = first; level <= last; level++)
@@ -97,13 +99,17 @@ namespace BusRush.EditorTools
                     yield return LoadLevel(level);
                     GameSession s = GameSession.Current;
                     int passengers = s.LevelData.queue.Count;
+                    if (level == 1) StartCoroutine(DiagnoseFirstPark(s));
                     Time.timeScale = PlayTimeScale;
+                    float levelStartReal = Time.realtimeSinceStartup, levelStartGame = Time.time;
                     float deadline = Time.realtimeSinceStartup + 180f;
                     while (!s.IsCleared && !s.IsLost && Time.realtimeSinceStartup < deadline)
                     {
                         BotStep(s);
+                        CheckOverlaps(level);
                         yield return new WaitForSecondsRealtime(0.04f);
                     }
+                    float levelReal = Time.realtimeSinceStartup - levelStartReal, levelGame = Time.time - levelStartGame;
                     Time.timeScale = 1f;
                     yield return new WaitForSecondsRealtime(1.2f);
 
@@ -112,14 +118,25 @@ namespace BusRush.EditorTools
                               s.Board.RemainingCount == 0 && s.Bays.AllEmpty && SaveSystem.Data.level == level + 1 &&
                               SaveSystem.Data.GetStars(level) == 3;
                     if (ok) won++;
+                    if (!s.IsCleared && !s.IsLost)
+                    {
+                        Debug.LogWarning($"[Step6PlayTest] TIMEOUT state level {level}: traffic:{VehicleMotion.DescribeTraffic()}");
+                        Debug.LogWarning($"[Step6PlayTest] TIMEOUT bays: " + string.Join(", ", s.Bays.Bays.Select(b =>
+                            $"bay{b.Index} {(b.Vehicle != null ? b.Vehicle.Data.color + " " + b.Filled + "+" + b.SeatsReserved + "r/" + b.Capacity : "empty")}" +
+                            $"{(b.Reserved ? " reserved" : "")}{(b.Departing ? " departing" : "")}{(b.Full ? " full" : "")}{(b.IsFree ? " free" : "")}")) +
+                            $"; movers={s.Bays.Movers} walking={s.Crowd.WalkerCount} board={s.Board.RemainingCount} " +
+                            $"clear={string.Join(",", s.Board.Vehicles.Where(v => s.Board.IsPathClear(v)).Select(v => v.Data.color.ToString()))}; " +
+                            $"window: {s.Crowd.DescribeFront(8)}");
+                    }
                     string why = s.IsLost ? $" LOST front={(s.Crowd.HasFront ? s.Crowd.FrontColor.ToString() : "-")}" : (!s.IsCleared ? " TIMEOUT" : "");
                     Debug.Log($"[Step6PlayTest] level {level} ({LevelPlan.Get(level).tier}): {(ok ? "WON" : "FAILED")} vehicles={s.LevelData.vehicles.Count} " +
-                              $"passengers={passengers} stars={s.Stars} wrongTaps={s.WrongTaps}{why}");
+                              $"passengers={passengers} stars={s.Stars} wrongTaps={s.WrongTaps} time={levelGame:F1}s game ({levelReal:F1}s real){why}");
                     UIManager.Instance.CloseAll();
                 }
 
-                bool pass = won == total && errors == 0 && mispicks == 0;
-                Debug.Log($"[Step6PlayTest] RESULT {(pass ? "PASS" : "FAIL")}: levels {first}-{last}, won {won}/{total}, errors {errors}, mis-picked taps {mispicks}");
+                bool pass = won == total && errors == 0 && mispicks == 0 && overlapFrames == 0;
+                Debug.Log($"[Step6PlayTest] RESULT {(pass ? "PASS" : "FAIL")}: levels {first}-{last}, won {won}/{total}, errors {errors}, " +
+                          $"mis-picked taps {mispicks}, vehicle overlap frames {overlapFrames}");
                 Time.timeScale = 1f;
                 SaveSystem.ResetToDefaults();
                 EditorApplication.ExitPlaymode();
@@ -250,26 +267,177 @@ namespace BusRush.EditorTools
                 yield return RenderCapture.Capture(ShotsDir, name + "_390x844", 390, 844);
             }
 
+            /// <summary>Fails the run if any two off-board vehicles (moving or parked) overlap (footprints shrunk 10%).</summary>
+            private void CheckOverlaps(int level)
+            {
+                int n = VehicleMotion.CountOverlaps(0.9f);
+                if (n == 0) return;
+                overlapFrames++;
+                if (overlapFrames <= 12) Debug.LogWarning($"[Step6PlayTest] level {level}: {n} overlapping vehicle pair(s):{VehicleMotion.DescribeOverlaps(0.9f)}");
+            }
+
+            // ------------------------------------------------------------------ City v2 (step 6b)
+
+            private IEnumerator CityV2Checks()
+            {
+                // 1) Background-only render for the alignment check (board, crowd, bays and UI hidden).
+                yield return LoadLevel(1);
+                yield return new WaitForSecondsRealtime(1.5f);
+                var hidden = new System.Collections.Generic.List<Renderer>();
+                foreach (Renderer r in Object.FindObjectsByType<Renderer>(FindObjectsInactive.Exclude))
+                {
+                    if (r.GetComponent<WorldBackground>() != null || !r.enabled) continue;
+                    r.enabled = false;
+                    hidden.Add(r);
+                }
+                var canvases = Object.FindObjectsByType<Canvas>(FindObjectsInactive.Exclude).Where(c => c.enabled).ToList();
+                foreach (Canvas c in canvases) c.enabled = false;
+                yield return RenderCapture.Capture(ShotsDir, "bg_only_390x844", 390, 844);
+                foreach (Renderer r in hidden) if (r != null) r.enabled = true;
+                foreach (Canvas c in canvases) if (c != null) c.enabled = true;
+
+                // 2) Passenger size on a 390x844 screen (standing people, projected renderer bounds).
+                yield return MeasurePassengers();
+
+                // 3) Full crowd at level 1 (three resolutions).
+                yield return Three("01_level1_full_crowd");
+
+                // 4) Several vehicles arriving at bays at once.
+                GameSession s = GameSession.Current;
+                int sent = 0;
+                foreach (VehicleView v in s.Board.Vehicles.Where(v => s.Board.IsPathClear(v)).ToList())
+                {
+                    if (sent >= 4 || !s.Bays.HasFreeBay) break;
+                    Tap(v, false);
+                    sent++;
+                    yield return new WaitForSeconds(0.12f);
+                }
+                yield return new WaitForSeconds(0.9f);
+                CheckOverlaps(1);
+                yield return Three("03_vehicles_arriving");
+
+                // 5) Mid-boarding.
+                float t0 = Time.realtimeSinceStartup;
+                while (s.Crowd.WalkerCount < 2 && Time.realtimeSinceStartup - t0 < 20f)
+                {
+                    BotStep(s);
+                    CheckOverlaps(1);
+                    yield return null;
+                }
+                yield return Three("02_mid_boarding");
+
+                // 6) Denser crowd: level 20 (boss, 100 passengers) right after the intro walk-in.
+                yield return LoadLevel(20);
+                yield return new WaitForSecondsRealtime(2.5f);
+                yield return RenderCapture.Capture(ShotsDir, "04_level20_crowd_390x844", 390, 844);
+            }
+
+            private IEnumerator MeasurePassengers()
+            {
+                Camera cam = Camera.main;
+                var rt = new RenderTexture(390, 844, 24);
+                cam.targetTexture = rt;
+                cam.GetComponent<CameraFitter>().Fit(390f / 844f);
+                yield return null;
+                float wSum = 0f, hSum = 0f;
+                int n = 0;
+                foreach (PassengerView p in Object.FindObjectsByType<PassengerView>(FindObjectsInactive.Exclude))
+                {
+                    Bounds b = default;
+                    bool first = true;
+                    foreach (Renderer r in p.GetComponentsInChildren<Renderer>())
+                    {
+                        if (r.name == "Shadow") continue;
+                        if (first) { b = r.bounds; first = false; } else b.Encapsulate(r.bounds);
+                    }
+                    if (first) continue;
+                    float minX = float.MaxValue, maxX = float.MinValue, minY = float.MaxValue, maxY = float.MinValue;
+                    for (int i = 0; i < 8; i++)
+                    {
+                        Vector3 corner = b.center + Vector3.Scale(b.extents, new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1));
+                        Vector3 sp = cam.WorldToScreenPoint(corner);
+                        minX = Mathf.Min(minX, sp.x); maxX = Mathf.Max(maxX, sp.x);
+                        minY = Mathf.Min(minY, sp.y); maxY = Mathf.Max(maxY, sp.y);
+                    }
+                    wSum += maxX - minX;
+                    hSum += maxY - minY;
+                    n++;
+                }
+                cam.targetTexture = null;
+                cam.GetComponent<CameraFitter>().Fit();
+                rt.Release();
+                Object.Destroy(rt);
+                Debug.Log($"[Step6PlayTest] PASSENGER SIZE on 390x844: {wSum / Mathf.Max(1, n):F1} x {hSum / Mathf.Max(1, n):F1} px " +
+                          $"(projected bounds, mean of {n} people; target 24 x 30)");
+            }
+
+            private static IEnumerator Three(string name)
+            {
+                yield return RenderCapture.Capture(ShotsDir, name + "_390x844", 390, 844);
+                yield return RenderCapture.Capture(ShotsDir, name + "_360x800", 360, 800);
+                yield return RenderCapture.Capture(ShotsDir, name + "_412x915", 412, 915);
+            }
+
+            /// <summary>Level 1: what the queue front is when the first vehicle parks, and whether its colour boards.</summary>
+            private static IEnumerator DiagnoseFirstPark(GameSession s)
+            {
+                BayState first = null;
+                string atPark = null;
+                void Handler(BayState b)
+                {
+                    if (first != null) return;
+                    first = b;
+                    GameColor c = b.Vehicle.Data.color;
+                    BayState seat = s.FindSeat(s.Crowd.FrontColor);
+                    atPark = $"{c} {b.Vehicle.Data.type} parked in bay {b.Index}; front={s.Crowd.FrontColor} frontReady={s.Crowd.IsReady(0)} " +
+                             $"seatForFront={(seat != null ? "bay " + seat.Index : "none")}; first {c} at queue index {s.Crowd.DistanceToColor(c)}; " +
+                             $"walking={s.Crowd.WalkerCount}; queue: {s.Crowd.DescribeFront(8)}";
+                }
+                s.OnVehicleParked += Handler;
+                while (first == null && s != null) yield return null;
+                if (s == null) yield break;
+                s.OnVehicleParked -= Handler;
+                Debug.Log("[Step6PlayTest] DIAG level 1 at first park: " + atPark);
+                float t0 = Time.time;
+                for (int k = 1; k <= 4; k++)
+                {
+                    yield return new WaitForSeconds(0.75f);
+                    if (s == null) yield break;
+                    Debug.Log($"[Step6PlayTest] DIAG level 1 +{Time.time - t0:F2}s: boarded {s.BoardedCount}, walking {s.Crowd.WalkerCount}, parked=[" +
+                              string.Join(", ", s.Bays.Bays.Where(b => b.IsParked).Select(b => $"bay{b.Index} {b.Vehicle.Data.color} {b.Filled}+{b.SeatsReserved}r/{b.Capacity}")) +
+                              $"], queue: {s.Crowd.DescribeFront(6)}");
+                }
+            }
+
             // ------------------------------------------------------------------ bot
 
+            /// <summary>
+            /// Mirrors <see cref="GameSimulator"/> (window rule): while someone in the window can board, let them. Otherwise,
+            /// with a free bay, park the free vehicle whose colour is needed soonest (skipping colours a parked or
+            /// arriving vehicle still has room for); the last free bay is only used for a colour already in the window.
+            /// </summary>
             private void BotStep(GameSession s)
             {
-                if (!s.Crowd.HasFront) return;
-                GameColor front = s.Crowd.FrontColor;
-                bool served = s.Bays.Bays.Any(b => b.Vehicle != null && !b.Full && !b.Departing &&
-                                                   b.Vehicle.Data.color == front && b.Filled + b.SeatsReserved < b.Capacity);
-                if (served) return;
+                if (!s.Crowd.HasFront || s.AnyoneCanBoard()) return;
 
                 int freeBays = s.Bays.Bays.Count(b => b.IsFree);
                 if (freeBays == 0) return;
 
                 var free = s.Board.Vehicles.Where(v => s.Board.IsPathClear(v)).ToList();
-                VehicleView pick = free.Where(v => v.Data.color == front).OrderBy(v => v.Id).FirstOrDefault();
-                if (pick == null && freeBays > 1)
+                if (free.Count == 0) return;
+                var pending = new System.Collections.Generic.HashSet<GameColor>(s.Bays.Bays
+                    .Where(b => b.Vehicle != null && !b.Full && !b.Departing && b.Filled + b.SeatsReserved < b.Capacity)
+                    .Select(b => b.Vehicle.Data.color));
+
+                VehicleView pick = free.Where(v => !pending.Contains(v.Data.color))
+                                       .OrderBy(v => s.Crowd.DistanceToColor(v.Data.color)).ThenBy(v => v.Id).FirstOrDefault();
+                if (pick == null)
                 {
-                    pick = free.OrderBy(v => s.Crowd.DistanceToColor(v.Data.color)).ThenBy(v => v.Id).FirstOrDefault();
+                    if (freeBays < 2) return;
+                    pick = free.OrderBy(v => s.Crowd.DistanceToColor(v.Data.color)).ThenBy(v => v.Id).First();
                 }
-                if (pick != null) Tap(pick, true);
+                if (s.Crowd.DistanceToColor(pick.Data.color) >= s.Crowd.WindowCount && freeBays < 2) return;
+                Tap(pick, true);
             }
 
             private void Tap(VehicleView v, bool checkPick)

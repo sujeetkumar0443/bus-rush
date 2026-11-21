@@ -224,22 +224,15 @@ namespace BusRush.EditorTools
                 decal.localRotation = Quaternion.Euler(90f, 0f, 0f);
 
                 RectTransform openGroup = Stretch(Rect(decal, "Open"));
-                Image pad = Img(openGroup, "Pad", Round, new Color(1f, 1f, 1f, 0.14f), 7f);
-                Place(pad.rectTransform, 0.5f, 0.5f, 0f, 0f, slotW - 10f, slotH - 8f);
-                SlotLines(openGroup, slotW, slotH, Color.white);
+                // (City v2: slot lines and pads are painted in the world art.)
 
                 RectTransform vipGroup = Stretch(Rect(decal, "Vip"));
-                Image vipPad = Img(vipGroup, "Pad", Round, new Color(1f, 0.83f, 0.3f, 0.35f), 7f);
-                Place(vipPad.rectTransform, 0.5f, 0.5f, 0f, 0f, slotW - 10f, slotH - 8f);
                 Image crown = IconImg(vipGroup, "Crown", "crown", 26f);
                 Place(crown.rectTransform, 0.5f, 0.5f, 0f, -8f, 26f, 26f);
                 TextMeshProUGUI vip = Label(vipGroup, "Label", "VIP", 14f, TextStyle.Heading, Gold);
                 Place(vip.rectTransform, 0.5f, 0.5f, 0f, -30f, 40f, 18f);
 
                 RectTransform lockedGroup = Stretch(Rect(decal, "Locked"));
-                Image greyPad = Img(lockedGroup, "Pad", Round, new Color(0.72f, 0.75f, 0.83f, 0.92f), 7f);
-                Place(greyPad.rectTransform, 0.5f, 0.5f, 0f, 0f, slotW - 10f, slotH - 8f);
-                SlotLines(lockedGroup, slotW, slotH, new Color(1f, 1f, 1f, 0.85f));
                 Image lockIcon = IconImg(lockedGroup, "Lock", "lock", 22f);
                 Place(lockIcon.rectTransform, 0.5f, 0.5f, 0f, 16f, 22f, 22f);
                 Image plus = Badge(lockedGroup, "Plus", Green, 20f, out RectTransform plusContent);
@@ -272,21 +265,6 @@ namespace BusRush.EditorTools
             finally
             {
                 Object.DestroyImmediate(root);
-            }
-        }
-
-        /// <summary>
-        /// Painted separators: both side lines lean the same way (angled parking look) and sit on the slot edges, so
-        /// neighbouring slots share one line instead of drawing two.
-        /// </summary>
-        private static void SlotLines(RectTransform parent, float w, float h, Color color)
-        {
-            var line = new Color(color.r, color.g, color.b, color.a * 0.85f);
-            for (int side = -1; side <= 1; side += 2)
-            {
-                Image l = Img(parent, side < 0 ? "LineLeft" : "LineRight", Round, line, 1f);
-                Place(l.rectTransform, 0.5f, 0.5f, side * w * 0.5f, 0f, 2f, h - 4f);
-                l.rectTransform.localRotation = Quaternion.Euler(0f, 0f, -5f);
             }
         }
 

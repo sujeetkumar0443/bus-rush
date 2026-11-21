@@ -109,7 +109,7 @@ namespace BusRush.Gameplay
             if (boardingTimer >= boardingInterval)
             {
                 boardingTimer = 0f;
-                TryBoardFront();
+                TryBoardWindow();
             }
             UpdateLose(Time.deltaTime);
         }
@@ -142,30 +142,48 @@ namespace BusRush.Gameplay
 
         // ------------------------------------------------------------------ boarding
 
-        /// <summary>The bay a passenger of this colour would board right now (closest to full first), or null.</summary>
+        /// <summary>The first bay (bay order) a passenger of this colour could board right now, or null.</summary>
         public BayState FindSeat(GameColor color)
         {
-            BayState best = null;
             for (int i = 0; i < bays.Bays.Count; i++) // indexed: no enumerator allocation (runs every frame)
             {
-                BayState b = bays.Bays[i];
-                if (!b.CanBoard(color)) continue;
-                if (best == null || b.Filled + b.SeatsReserved > best.Filled + best.SeatsReserved) best = b;
+                if (bays.Bays[i].CanBoard(color)) return bays.Bays[i];
             }
-            return best;
+            return null;
         }
 
-        private void TryBoardFront()
+        /// <summary>
+        /// Boarding window (<see cref="GameTuning.FrontWindow"/>): each parked vehicle with space, in bay order, takes the
+        /// earliest eligible passenger of its colour. One passenger per vehicle per boarding tick.
+        /// </summary>
+        private void TryBoardWindow()
         {
-            if (!crowd.FrontAtGate) return;
-            BayState bay = FindSeat(crowd.FrontColor);
-            if (bay == null) return; // the queue waits; nobody skips ahead
+            for (int i = 0; i < bays.Bays.Count; i++)
+            {
+                BayState bay = bays.Bays[i];
+                if (!bay.IsParked || bay.Full) continue;
+                GameColor color = bay.Vehicle.Data.color;
+                if (!bay.CanBoard(color)) continue;
+                int index = crowd.FindEligible(color);
+                if (index < 0) continue;
 
-            GameColor color = crowd.FrontColor;
-            VehicleView vehicle = bay.Vehicle;
-            bay.SeatsReserved++;
-            var seat = new Vector2(ScreenRef.BayX(bay.Index), ScreenRef.BayY - 6f);
-            crowd.BoardFront(seat, () => OnPassengerArrived(bay, vehicle, color));
+                VehicleView vehicle = bay.Vehicle;
+                bay.SeatsReserved++;
+                var seat = new Vector2(ScreenRef.BayX(bay.Index), ScreenRef.BayY - 6f);
+                crowd.Board(index, seat, () => OnPassengerArrived(bay, vehicle, color));
+            }
+        }
+
+        /// <summary>True if some parked vehicle with space has a ready passenger of its colour in the window.</summary>
+        public bool AnyoneCanBoard()
+        {
+            for (int i = 0; i < bays.Bays.Count; i++)
+            {
+                BayState bay = bays.Bays[i];
+                if (bay.IsParked && !bay.Full && bay.CanBoard(bay.Vehicle.Data.color) &&
+                    BoardingRule.EligibleIndex(crowd.WindowColors(), bay.Vehicle.Data.color) >= 0) return true;
+            }
+            return false;
         }
 
         private void OnPassengerArrived(BayState bay, VehicleView vehicle, GameColor color)
@@ -231,7 +249,7 @@ namespace BusRush.Gameplay
 
         /// <summary>
         /// Stuck: vehicles left on the board, every open bay holds a parked vehicle, nothing is moving or walking, and no
-        /// parked vehicle can take the queue front. Must hold for <see cref="loseDelay"/> seconds.
+        /// parked vehicle can take anyone in the boarding window. Must hold for <see cref="loseDelay"/> seconds.
         /// </summary>
         public bool IsStuck()
         {
@@ -239,7 +257,7 @@ namespace BusRush.Gameplay
             if (bays.Movers > 0 || crowd.WalkerCount > 0) return false;
             for (int i = 0; i < bays.Bays.Count; i++) if (bays.Bays[i].Full || bays.Bays[i].Departing) return false;
             if (!crowd.HasFront) return false;
-            return FindSeat(crowd.FrontColor) == null;
+            return !AnyoneCanBoard();
         }
 
         private void UpdateLose(float dt)

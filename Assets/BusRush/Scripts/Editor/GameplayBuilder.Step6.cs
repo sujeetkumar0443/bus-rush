@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using BusRush.Gameplay;
 using UnityEditor;
 using UnityEngine;
@@ -39,10 +40,52 @@ namespace BusRush.EditorTools
                 }
             }
 
+            ImportCityV2();
+
             Material fade = CreateTransparentUnlit("World_BackgroundFade", null, Color.white);
             fade.renderQueue = (int)RenderQueue.Geometry + 400; // just after the opaque background, before transparents
             EditorUtility.SetDirty(fade);
             AssetDatabase.SaveAssets();
+        }
+
+        private const string CityV2Source = "C:/UnityBuilds/BusRush_Source/city_v2/BusRush_City_v2/world_city_v2.jpg";
+        private const string CityV2Path = WorldsDir + "/world_city_v2.jpg";
+
+        /// <summary>
+        /// City v2 world art (1020x2288, 2 image px per ref px) covering ref x -60..450, y -150..994, with the lot, bay
+        /// slots, plaza and alleys painted in. No edge mirroring (the art has its own margins).
+        /// </summary>
+        private static WorldTheme ImportCityV2()
+        {
+            if (!File.Exists(CityV2Path) || new FileInfo(CityV2Source).LastWriteTimeUtc > new FileInfo(CityV2Path).LastWriteTimeUtc)
+            {
+                File.Copy(CityV2Source, CityV2Path, true);
+                AssetDatabase.ImportAsset(CityV2Path, ImportAssetOptions.ForceUpdate);
+            }
+            var ti = (TextureImporter)AssetImporter.GetAtPath(CityV2Path);
+            ti.textureType = TextureImporterType.Sprite;
+            ti.spriteImportMode = SpriteImportMode.Single;
+            ti.mipmapEnabled = false;
+            ti.maxTextureSize = 4096;
+            ti.textureCompression = TextureImporterCompression.CompressedHQ;
+            ti.wrapMode = TextureWrapMode.Clamp;
+            ti.npotScale = TextureImporterNPOTScale.None;
+            ti.SaveAndReimport();
+
+            string path = $"{ThemesDir}/CityV2.asset";
+            var theme = AssetDatabase.LoadAssetAtPath<WorldTheme>(path);
+            if (theme == null)
+            {
+                theme = ScriptableObject.CreateInstance<WorldTheme>();
+                AssetDatabase.CreateAsset(theme, path);
+            }
+            theme.themeName = "City v2";
+            theme.background = AssetDatabase.LoadAssetAtPath<Sprite>(CityV2Path);
+            theme.refCoverage = new Rect(-60f, -150f, 510f, 1144f);
+            theme.mirrorEdges = false;
+            EditorUtility.SetDirty(theme);
+            AssetDatabase.SaveAssets();
+            return theme;
         }
 
         /// <summary>One Body and one Cap material per colour, referenced from the GameConfig palette.</summary>

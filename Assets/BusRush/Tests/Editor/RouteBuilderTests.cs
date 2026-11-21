@@ -51,7 +51,9 @@ namespace BusRush.Tests
                     Assert.AreEqual(ScreenRef.BayX(bay), end.x, 0.001f, ctx + ": end x");
                     Assert.AreEqual(ScreenRef.ParkCenterY(v.type), end.y, 0.001f, ctx + ": end y");
                     // Front of the parked vehicle is exactly at BAY_Y.
-                    Assert.AreEqual(ScreenRef.BayY, end.y - ScreenRef.VehicleLengthPx(v.type) * 0.5f, 0.001f, ctx + ": front");
+                    float half = ScreenRef.VehicleLengthPx(v.type) * 0.5f;
+                    Assert.GreaterOrEqual(end.y - half, ScreenRef.SlotTopY, ctx + ": front inside the slot");
+                    Assert.LessOrEqual(end.y + half, ScreenRef.SlotBottomY, ctx + ": tail inside the slot");
 
                     Vector2 first = (route[1] - route[0]).normalized;
                     Vector2 expected = v.direction switch
@@ -92,22 +94,30 @@ namespace BusRush.Tests
         }
 
         [Test]
-        public void Departure_BacksOutThenLeavesRight()
+        public void Departure_LeavesForwardOverTheBays_ThenRight()
         {
             foreach (VehicleType type in new[] { VehicleType.Car, VehicleType.Van, VehicleType.Bus })
             {
                 for (int bay = 0; bay < ScreenRef.BayCount; bay++)
                 {
-                    List<Vector2> back = RouteBuilder.BuildReverseOut(type, bay);
-                    List<Vector2> off = RouteBuilder.BuildDriveOff(bay);
-                    Assert.AreEqual(RouteBuilder.ParkPointRef(type, bay), back[0]);
-                    Assert.AreEqual(back[back.Count - 1], off[0]);
-                    Assert.AreEqual(ScreenRef.TopY, off[off.Count - 1].y, 0.001f);
-                    Assert.Greater(off[off.Count - 1].x, ScreenRef.Width);
-                    foreach (Vector2 p in back) Assert.IsTrue(Allowed.Contains(p), $"{type} bay {bay}: {p}");
-                    foreach (Vector2 p in off) Assert.IsTrue(Allowed.Contains(p), $"{type} bay {bay}: {p}");
+                    List<Vector2> route = RouteBuilder.BuildDeparture(type, bay);
+                    Assert.AreEqual(RouteBuilder.ParkPointRef(type, bay), route[0]);
+                    Assert.Less(route[1].y, route[0].y, "first leg drives forward (up) out of the slot");
+                    Assert.AreEqual(ScreenRef.DepartY, route[route.Count - 1].y, 0.001f);
+                    Assert.Greater(route[route.Count - 1].x, ScreenRef.Width);
+                    Assert.Less(ScreenRef.DepartY, ScreenRef.SlotTopY, "departure strip is above the painted slots");
+                    foreach (Vector2 p in route) Assert.IsTrue(Allowed.Contains(p), $"{type} bay {bay}: {p}");
                 }
             }
+        }
+
+        [Test]
+        public void ArrivalLane_ClearsParkedBuses()
+        {
+            // Bus tail (front at BAY_Y) must stay above the top edge of a vehicle driving on the arrival lane.
+            float busTail = ScreenRef.ParkCenterY(VehicleType.Bus) + ScreenRef.VehicleLengthPx(VehicleType.Bus) * 0.5f;
+            float laneTopEdge = ScreenRef.TopY - 0.40f * BoardGeometry.PixelsPerCell * BoardGeometry.SinPitch;
+            Assert.Less(busTail, laneTopEdge);
         }
 
         [Test]

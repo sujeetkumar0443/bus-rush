@@ -68,6 +68,7 @@
     <Compile Include="Assets\BusRush\Scripts\Editor\AllocProbe.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\RenderCapture.cs" />
     <Compile Include="Assets\TutorialInfo\Editor\ReadmeEditor.cs" />
+    <Compile Include="Assets\BusRush\Tests\Editor\TrafficRulesTests.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\UIArtGenerator.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\GameplayBuilder.Step4.cs" />
     <Compile Include="Assets\BusRush\Tests\Editor\CrowdTests.cs" />

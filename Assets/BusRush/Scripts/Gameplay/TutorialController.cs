@@ -116,7 +116,12 @@ namespace BusRush.Gameplay
                     if (target != null) PointAt(hint, target.transform.position, TapCarText);
                     break;
                 case Step.L1Board:
-                    PointAt(hint, session.Crowd.FrontWorldPosition, BoardText);
+                    {
+                        // Hand on the front of the crowd; bubble below the bay row (above the crowd is the level badge,
+                        // and on the bays it would hide the parked vehicles and pills), its tail pointing up at the bays.
+                        hint.ShowHand(ScreenOf(session.Crowd.FrontWorldPosition, 0.6f));
+                        hint.ShowBubble(BoardText, viewCamera.WorldToScreenPoint(ScreenRef.RefToWorld(195f, 330f)), preferBelow: true);
+                    }
                     if (session.BoardedCount > 0) SetStep(Step.Done);
                     break;
                 case Step.L2Blocked:
@@ -167,11 +172,11 @@ namespace BusRush.Gameplay
             idleShowing = true;
         }
 
-        private void PointAt(HintView hint, Vector3 world, string text)
+        private void PointAt(HintView hint, Vector3 world, string text, bool preferBelow = false)
         {
             Vector2 p = ScreenOf(world, 0.6f);
             hint.ShowHand(p);
-            hint.ShowBubble(text, p);
+            hint.ShowBubble(text, p, preferBelow);
         }
 
         private Vector2 ScreenOf(Vector3 world, float height) => viewCamera.WorldToScreenPoint(world + Vector3.up * height);
@@ -219,20 +224,27 @@ namespace BusRush.Gameplay
 
         // ------------------------------------------------------------------ move picking
 
-        /// <summary>A free vehicle that matches the queue front, otherwise any free vehicle (needs a free bay).</summary>
+        /// <summary>
+        /// A free vehicle whose colour is earliest in the boarding window, otherwise any free vehicle (needs a free bay).
+        /// </summary>
         public VehicleView GoodMove()
         {
             if (!session.Bays.HasFreeBay) return null;
-            bool hasFront = session.Crowd.HasFront;
-            GameColor front = hasFront ? session.Crowd.FrontColor : GameColor.Red;
-            VehicleView any = null;
+            int window = session.Crowd.WindowCount;
+            VehicleView best = null, any = null;
+            int bestIndex = int.MaxValue;
             foreach (VehicleView v in session.Board.Vehicles)
             {
                 if (!session.Board.IsPathClear(v)) continue;
-                if (hasFront && v.Data.color == front) return v;
                 if (any == null) any = v;
+                int index = session.Crowd.DistanceToColor(v.Data.color);
+                if (index < window && index < bestIndex)
+                {
+                    best = v;
+                    bestIndex = index;
+                }
             }
-            return any;
+            return best != null ? best : any;
         }
 
         /// <summary>A blocked vehicle whose first blocker can leave right now (BoardState path check).</summary>

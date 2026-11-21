@@ -48,7 +48,7 @@ namespace BusRush.UI
         public void HideHand() => hand.gameObject.SetActive(false);
 
         /// <summary>Speech bubble above (or below, if there is no room) a screen position.</summary>
-        public void ShowBubble(string text, Vector2 screenPoint)
+        public void ShowBubble(string text, Vector2 screenPoint, bool preferBelow = false)
         {
             if (bubbleText.text != text) bubbleText.text = text;
             bubble.gameObject.SetActive(true);
@@ -56,7 +56,7 @@ namespace BusRush.UI
             Vector2 local = ToLocal(screenPoint);
             Rect r = area.rect;
             Vector2 size = bubble.sizeDelta;
-            bool above = local.y + bubbleGap + size.y < r.yMax - 10f;
+            bool above = !preferBelow && local.y + bubbleGap + size.y < r.yMax - 10f;
             float y = above ? local.y + bubbleGap + size.y * 0.5f : local.y - bubbleGap - size.y * 0.5f;
             float x = Mathf.Clamp(local.x, r.xMin + size.x * 0.5f + 8f, r.xMax - size.x * 0.5f - 8f);
             bubble.anchoredPosition = new Vector2(x, y);

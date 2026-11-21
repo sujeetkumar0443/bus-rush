@@ -14,3 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BusRush.WorldTheme
   themeName: Beach
   background: {fileID: 21300000, guid: c6a0390862353044ca370f2e112e8801, type: 3}
+  refCoverage:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 390
+    height: 844
+  mirrorEdges: 1

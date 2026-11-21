@@ -148,7 +148,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: a1243adc5ee545542a622d16fae358c7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::BusRush.BootLoader
-  splash: {fileID: 1187555684}
+  splash: {fileID: 1295268977}
   delay: 0.5
 --- !u!4 &850708102
 Transform:
@@ -165,7 +165,7 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1001 &1187555683
+--- !u!1001 &1295268976
 PrefabInstance:
   m_ObjectHideFlags: 0
   serializedVersion: 2
@@ -222,10 +222,10 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: ddaaac3e3bdfa84448ce30b9beda10c0, type: 3}
---- !u!114 &1187555684 stripped
+--- !u!114 &1295268977 stripped
 MonoBehaviour:
   m_CorrespondingSourceObject: {fileID: 278858266450205514, guid: ddaaac3e3bdfa84448ce30b9beda10c0, type: 3}
-  m_PrefabInstance: {fileID: 1187555683}
+  m_PrefabInstance: {fileID: 1295268976}
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 0}
   m_Enabled: 1
@@ -322,4 +322,4 @@ SceneRoots:
   m_Roots:
   - {fileID: 1937875336}
   - {fileID: 850708102}
-  - {fileID: 1187555683}
+  - {fileID: 1295268976}

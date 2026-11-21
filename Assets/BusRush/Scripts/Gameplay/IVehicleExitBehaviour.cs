@@ -43,7 +43,7 @@ namespace BusRush.Gameplay
         private IEnumerator Drive(VehicleView vehicle, BayState bay, Action<VehicleView> onExited)
         {
             var route = RouteBuilder.ToWorld(RouteBuilder.Build(vehicle.Data, bay.Index));
-            yield return vehicle.Motion.Drive(route, false, 1f, true, true);
+            yield return vehicle.Motion.Drive(route, false, GameTuning.VehicleDriveSpeed, true, true);
             bays.Arrive(bay);
             onExited(vehicle);
         }

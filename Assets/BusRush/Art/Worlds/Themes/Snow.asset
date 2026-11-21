@@ -14,3 +14,10 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BusRush.WorldTheme
   themeName: Snow
   background: {fileID: 21300000, guid: 5d13a0fb62b780a4cbbafe9fea24654e, type: 3}
+  refCoverage:
+    serializedVersion: 2
+    x: 0
+    y: 0
+    width: 390
+    height: 844
+  mirrorEdges: 1

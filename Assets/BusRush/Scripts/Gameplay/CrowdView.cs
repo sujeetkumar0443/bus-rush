@@ -5,25 +5,41 @@ using UnityEngine;
 namespace BusRush.Gameplay
 {
     /// <summary>
-    /// The passenger queue on the U-shaped track around the island. Two arms start at the gate, curve around the bottom
-    /// of the ellipse, up its sides and straight up off screen. Person n uses arm n%2 and lane (n/2)%5; the person at
-    /// queue index i targets 6 + (i/2)*7.5 (+3.75 on odd lanes) ref px from the gate and walks there at 85 px/s, so
-    /// the crowd flows forward as the front boards. At most <see cref="maxVisible"/> people are instantiated (pooled);
-    /// the rest exist only logically.
+    /// The passenger queue on the round plaza (City v2). The track is the ellipse centre (195,112), rx 112, ry 82;
+    /// the right arm starts 14 px from the bottom centre, goes round the right side and straight up the alley at
+    /// x = 307 off screen; the left arm mirrors via x = 83. Three lanes per arm at -21 / 0 / +21 px, rows 22 px apart.
+    /// <para>Person n joins as row n/3, lane n%3, arm row%2 (so the front of the queue stands at the bottom of the U next
+    /// to the gate, and rows alternate between the arms). Each arm/lane pair is a column: a person stands at
+    /// 14 + k*22 where k = people still ahead of them in the same column, which at the start is 14 + (row/2)*22. When
+    /// someone boards, the people behind them in their column step forward (shuffle speed) to close the gap; everyone
+    /// keeps their arm and lane, so nobody cuts across the plaza.</para>
+    /// <para>Boarding window: the first <see cref="GameTuning.FrontWindow"/> people in queue order are eligible (they
+    /// bounce gently). A boarding passenger steps out to the outer edge of their arm, runs along it to the gate and on
+    /// to the vehicle.</para>
+    /// At most <see cref="maxVisible"/> people are instantiated (pooled); the rest exist only logically up the alleys.
     /// </summary>
     public sealed class CrowdView : MonoBehaviour
     {
         public static readonly Vector2 Gate = new Vector2(195f, 228f);
-        public static readonly Vector2 EllipseCenter = new Vector2(195f, 118f);
-        public const float EllipseRx = 107f;
-        public const float EllipseRy = 72f;
+        public static readonly Vector2 EllipseCenter = new Vector2(195f, 112f);
+        public const float EllipseRx = 112f;
+        public const float EllipseRy = 82f;
         public const float ArmTopY = -420f;
-        public const float FrontRadius = 40f;
-        private static readonly float[] Lanes = { -20f, -10f, 0f, 10f, 20f }; // design lanes * 0.8 (denser crowd)
-        public const float RowSpacing = 7.5f;
+        /// <summary>Arms start this far (along the track) from the bottom centre so they never overlap at the gate.</summary>
+        public const float ArmStart = 14f;
+        public const float RowSpacing = 22f;
+        public const int LanesPerArm = 3;
+        private static readonly float[] Lanes = { -21f, 0f, 21f };
+        /// <summary>An eligible person may board once within this distance of their slot (not while still walking in).</summary>
+        public const float ReadySlackPx = 24f;
+        /// <summary>Boarding runners use the outer edge of their arm, outside lane +21.</summary>
+        public const float OuterEdgePx = 40f;
+        /// <summary>Eligible people hop this high (world units) at this rate.</summary>
+        private const float HopHeight = 0.07f;
+        private const float HopHz = 1.6f;
 
         [SerializeField] private PassengerView passengerPrefab;
-        [SerializeField] private int maxVisible = 70;
+        [SerializeField] private int maxVisible = 80;
         [SerializeField] private float walkSpeedPx = 85f;
         [SerializeField] private float boardSpeedPx = 420f;
         [SerializeField] private float minBoardTime = 0.25f;
@@ -32,13 +48,20 @@ namespace BusRush.Gameplay
         [SerializeField] private float passengerHeight = 0.81f;
         [Tooltip("Model height of the Passenger prefab (for scaling to passengerHeight).")]
         [SerializeField] private float modelHeight = 0.779f;
+        [Tooltip("Extra width (X/Z) so a standing person reads ~24 x 30 px on a 390x844 screen (the rig alone measures 17.8 x 29.4).")]
+        [SerializeField] private float widthFactor = 1.35f;
+        [Tooltip("Depth and height factors keep the projected height at ~30 px (depth shows at the 58 degree pitch).")]
+        [SerializeField] private float depthFactor = 1.35f;
+        [SerializeField] private float heightFactor = 0.8f;
 
         private sealed class Person
         {
             public GameColor color;
+            public int row;
             public int arm;
             public int lane;
             public float s;
+            public float target;
             public float lateral;
             public PassengerView view;
         }
@@ -60,18 +83,58 @@ namespace BusRush.Gameplay
         private readonly List<Vector2>[] arms = new List<Vector2>[2];
         private readonly List<float>[] armLengths = new List<float>[2];
         private float spawnS;
-        private float sharedLength;
+        private readonly int[] columnAhead = new int[2 * LanesPerArm];
 
         public int QueueCount => queue.Count;
         public int WalkerCount => walkers.Count;
         public int PassengersLeft => queue.Count + walkers.Count;
         public bool HasFront => queue.Count > 0;
         public GameColor FrontColor => queue[0].color;
-        public bool FrontAtGate => queue.Count > 0 && queue[0].s <= FrontRadius;
+
+        /// <summary>Number of people currently in the boarding window.</summary>
+        public int WindowCount => Mathf.Min(GameTuning.FrontWindow, queue.Count);
+
+        public GameColor ColorAt(int queueIndex) => queue[queueIndex].color;
+
+        /// <summary>In the window and standing at (or nearly at) their slot.</summary>
+        public bool IsReady(int queueIndex) =>
+            queueIndex < WindowCount && queue[queueIndex].s <= queue[queueIndex].target + ReadySlackPx;
+
+        private readonly List<GameColor> windowColors = new List<GameColor>(GameTuning.FrontWindow);
+
+        /// <summary>Colours of the people in the window, in queue order (shared list, no allocation).</summary>
+        public IReadOnlyList<GameColor> WindowColors()
+        {
+            windowColors.Clear();
+            for (int i = 0; i < WindowCount; i++) windowColors.Add(queue[i].color);
+            return windowColors;
+        }
+
+        /// <summary>Queue index of the earliest ready person of this colour in the window, or -1.</summary>
+        public int FindEligible(GameColor color)
+        {
+            int n = WindowCount;
+            for (int i = 0; i < n; i++)
+            {
+                if (queue[i].color == color && IsReady(i)) return i;
+            }
+            return -1;
+        }
 
         /// <summary>World position of the person at the front of the queue (the gate if nobody is visible).</summary>
         public Vector3 FrontWorldPosition =>
             queue.Count > 0 && queue[0].view != null ? queue[0].view.transform.position : ScreenRef.RefToWorld(Gate);
+
+        /// <summary>Debug: the first n people in queue order as "colour(s px)".</summary>
+        public string DescribeFront(int n)
+        {
+            var sb = new System.Text.StringBuilder();
+            for (int i = 0; i < queue.Count && i < n; i++)
+            {
+                sb.Append(i == 0 ? "" : ", ").Append(i).Append(':').Append(queue[i].color).Append('(').Append(queue[i].s.ToString("F0")).Append(')');
+            }
+            return sb.ToString();
+        }
 
         /// <summary>Queue index of the next passenger of this colour (int.MaxValue if none).</summary>
         public int DistanceToColor(GameColor color)
@@ -97,9 +160,10 @@ namespace BusRush.Gameplay
 
             for (int n = 0; n < colors.Count; n++)
             {
-                var p = new Person { color = colors[n], arm = n % 2, lane = (n / 2) % 5 };
+                int row = n / LanesPerArm;
+                var p = new Person { color = colors[n], row = row, arm = row % 2, lane = n % LanesPerArm };
                 // Level intro: everyone starts a little further up the track and walks in (~1 s at walk speed).
-                p.s = TargetS(n, p.lane) + introWalkPx;
+                p.s = ArmStart + (row / 2) * RowSpacing + introWalkPx;
                 p.lateral = TargetLateral(p);
                 queue.Add(p);
             }
@@ -107,24 +171,35 @@ namespace BusRush.Gameplay
             Update();
         }
 
-        /// <summary>Sends the front person to a seat; returns false if there is nobody at the gate.</summary>
-        public bool BoardFront(Vector2 targetRef, Action onArrive)
+        /// <summary>
+        /// Sends the person at queue index i (must be <see cref="IsReady"/>) to a seat: out to the outer edge of their
+        /// arm, along it to the gate, then to targetRef. Returns false if they are not ready.
+        /// </summary>
+        public bool Board(int queueIndex, Vector2 targetRef, Action onArrive)
         {
-            if (!FrontAtGate) return false;
-            Person p = queue[0];
-            queue.RemoveAt(0);
+            if (!IsReady(queueIndex)) return false;
+            Person p = queue[queueIndex];
+            queue.RemoveAt(queueIndex);
             if (p.view == null) Spawn(p, false);
 
-            var path = new List<Vector2> { ArmPoint(p.arm, p.s, p.lateral, out _), Gate, targetRef };
-            float d1 = Vector2.Distance(path[0], path[1]);
-            float length = d1 + Vector2.Distance(path[1], path[2]);
+            float outer = OuterEdgePx * (p.arm == 0 ? 1f : -1f);
+            var path = new List<Vector2> { ArmPoint(p.arm, p.s, p.lateral, out _) };
+            for (float s = p.s; s > ArmStart; s -= 8f) path.Add(ArmPoint(p.arm, s, outer, out _));
+            path.Add(ArmPoint(p.arm, ArmStart, outer, out _));
+            path.Add(Gate);
+            path.Add(targetRef);
+
+            var lengths = new List<float>(path.Count) { 0f };
+            for (int i = 1; i < path.Count; i++) lengths.Add(lengths[i - 1] + Vector2.Distance(path[i - 1], path[i]));
+            float length = lengths[lengths.Count - 1];
+            float speed = boardSpeedPx * GameTuning.PassengerBoardSpeed;
             walkers.Add(new Walker
             {
                 person = p,
                 path = path,
-                lengths = new List<float> { 0f, d1, length },
+                lengths = lengths,
                 length = length,
-                duration = Mathf.Max(minBoardTime, length / boardSpeedPx),
+                duration = Mathf.Max(minBoardTime / GameTuning.PassengerBoardSpeed, length / speed),
                 onArrive = onArrive
             });
             return true;
@@ -133,14 +208,18 @@ namespace BusRush.Gameplay
         private void Update()
         {
             float dt = Time.deltaTime;
+            float walk = walkSpeedPx * GameTuning.QueueShuffleSpeed;
+            int window = WindowCount;
 
+            for (int c = 0; c < columnAhead.Length; c++) columnAhead[c] = 0;
             for (int i = 0; i < queue.Count; i++)
             {
                 Person p = queue[i];
-                float target = TargetS(i, p.lane);
+                int column = p.arm * LanesPerArm + p.lane;
+                p.target = ArmStart + columnAhead[column]++ * RowSpacing;
                 float before = p.s;
-                p.s = Mathf.MoveTowards(p.s, target, walkSpeedPx * dt);
-                p.lateral = Mathf.MoveTowards(p.lateral, TargetLateral(p), walkSpeedPx * 0.5f * dt);
+                p.s = Mathf.MoveTowards(p.s, p.target, walk * dt);
+                p.lateral = Mathf.MoveTowards(p.lateral, TargetLateral(p), walk * 0.5f * dt);
 
                 if (p.view == null && i < maxVisible) Spawn(p, true);
                 if (p.view == null) continue;
@@ -149,7 +228,13 @@ namespace BusRush.Gameplay
                 float moved = p.s - before;
                 // Face the way they walk; standing people face the gate (down the arm).
                 Vector2 facing = Mathf.Abs(moved) > 0.0001f ? tangent * Mathf.Sign(moved) : -tangent;
-                Place(p.view, refPos, facing, dt);
+                // Eligible (first FrontWindow, at their slot): a small rhythmic hop, staggered by queue index.
+                float hop = 0f;
+                if (i < window && p.s <= p.target + ReadySlackPx)
+                {
+                    hop = HopHeight * Mathf.Abs(Mathf.Sin((Time.time * HopHz + i * 0.13f) * Mathf.PI));
+                }
+                Place(p.view, refPos, facing, dt, hop);
                 p.view.Pose(dt, dt > 0f ? Mathf.Abs(moved) / dt : 0f, false);
             }
 
@@ -160,7 +245,7 @@ namespace BusRush.Gameplay
                 float k = Mathf.Clamp01(w.time / w.duration);
                 Vector2 pos = PolylinePoint(w.path, k * w.length, out Vector2 dir, w.lengths);
                 Place(w.person.view, pos, dir, dt);
-                w.person.view.Pose(dt, boardSpeedPx, true);
+                w.person.view.Pose(dt, boardSpeedPx * GameTuning.PassengerBoardSpeed, true);
                 if (k >= 1f)
                 {
                     walkers.RemoveAt(i);
@@ -172,14 +257,15 @@ namespace BusRush.Gameplay
 
         // ------------------------------------------------------------------ track geometry (reference px)
 
+        /// <summary>Arm 0 = right (round the right side, up x = 307), arm 1 = left (up x = 83). s = 0 at the bottom centre.</summary>
         private void BuildArms()
         {
             Vector2 bottom = new Vector2(EllipseCenter.x, EllipseCenter.y + EllipseRy);
             for (int arm = 0; arm < 2; arm++)
             {
-                var pts = new List<Vector2> { Gate, bottom };
-                float end = arm == 0 ? 180f : 0f;
-                const int steps = 16;
+                var pts = new List<Vector2> { bottom };
+                float end = arm == 0 ? 0f : 180f;
+                const int steps = 24;
                 for (int k = 1; k <= steps; k++)
                 {
                     float a = Mathf.Lerp(90f, end, k / (float)steps) * Mathf.Deg2Rad;
@@ -193,8 +279,7 @@ namespace BusRush.Gameplay
                 armLengths[arm] = lengths;
             }
 
-            sharedLength = Vector2.Distance(Gate, bottom);
-            // People who join the visible crowd appear just above the top edge and walk in.
+            // People who join the visible crowd come down the alleys from just above the top edge.
             spawnS = ArmSAtY(0, -30f);
         }
 
@@ -205,33 +290,22 @@ namespace BusRush.Gameplay
             return armLengths[arm][pts.Count - 2] + (top.y - y);
         }
 
-        /// <summary>
-        /// Distance from the gate for queue index i. The two arms alternate (one person per arm per row) and the five
-        /// lanes cycle along each arm, so each arm advances one row (RowSpacing) per person and long queues run up the
-        /// sides of the island and off the top of the screen.
-        /// </summary>
-        public static float TargetS(int queueIndex, int lane)
+        /// <summary>Layout formula for a full queue: queue index i -> 14 + (row/2)*22 with row = i/3.</summary>
+        public static float TargetS(int queueIndex)
         {
-            return 6f + (queueIndex / 2) * RowSpacing + (lane % 2 == 1 ? RowSpacing * 0.5f : 0f);
+            return ArmStart + (queueIndex / LanesPerArm / 2) * RowSpacing;
         }
 
-        /// <summary>
-        /// Lane offset. Both arms share the short stretch between the gate and the bottom of the ellipse, so there the
-        /// left arm keeps to the left half of the track and the right arm to the right half.
-        /// </summary>
-        private float TargetLateral(Person p)
+        /// <summary>Lane offset perpendicular to the track; mirrored on the left arm so lane 0 is inside on both.</summary>
+        private static float TargetLateral(Person p)
         {
-            float full = Lanes[p.lane];
-            float shared = (p.arm == 0 ? -1f : 1f) * (10f + full * 0.5f);
-            float k = Mathf.InverseLerp(sharedLength, sharedLength + 30f, p.s);
-            return Mathf.Lerp(shared, full * (p.arm == 0 ? 1f : -1f), k);
+            return Lanes[p.lane] * (p.arm == 0 ? 1f : -1f);
         }
 
         private Vector2 ArmPoint(int arm, float s, float lateral, out Vector2 tangent)
         {
             Vector2 c = PolylinePoint(arms[arm], s, out tangent, armLengths[arm]);
-            // Offset along the track normal; on the shared stretch (tangent = up) positive lateral is screen-right.
-            // The left/right mirroring of the lanes is done in TargetLateral.
+            // Offset along the track normal (mirroring between the arms is done in TargetLateral).
             Vector2 normal = new Vector2(-tangent.y, tangent.x);
             return c + normal * lateral;
         }
@@ -262,10 +336,10 @@ namespace BusRush.Gameplay
 
         // ------------------------------------------------------------------ views
 
-        private void Place(PassengerView view, Vector2 refPos, Vector2 refDir, float dt)
+        private void Place(PassengerView view, Vector2 refPos, Vector2 refDir, float dt, float hop = 0f)
         {
             Vector3 world = ScreenRef.RefToWorld(refPos);
-            view.transform.position = world;
+            view.transform.position = world + Vector3.up * hop;
             if (refDir.sqrMagnitude > 1e-6f)
             {
                 Vector3 ahead = ScreenRef.RefToWorld(refPos + refDir.normalized) - world;
@@ -282,7 +356,8 @@ namespace BusRush.Gameplay
         {
             PassengerView v = pool.Count > 0 ? pool.Pop() : Instantiate(passengerPrefab, transform);
             v.gameObject.SetActive(true);
-            v.transform.localScale = Vector3.one * (passengerHeight / modelHeight);
+            float k = passengerHeight / modelHeight;
+            v.transform.localScale = new Vector3(k * widthFactor, k * heightFactor, k * depthFactor);
             v.SetColor(p.color);
             v.ResetPose();
             if (walkIn) p.s = Mathf.Max(p.s, spawnS); // appear above the top edge and walk in, never pop in view

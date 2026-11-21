@@ -94,11 +94,27 @@ namespace BusRush.Gameplay
         }
 
         /// <summary>Reserves the first free open bay for a vehicle about to drive off the board.</summary>
+        /// <summary>
+        /// Reserves a free bay: the first one (bay order) the vehicle can turn into cleanly, i.e. whose straight run
+        /// along the arrival lane is at least the vehicle's length (a bus coming round the left corner cannot swing into
+        /// bay 1 without sweeping over the lot's top-left cells); otherwise the first free bay.
+        /// </summary>
         public BayState ReserveFirstFree(VehicleView vehicle)
         {
+            BayState pick = null;
             foreach (BayState b in bays)
             {
                 if (!b.IsFree) continue;
+                if (pick == null) pick = b;
+                if (vehicle == null || vehicle.Data == null || RouteBuilder.TurnInRoomOk(vehicle.Data, b.Index))
+                {
+                    pick = b;
+                    break;
+                }
+            }
+            if (pick != null)
+            {
+                BayState b = pick;
                 b.Vehicle = vehicle;
                 b.Reserved = true;
                 b.ResetFilled();
@@ -137,16 +153,34 @@ namespace BusRush.Gameplay
                                new Color(1f, 0.79f, 0.24f));
 
             VehicleMotion motion = v.Motion;
-            yield return motion.Drive(RouteBuilder.ToWorld(RouteBuilder.BuildReverseOut(v.Data.type, bay.Index)),
-                                      true, 1f, true, true);
+            bool freed = false;
+            float tailPx = ScreenRef.VehicleLengthPx(v.Data.type) * 0.5f;
+            const float slotTop = ScreenRef.SlotTopY; // painted slot (City v2)
 
-            // Out of the slot: the bay can take the next vehicle.
-            bay.Vehicle = null;
-            bay.Departing = false;
-            bay.ResetFilled();
+            // Wait in the slot until nobody on the strip will pass in front of it.
+            float bayX = ScreenRef.BayX(bay.Index);
+            while (VehicleMotion.DepartStripBusy(bayX, motion)) yield return null;
+            motion.SetDeparting(true);
 
-            yield return motion.Drive(RouteBuilder.ToWorld(RouteBuilder.BuildDriveOff(bay.Index)),
-                                      false, departSpeedMultiplier, false, true, clampToScreen: false);
+            // Forward out of the top of the slot onto the departure strip, then off to the right. The bay is freed as
+            // soon as the whole vehicle has left the slot.
+            yield return motion.Drive(RouteBuilder.ToWorld(RouteBuilder.BuildDeparture(v.Data.type, bay.Index)),
+                                      false, departSpeedMultiplier * GameTuning.VehicleDepartSpeed, false, true, clampToScreen: false, onProgress: () =>
+                                      {
+                                          if (freed || v == null) return;
+                                          if (ScreenRef.WorldToRef(v.transform.position).y + tailPx > slotTop) return;
+                                          freed = true;
+                                          bay.Vehicle = null;
+                                          bay.Departing = false;
+                                          bay.ResetFilled();
+                                      });
+
+            if (!freed)
+            {
+                bay.Vehicle = null;
+                bay.Departing = false;
+                bay.ResetFilled();
+            }
 
             Destroy(v.gameObject);
             movers = Mathf.Max(0, movers - 1);

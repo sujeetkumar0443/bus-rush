@@ -53,7 +53,7 @@ namespace BusRush.UI
             int left = session != null ? session.PassengersLeft : 0;
             if (left == shownPassengers) return;
             shownPassengers = left;
-            passengersText.text = $"Passengers left {left}";
+            passengersText.text = left == 1 ? "1 passenger left" : $"{left} passengers left";
         }
 
         private void OnDestroy()

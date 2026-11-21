@@ -315,14 +315,10 @@ namespace BusRush.EditorTools
             Scene scene = EditorSceneManager.OpenScene(GameScene, OpenSceneMode.Single);
 
             // Opening a scene unloads unreferenced assets, so load everything from disk only now.
-            var themes = new[]
-            {
-                AssetDatabase.LoadAssetAtPath<WorldTheme>($"{ThemesDir}/City.asset"),
-                AssetDatabase.LoadAssetAtPath<WorldTheme>($"{ThemesDir}/Snow.asset"),
-                AssetDatabase.LoadAssetAtPath<WorldTheme>($"{ThemesDir}/Beach.asset")
-            };
+            // City v2 for every level for now; Snow / Beach (City.asset, Snow.asset, Beach.asset) return once redrawn in
+            // the v2 style - add them back to this list.
+            var themes = new[] { AssetDatabase.LoadAssetAtPath<WorldTheme>($"{ThemesDir}/CityV2.asset") };
             var background = AssetDatabase.LoadAssetAtPath<Material>($"{MaterialsDir}/World_Background.mat");
-            var grid = AssetDatabase.LoadAssetAtPath<Material>($"{MaterialsDir}/LotGrid.mat");
             foreach (GameObject go in scene.GetRootGameObjects())
             {
                 if (go.name is "Lot" or "Background (placeholder)" or "World" or "Board") Object.DestroyImmediate(go);
@@ -364,14 +360,7 @@ namespace BusRush.EditorTools
                 ("vanPrefab", AssetDatabase.LoadAssetAtPath<VehicleView>($"{VehiclesDir}/Van.prefab")),
                 ("busPrefab", AssetDatabase.LoadAssetAtPath<VehicleView>($"{VehiclesDir}/Bus.prefab")));
 
-            var gridGo = new GameObject("LotGrid");
-            gridGo.transform.SetParent(board.transform, false);
-            gridGo.AddComponent<MeshFilter>();
-            var gridRenderer = gridGo.AddComponent<MeshRenderer>();
-            gridRenderer.sharedMaterial = grid;
-            gridRenderer.shadowCastingMode = ShadowCastingMode.Off;
-            gridRenderer.receiveShadows = false;
-            gridGo.AddComponent<LotGridView>();
+            // (No LotGrid overlay: the City v2 world art has the lot with painted lines. LotGridView stays available.)
 
             GameSession session = board.AddComponent<GameSession>();
             (CrowdView crowd, GameFx fx) = BuildCrowdAndFx(board);

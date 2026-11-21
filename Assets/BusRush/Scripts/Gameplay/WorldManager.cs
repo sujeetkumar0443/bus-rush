@@ -29,6 +29,9 @@ namespace BusRush.Gameplay
             lastIndex = index;
             if (Current == null || Current.background == null) return;
 
+            background.SetCoverage(Current.refCoverage);
+            if (previous != null && previous.refCoverage != Current.refCoverage) previous = null; // different framing: no crossfade
+
             if (previous != null && previous.background != null)
             {
                 background.Crossfade(previous.background.texture, Current.background.texture, crossfadeSeconds);

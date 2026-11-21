@@ -54,6 +54,31 @@ namespace BusRush.Gameplay
             Done = Length <= 0.0001f;
         }
 
+        /// <summary>Smallest ground (XZ) distance from p to the part of the path not yet driven.</summary>
+        public float MinDistanceAhead(Vector3 p)
+        {
+            var q = new Vector2(p.x, p.z);
+            float best = float.MaxValue;
+            int start = Mathf.Min(Segment(Distance), Mathf.Max(0, points.Count - 2));
+            for (int i = start; i + 1 < points.Count; i++)
+            {
+                var a = new Vector2(points[i].x, points[i].z);
+                var b = new Vector2(points[i + 1].x, points[i + 1].z);
+                if (i == start) a = new Vector2(Position.x, Position.z);
+                Vector2 ab = b - a;
+                float t = ab.sqrMagnitude > 1e-8f ? Mathf.Clamp01(Vector2.Dot(q - a, ab) / ab.sqrMagnitude) : 0f;
+                best = Mathf.Min(best, (a + ab * t - q).magnitude);
+            }
+            return points.Count == 1 ? (new Vector2(points[0].x, points[0].z) - q).magnitude : best;
+        }
+
+        /// <summary>Stops in place this frame (traffic: yielding to another vehicle).</summary>
+        public void Hold()
+        {
+            IsBraking = Speed > 0f;
+            Speed = 0f;
+        }
+
         /// <summary>Advances along the path. <paramref name="speedCap"/> limits speed (e.g. traffic spacing).</summary>
         public void Step(float dt, float speedCap = float.MaxValue)
         {

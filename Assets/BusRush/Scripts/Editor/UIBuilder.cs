@@ -276,12 +276,13 @@ namespace BusRush.EditorTools
             Place(restart.Root, 0f, 1f, 14f, -10f, 54f, 58f, 0f, 1f);
             Chunk pause = IconButton(safe, "PauseButton", "pause", Blue, BlueLip, 54f, 58f, 32f, 16f);
             Place(pause.Root, 1f, 1f, -14f, -10f, 54f, 58f, 1f, 1f);
-            Chunk levelPill = Chunky(safe, "LevelPill", Navy, NavyLip, 170f, 50f, -1f, 6f, false, true, false);
-            Place(levelPill.Root, 0.5f, 1f, 0f, -14f, 170f, 50f, 0.5f, 1f);
-            TextMeshProUGUI level = Label(levelPill.Face, "Label", "Level 1", 28f, TextStyle.Heading);
-            Stretch(level.rectTransform, 10f, 0f, 10f, 0f);
-            TextMeshProUGUI passengers = Label(safe, "PassengersLeft", "Passengers left 0", 15f, TextStyle.Body);
-            Place(passengers.rectTransform, 0.5f, 1f, 0f, -66f, 180f, 20f, 0.5f, 1f);
+            // Level badge: "Level N" with a small "N passengers left" second line (kept off the crowd).
+            Chunk levelPill = Chunky(safe, "LevelPill", Navy, NavyLip, 170f, 60f, 26f, 6f, false, true, false);
+            Place(levelPill.Root, 0.5f, 1f, 0f, -12f, 170f, 60f, 0.5f, 1f);
+            TextMeshProUGUI level = Label(levelPill.Face, "Label", "Level 1", 26f, TextStyle.Heading);
+            Stretch(level.rectTransform, 10f, 18f, 10f, 2f);
+            TextMeshProUGUI passengers = Label(levelPill.Face, "PassengersLeft", "0 passengers left", 13f, TextStyle.Body);
+            Stretch(passengers.rectTransform, 10f, 3f, 10f, 34f);
 
             // Booster row
             RectTransform row = Rect(safe, "BoosterRow");

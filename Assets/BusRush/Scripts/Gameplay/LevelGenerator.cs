@@ -43,7 +43,29 @@ namespace BusRush.Gameplay
 
         public static LevelData Generate(int level) => Generate(level, SeedFor(level));
 
+        /// <summary>Extra generation attempts (seed + k * SolvableRetryStride) if a board fails the window-rule check.</summary>
+        public const int SolvableAttempts = 24;
+        public const int SolvableRetryStride = 104729;
+
+        /// <summary>
+        /// Generates the level and checks it with <see cref="GameSimulator"/> under the boarding-window rule (4 open bays).
+        /// Attempt 0 uses the given seed, so boards that already pass are unchanged; otherwise the next seeds are tried.
+        /// </summary>
         public static LevelData Generate(int level, int seed, int columns = 9, int rows = 10)
+        {
+            LevelData data = null;
+            for (int attempt = 0; attempt < SolvableAttempts; attempt++)
+            {
+                data = GenerateOnce(level, seed + attempt * SolvableRetryStride, columns, rows);
+                if (!GameSimulator.Run(data).won) continue;
+                if (attempt > 0) Debug.Log($"[LevelGenerator] level {level}: seed {seed} failed the window-rule check; using attempt {attempt}.");
+                return data;
+            }
+            Debug.LogError($"[LevelGenerator] level {level}: no board passed the window-rule check in {SolvableAttempts} attempts.");
+            return data;
+        }
+
+        private static LevelData GenerateOnce(int level, int seed, int columns, int rows)
         {
             Settings s = SettingsFor(level);
             var rng = new System.Random(seed);
@@ -100,8 +122,8 @@ namespace BusRush.Gameplay
         /// greedy player picks.</item>
         /// <item>The chunk's remaining passengers follow in groups of 4, shuffled (seeded) across the chunk's vehicles.</item>
         /// </list>
-        /// Every passenger can therefore board when they reach the front, the level is winnable with 4 open bays (one
-        /// kept spare), and per colour the queue equals the total vehicle capacity.
+        /// Per colour the queue equals the total vehicle capacity. Winnability under the boarding-window rule is then
+        /// checked with <see cref="GameSimulator"/> in <see cref="Generate(int,int,int,int)"/>.
         /// </summary>
         private static List<GameColor> BuildQueue(System.Random rng, List<VehicleData> vehicles, List<int> exitOrder,
                                                   int columns, int rows, out List<int> parkOrder)

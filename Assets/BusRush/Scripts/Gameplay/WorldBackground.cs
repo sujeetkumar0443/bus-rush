@@ -92,11 +92,32 @@ namespace BusRush.Gameplay
 
         private void OnFitted(CameraFitter _) => Rebuild();
 
+        /// <summary>Reference-px rectangle the current art covers (default: exactly the 390x844 reference view).</summary>
+        private Rect refCoverage = new Rect(0f, 0f, ScreenRef.Width, ScreenRef.Height);
+
+        /// <summary>
+        /// Sets which reference-px rectangle the art covers, so art pixel (x, y) lands on ScreenRef.RefToWorld(x, y).
+        /// </summary>
+        public void SetCoverage(Rect refRect)
+        {
+            if (refRect.width <= 0f || refRect.height <= 0f) return;
+            refCoverage = refRect;
+            Rebuild();
+        }
+
+        /// <summary>Ground rectangle (world X/Z) of the art: corners mapped through ScreenRef.</summary>
+        public Rect ArtGroundRect()
+        {
+            Vector3 topLeft = ScreenRef.RefToWorld(refCoverage.xMin, refCoverage.yMin);
+            Vector3 bottomRight = ScreenRef.RefToWorld(refCoverage.xMax, refCoverage.yMax);
+            return Rect.MinMaxRect(topLeft.x, bottomRight.z, bottomRight.x, topLeft.z);
+        }
+
         public void Rebuild()
         {
             if (mesh == null) return;
 
-            Rect art = BoardGeometry.ArtGroundRect;
+            Rect art = ArtGroundRect();
             Rect quad = art;
             if (fitter != null)
             {
