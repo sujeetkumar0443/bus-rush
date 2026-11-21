@@ -21,7 +21,6 @@ Reference resolution 390×844, Canvas Scaler *Scale With Screen Size*, match 0.5
 | `SettingsPopup` | – | Settings from Home; Pause (Home / Restart / Resume) in Game. |
 | `DailyRewardPopup` | – | 7 day cards, Claim (real save logic), x2 (ad placeholder). |
 | `BoosterPopup` | – | VIP / Arrange / Shuffle tabs, owned count, buy with coins. Empty `Icon3D` image slot for the 3D icon. |
-| `OutOfSpacePopup` | – | 8 mini bays, +1 Bay for coins or ad placeholder, Give up. |
 
 ## Opening popups from code
 
@@ -31,7 +30,7 @@ using BusRush.UI;
 UIManager.Instance.Open<SettingsPopup>();
 UIManager.Instance.Open<DailyRewardPopup>();
 UIManager.Instance.Open<BoosterPopup>().Select(BoosterType.Arrange);
-UIManager.Instance.Open<OutOfSpacePopup>();
+LevelFailedScreen.Find().Show(offerExtraBay: true);   // UI v2 full-screen overlay (Game scene)
 
 // Level complete (UI v2 full-screen overlay in the Game scene, not a popup)
 LevelCompleteScreen.Find().Show(level: 7, starsEarned: 2, reward: 50);
@@ -43,7 +42,7 @@ UIManager.Instance.CloseAll();
 Useful hooks:
 
 - `UIManager.Instance.BackPressedWithNoPopup` – Game opens the pause menu.
-- `OutOfSpacePopup.BayPurchased` – raised after a +1 bay was bought with coins (gameplay subscribes later).
+- `GameSession.UseExtraBay()` – Level Failed's rewarded "Extra bay" (once per level, while a locked bay is left).
 - `UIButton.Clicked` – fires on every button click; hook the click SFX here.
 - `SaveSystem.Changed` – coins / lives / boosters / level / settings changed (`CoinText`, `LivesText`, HUD listen to it).
 

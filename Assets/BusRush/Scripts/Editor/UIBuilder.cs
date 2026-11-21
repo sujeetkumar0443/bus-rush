@@ -34,7 +34,6 @@ namespace BusRush.EditorTools
                 SavePopup(BuildPausePopup()),
                 SavePopup(BuildDaily()),
                 SavePopup(BuildBoosterPopup()),
-                SavePopup(BuildOutOfSpace()),
                 SavePopup(BuildFreeCoins())
             };
 
@@ -53,6 +52,7 @@ namespace BusRush.EditorTools
             GameObject splash = Save(BuildSplash(), "Splash");
             Save(BuildRoadMap(), "RoadMap");
             Save(BuildLevelCompleteScreen(), "LevelCompleteScreen");
+            Save(BuildLevelFailedScreen(), "LevelFailedScreen");
 
             AssetDatabase.SaveAssets();
             WireScenes(splash, home, hud, uiManager);

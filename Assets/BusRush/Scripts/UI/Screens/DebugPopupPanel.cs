@@ -41,7 +41,11 @@ namespace BusRush.UI
                 int level = GameSession.Current != null ? GameSession.Current.Level : SaveSystem.Data.level;
                 if (screen != null) screen.Show(level, 3, GameSession.CoinsFor(3));
             });
-            outOfSpaceButton.onClick.AddListener(Open<OutOfSpacePopup>);
+            outOfSpaceButton.onClick.AddListener(() =>
+            {
+                LevelFailedScreen screen = LevelFailedScreen.Find();
+                if (screen != null) screen.Show(GameSession.Current != null && GameSession.Current.ExtraBayOffered);
+            });
             nextLevelButton.onClick.AddListener(() =>
             {
                 if (GameSession.Current != null) GameSession.Current.DebugNextLevel();

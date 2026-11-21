@@ -75,7 +75,6 @@ namespace BusRush.Gameplay
         private void OnDestroy()
         {
             if (Current == this) Current = null;
-            OutOfSpacePopup.BayPurchased -= HandleBayPurchased;
         }
 
         private void Start()
@@ -92,7 +91,6 @@ namespace BusRush.Gameplay
             board.BoardCleared += CheckWin;
             board.Build(LevelData, new RoadExitBehaviour(bays));
             crowd.Build(LevelData.queue);
-            OutOfSpacePopup.BayPurchased += HandleBayPurchased;
             Boosters = gameObject.AddComponent<BoosterController>();
             Boosters.Init(this);
 
@@ -274,8 +272,33 @@ namespace BusRush.Gameplay
             outOfSpaceShown = true;
             IsLost = true;
             OnLevelLost?.Invoke();
-            Toast.Show("All bays are full and nobody in line matches.");
-            if (UIManager.Instance != null) UIManager.Instance.Open<OutOfSpacePopup>();
+            if (UIManager.Instance != null) UIManager.Instance.CloseAll();
+            LevelFailedScreen screen = LevelFailedScreen.Find();
+            if (screen != null) screen.Show(ExtraBayOffered);
+        }
+
+        private readonly ExtraBayOffer extraBayOffer = new ExtraBayOffer();
+
+        public int LockedBayCount
+        {
+            get
+            {
+                int n = 0;
+                foreach (BayState b in bays.Bays) if (b.Kind == BayKind.Locked) n++;
+                return n;
+            }
+        }
+
+        /// <summary>Level Failed offers one free extra bay per level while a locked bay is left.</summary>
+        public bool ExtraBayOffered => extraBayOffer.CanOffer(LockedBayCount);
+
+        /// <summary>Rewarded "Extra bay": opens the next locked bay for this level and play continues.</summary>
+        public bool UseExtraBay()
+        {
+            if (!extraBayOffer.TryUse(LockedBayCount)) return false;
+            HandleBayPurchased();
+            if (GameManager.Instance != null) GameManager.Instance.SetState(GameState.Playing);
+            return true;
         }
 
         private void HandleBayPurchased()

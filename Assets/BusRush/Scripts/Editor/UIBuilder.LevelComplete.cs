@@ -64,11 +64,13 @@ namespace BusRush.EditorTools
         private static void WireGame(GameObject hud, GameObject uiManager)
         {
             Scene game = EditorSceneManager.OpenScene($"{ScenesDir}/Game.unity", OpenSceneMode.Single);
-            RemoveRoots(game, "Canvas", "GameHUD", "UIManager", "LevelCompleteScreen");
+            RemoveRoots(game, "Canvas", "GameHUD", "UIManager", "LevelCompleteScreen", "LevelFailedScreen");
             PrefabUtility.InstantiatePrefab(hud, game);
             PrefabUtility.InstantiatePrefab(uiManager, game);
             GameObject lc = AssetDatabase.LoadAssetAtPath<GameObject>($"{PrefabDir}/LevelCompleteScreen.prefab");
             if (lc != null) ((GameObject)PrefabUtility.InstantiatePrefab(lc, game)).SetActive(false);
+            GameObject failed = AssetDatabase.LoadAssetAtPath<GameObject>($"{PrefabDir}/LevelFailedScreen.prefab");
+            if (failed != null) ((GameObject)PrefabUtility.InstantiatePrefab(failed, game)).SetActive(false);
             EditorSceneManager.SaveScene(game);
         }
 
