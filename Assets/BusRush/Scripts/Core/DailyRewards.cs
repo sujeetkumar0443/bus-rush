@@ -1,108 +1,85 @@
 using System;
 using System.Globalization;
+using BusRush.Gameplay;
 
 namespace BusRush
 {
     /// <summary>
-    /// 7-day daily reward cycle stored in SaveData (dailyStreak + lastDailyClaim).
-    /// A claim unlocks 24 h after the previous one; missing a full day (48 h) restarts the cycle at day 1.
+    /// 7-day daily reward cycle (rewards in GameTuning.DailyRewards), stored in SaveData: dailyStreak = 0-based day the
+    /// next claim pays, lastDailyClaim = date of the last claim. One claim per calendar day (device local date). A
+    /// missed day does not reset the cycle; after day 7 it starts again at day 1. Older saves (UTC timestamps) still load.
     /// </summary>
     public static class DailyRewards
     {
         public const int Days = 7;
+        private const string DateFormat = "yyyy-MM-dd";
 
-        public static readonly TimeSpan Cooldown = TimeSpan.FromHours(24);
-        public static readonly TimeSpan StreakGrace = TimeSpan.FromHours(48);
+        /// <summary>Local clock; replaceable for tests.</summary>
+        public static Func<DateTime> Now = () => DateTime.Now;
 
-        /// <summary>Clock source; replaceable for tests.</summary>
-        public static Func<DateTime> UtcNow = () => DateTime.UtcNow;
+        public static DateTime Today => Now().Date;
 
-        public static bool TryGetLastClaim(out DateTime lastUtc)
+        public static string TodayKey => Today.ToString(DateFormat, CultureInfo.InvariantCulture);
+
+        /// <summary>Local date of the last claim.</summary>
+        public static bool TryGetLastClaim(out DateTime lastDate)
         {
             string raw = SaveSystem.Data.lastDailyClaim;
             if (!string.IsNullOrEmpty(raw) &&
-                DateTime.TryParse(raw, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out lastUtc))
+                DateTime.TryParse(raw, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out DateTime parsed))
             {
-                lastUtc = lastUtc.ToUniversalTime();
+                lastDate = (parsed.Kind == DateTimeKind.Utc ? parsed.ToLocalTime() : parsed).Date;
                 return true;
             }
-            lastUtc = default;
+            lastDate = default;
             return false;
         }
 
-        /// <summary>True if the streak is broken and the next claim restarts at day 1.</summary>
-        public static bool StreakExpired => TryGetLastClaim(out DateTime last) && UtcNow() - last >= StreakGrace;
+        /// <summary>Today is unclaimed (a clock set backwards never unlocks early).</summary>
+        public static bool CanClaim => !TryGetLastClaim(out DateTime last) || Today > last;
 
-        /// <summary>0-based index of the day that the next claim pays out.</summary>
-        public static int NextDayIndex => StreakExpired ? 0 : Math.Clamp(SaveSystem.Data.dailyStreak, 0, Days - 1);
+        /// <summary>0-based index of the day the next claim pays out.</summary>
+        public static int NextDayIndex => Math.Clamp(SaveSystem.Data.dailyStreak, 0, Days - 1);
 
-        public static bool CanClaim
+        /// <summary>Days already claimed in the current cycle (shown as ticked cards).</summary>
+        public static int ClaimedInCycle
         {
             get
             {
-                if (!TryGetLastClaim(out DateTime last))
-                {
-                    return true;
-                }
-                TimeSpan elapsed = UtcNow() - last;
-                // A clock set backwards never unlocks early.
-                return elapsed >= Cooldown;
+                // Right after day 7 the cycle shows complete until tomorrow.
+                if (!CanClaim && NextDayIndex == 0 && TryGetLastClaim(out _)) return Days;
+                return NextDayIndex;
             }
         }
 
-        public static TimeSpan TimeUntilNextClaim
-        {
-            get
-            {
-                if (!TryGetLastClaim(out DateTime last))
-                {
-                    return TimeSpan.Zero;
-                }
-                TimeSpan elapsed = UtcNow() - last;
-                if (elapsed < TimeSpan.Zero)
-                {
-                    return Cooldown;
-                }
-                TimeSpan left = Cooldown - elapsed;
-                return left > TimeSpan.Zero ? left : TimeSpan.Zero;
-            }
-        }
+        public static RewardSpec GetReward(int dayIndex) =>
+            GameTuning.DailyRewards[Math.Clamp(dayIndex, 0, GameTuning.DailyRewards.Length - 1)];
 
-        public static GameConfig.DailyReward GetReward(int dayIndex)
+        /// <summary>
+        /// Claims today's reward times <paramref name="multiplier"/>: grants the boosters, advances the cycle and
+        /// returns the reward. Coins are NOT added here (the popup adds them when the flying coins land).
+        /// </summary>
+        public static bool Claim(int multiplier, out RewardSpec reward)
         {
-            GameConfig config = GameConfig.Instance;
-            if (config != null && config.dailyRewards != null && dayIndex >= 0 && dayIndex < config.dailyRewards.Length)
-            {
-                return config.dailyRewards[dayIndex];
-            }
-            return new GameConfig.DailyReward { coins = 50 };
-        }
-
-        /// <summary>Grants today's reward (times <paramref name="multiplier"/>) and advances the streak.</summary>
-        public static bool Claim(int multiplier = 1)
-        {
-            if (!CanClaim)
-            {
-                return false;
-            }
-
+            reward = default;
+            if (!CanClaim) return false;
             int day = NextDayIndex;
-            GameConfig.DailyReward reward = GetReward(day);
+            reward = GetReward(day).Times(Math.Max(1, multiplier));
+            reward.GrantBoosters();
             SaveData data = SaveSystem.Data;
-
-            data.coins += reward.coins * multiplier;
-            if (reward.boosterPack)
-            {
-                foreach (BoosterType type in (BoosterType[])Enum.GetValues(typeof(BoosterType)))
-                {
-                    data.SetBooster(type, data.GetBooster(type) + multiplier);
-                }
-            }
-
             data.dailyStreak = (day + 1) % Days;
-            data.lastDailyClaim = UtcNow().ToString("o", CultureInfo.InvariantCulture);
+            data.lastDailyClaim = TodayKey;
             SaveSystem.Commit();
             return true;
+        }
+
+        /// <summary>True once per day: the Daily popup should open by itself on Home (today unclaimed, not shown yet).</summary>
+        public static bool ShouldAutoOpen => CanClaim && SaveSystem.Data.dailyAutoShown != TodayKey;
+
+        public static void MarkAutoOpened()
+        {
+            SaveSystem.Data.dailyAutoShown = TodayKey;
+            SaveSystem.Commit();
         }
     }
 }

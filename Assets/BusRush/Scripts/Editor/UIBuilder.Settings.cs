@@ -260,7 +260,10 @@ namespace BusRush.EditorTools
         }
 
         private static V2Shell V2PopupShell<T>(string name, float w, float h, float centreOffsetY, float ribbonLeft, float ribbonWidth,
-                                              string title, float titleSize, float closeLeft, float dimAlpha) where T : Popup
+                                              string title, float titleSize, float closeLeft, float dimAlpha,
+                                              int ribbonTop = 0x7FD3FF, int ribbonBottom = 0x2F86E8, int ribbonEdge = 0x103E86,
+                                              string ribbonMaterial = "Blue", float ribbonY = -30f, float closeY = -18f,
+                                              bool card = true) where T : Popup
         {
             const float b = 4f;
             var root = new GameObject(name, typeof(RectTransform));
@@ -282,17 +285,16 @@ namespace BusRush.EditorTools
             RectTransform safe = SafeArea(root.transform);
             RectTransform panel = Rect(safe, "Panel");
             Place(panel, 0.5f, 0.5f, 0f, centreOffsetY, w, h);
-            RectTransform card = V2Box(panel, "Card", 32f, Color.white, H(0xE3EFFF), null, b, H(0x1B4FA0), 8f);
-            Stretch(card);
+            if (card) Stretch(V2Box(panel, "Card", 32f, Color.white, H(0xE3EFFF), null, b, H(0x1B4FA0), 8f));
 
-            RectTransform ribbon = Box(Rect(panel, "Ribbon"), ribbonLeft, -30f, ribbonWidth, 60f);
+            RectTransform ribbon = Box(Rect(panel, "Ribbon"), ribbonLeft, ribbonY, ribbonWidth, 60f);
             CanvasGroup ribbonGroup = ribbon.gameObject.AddComponent<CanvasGroup>();
-            RectTransform ribbonBox = V2Box(ribbon, "Box", 20f, H(0x7FD3FF), H(0x2F86E8), null, 4f, H(0x103E86), 5f);
+            RectTransform ribbonBox = V2Box(ribbon, "Box", 20f, H(ribbonTop), H(ribbonBottom), null, 4f, H(ribbonEdge), 5f);
             Stretch(ribbonBox);
-            V2Text(ribbonBox, "Title", title, titleSize, true, Color.white, LilitaOutline("Blue", H(0x103E86)));
+            V2Text(ribbonBox, "Title", title, titleSize, true, Color.white, LilitaOutline(ribbonMaterial, H(ribbonEdge)));
 
             RectTransform close = V2Box(panel, "CloseButton", 23f, H(0xFF8A8A), H(0xD12A33), null, 3f, H(0x7A1016), 4f);
-            Box(close, closeLeft, -18f, 46f, 46f);
+            Box(close, closeLeft, closeY, 46f, 46f);
             for (int i = 0; i < 2; i++)
             {
                 Image bar = RoundImg(close, "X" + i, 1.7f, Color.white);

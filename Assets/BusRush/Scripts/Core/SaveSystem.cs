@@ -27,6 +27,13 @@ namespace BusRush
         /// <summary>Daily reward days claimed in the current 7-day cycle (0..6).</summary>
         public int dailyStreak;
 
+        /// <summary>Local date ("yyyy-MM-dd") the Daily popup last opened by itself on Home.</summary>
+        public string dailyAutoShown = string.Empty;
+
+        /// <summary>Local date of the Lucky Spin counter, and spins used on that date.</summary>
+        public string luckySpinDate = string.Empty;
+        public int luckySpinsUsed;
+
         /// <summary>Highest level whose Road Map unlock animation has already played (never replays).</summary>
         public int mapUnlockShown;
 

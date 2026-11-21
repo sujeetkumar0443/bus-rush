@@ -46,26 +46,6 @@ namespace BusRush
         [Min(1)] public int maxLives = 5;
 
         [Serializable]
-        public struct DailyReward
-        {
-            public int coins;
-            [Tooltip("Grants one of each booster.")]
-            public bool boosterPack;
-        }
-
-        [Header("Daily reward (day 1..7)")]
-        public DailyReward[] dailyRewards =
-        {
-            new DailyReward { coins = 50 },
-            new DailyReward { coins = 75 },
-            new DailyReward { coins = 100 },
-            new DailyReward { coins = 150 },
-            new DailyReward { coins = 200 },
-            new DailyReward { coins = 300 },
-            new DailyReward { coins = 0, boosterPack = true }
-        };
-
-        [Serializable]
         public struct Unlock
         {
             public int level;

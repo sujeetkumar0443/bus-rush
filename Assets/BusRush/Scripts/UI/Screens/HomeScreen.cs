@@ -35,7 +35,7 @@ namespace BusRush.UI
             {
                 if (roadMap != null) roadMap.Open();
             });
-            luckySpinButton.onClick.AddListener(() => Toast.Show("Coming soon"));
+            luckySpinButton.onClick.AddListener(() => Open<LuckySpinPopup>());
         }
 
         private void Start()
@@ -43,7 +43,17 @@ namespace BusRush.UI
             // After a win: straight to the map with that level's unlock animation.
             int unlocked = RoadMapScreen.PendingUnlockLevel;
             RoadMapScreen.PendingUnlockLevel = 0;
-            if (unlocked > 0 && roadMap != null) roadMap.Open(unlocked);
+            if (unlocked > 0 && roadMap != null)
+            {
+                roadMap.Open(unlocked);
+                return;
+            }
+            // Once per day, the first time Home shows (after the splash) while today's reward is unclaimed.
+            if (DailyRewards.ShouldAutoOpen && UIManager.Instance != null)
+            {
+                DailyRewards.MarkAutoOpened();
+                Open<DailyRewardPopup>();
+            }
         }
 
         private void OnEnable()

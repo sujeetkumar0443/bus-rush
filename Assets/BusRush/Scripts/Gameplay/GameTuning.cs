@@ -56,6 +56,28 @@ namespace BusRush.Gameplay
         public const int WinCoinsBase = 20;
         public const int WinCoinsPerStar = 5;
 
+        // ------------------------------------------------------------------ daily reward + lucky spin
+
+        /// <summary>Daily reward, day 1..7 (cycle repeats; a missed day does not reset it).</summary>
+        public static readonly RewardSpec[] DailyRewards =
+        {
+            RewardSpec.Coins(20), RewardSpec.Coins(30), RewardSpec.Booster(BoosterType.Arrange), RewardSpec.Coins(50),
+            RewardSpec.Booster(BoosterType.Vip), RewardSpec.Coins(80),
+            new RewardSpec { coins = 200, vip = 1, arrange = 1, shuffle = 1 }
+        };
+
+        public const int LuckySpinsPerDay = 3;
+
+        /// <summary>Wheel segments clockwise from the top (as the design), each 45 degrees.</summary>
+        public static readonly RewardSpec[] LuckySpinSegments =
+        {
+            RewardSpec.Coins(20), RewardSpec.Booster(BoosterType.Vip), RewardSpec.Coins(50), RewardSpec.Booster(BoosterType.Arrange),
+            RewardSpec.Coins(100), RewardSpec.Booster(BoosterType.Shuffle), RewardSpec.Coins(30), RewardSpec.Coins(200)
+        };
+
+        /// <summary>Chance weights per segment (same order), adding up to 100.</summary>
+        public static readonly int[] LuckySpinWeights = { 25, 8, 18, 10, 8, 8, 20, 3 };
+
         /// <summary>Settings popup links (placeholders until the real pages exist).</summary>
         public const string PrivacyPolicyUrl = "https://example.com/busrush/privacy";
         public const string TermsOfUseUrl = "https://example.com/busrush/terms";

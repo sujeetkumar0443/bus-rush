@@ -63,7 +63,9 @@
     <Compile Include="Assets\BusRush\Scripts\Editor\AndroidBuild.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\UIBuilder.LevelFailed.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\BusRushSetup.cs" />
+    <Compile Include="Assets\BusRush\Tests\Editor\DailyAndSpinTests.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\UIScreenshotTool.cs" />
+    <Compile Include="Assets\BusRush\Scripts\Editor\UIBuilder.Daily.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\GameplayBuilder.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\UIBuilder.Home.cs" />
     <Compile Include="Assets\BusRush\Tests\Editor\RoadMapTests.cs" />
@@ -72,6 +74,7 @@
     <Compile Include="Assets\BusRush\Scripts\Editor\UIBuilder.Popups.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\UIBuilder.RoadMap.cs" />
     <Compile Include="Assets\BusRush\Tests\Editor\TrafficScheduleTests.cs" />
+    <Compile Include="Assets\BusRush\Scripts\Editor\DailyScreenshotTool.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\UIBuilder.Settings.cs" />
     <Compile Include="Assets\BusRush\Tests\Editor\ExtraBayOfferTests.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\Step6PlayTest.cs" />

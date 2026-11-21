@@ -1,89 +1,97 @@
-using System;
-using TMPro;
+using System.Collections;
+using BusRush.Gameplay;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace BusRush.UI
 {
-    /// <summary>7-day daily reward. Claim is real (see <see cref="DailyRewards"/>); x2 is an ad placeholder that only logs.</summary>
-    public sealed class DailyRewardPopup : Popup
+    /// <summary>
+    /// Daily Reward (UI v2, DailyReward.dc.html) on the blurred popup base: 6 day cards + the Day 7 chest card,
+    /// "Claim" and "Claim x2" (rewarded video doubles everything). After a claim the card flips with a pop, the popup
+    /// closes, coins fly to the Home coin pill and booster rewards show a toast. Logic: <see cref="DailyRewards"/>.
+    /// </summary>
+    public sealed class DailyRewardPopup : V2Popup
     {
-        [SerializeField] private DayCardView[] cards = new DayCardView[DailyRewards.Days];
-        [SerializeField] private UIButton claimButton;
-        [SerializeField] private TMP_Text claimLabel;
-        [SerializeField] private UIButton doubleButton;
-        [SerializeField] private TMP_Text timerText;
+        [SerializeField] private DailyCardView[] cards = new DailyCardView[DailyRewards.Days];
+        [SerializeField] private Button claimButton;
+        [SerializeField] private Button doubleButton;
+        [SerializeField] private RectTransform claimPulse;
+        [SerializeField] private RectTransform chest;
         [SerializeField] private Sprite coinSprite;
-        [SerializeField] private Sprite packSprite;
 
-        private float nextTimerUpdate;
+        private bool claiming;
+        private float clock;
 
         protected override void Awake()
         {
             base.Awake();
-            claimButton.Button.onClick.AddListener(Claim);
-            doubleButton.Button.onClick.AddListener(() => MonetizationPlaceholder.ShowRewarded("daily_reward_x2"));
+            chestHomeY = chest.anchoredPosition.y;
+            claimButton.onClick.AddListener(() => Claim(1));
+            doubleButton.onClick.AddListener(() =>
+            {
+                if (claiming || !DailyRewards.CanClaim) return;
+                Ads.Service.ShowRewarded("daily_reward_x2", granted =>
+                {
+                    if (this == null) return;
+                    if (granted) Claim(2);
+                    else Toast.Show("Video not available");
+                });
+            });
         }
 
         protected override void OnOpening()
         {
+            base.OnOpening();
+            claiming = false;
+            clock = 0f;
             Refresh();
-        }
-
-        private void Update()
-        {
-            if (!IsOpen || Time.unscaledTime < nextTimerUpdate) return;
-            nextTimerUpdate = Time.unscaledTime + 0.5f;
-            UpdateTimer();
-        }
-
-        private void Claim()
-        {
-            int day = DailyRewards.NextDayIndex;
-            if (!DailyRewards.Claim()) return;
-
-            Haptics.Medium();
-            Refresh();
-            if (day >= 0 && day < cards.Length) cards[day].PlayClaimed();
         }
 
         private void Refresh()
         {
-            int next = DailyRewards.NextDayIndex;
+            int claimed = DailyRewards.ClaimedInCycle;
             bool canClaim = DailyRewards.CanClaim;
-            if (!canClaim && next == 0 && DailyRewards.TryGetLastClaim(out _))
-            {
-                // Day 7 was just claimed: show the finished cycle until the next day unlocks.
-                next = DailyRewards.Days;
-            }
-
             for (int i = 0; i < cards.Length; i++)
             {
-                DayCardView.State state;
-                if (i < next) state = DayCardView.State.Claimed;
-                else if (i == next && canClaim) state = DayCardView.State.Today;
-                else state = DayCardView.State.Upcoming;
-
-                cards[i].Set(i, DailyRewards.GetReward(i), coinSprite, packSprite, state);
+                DailyCardView.State s = i < claimed ? DailyCardView.State.Claimed
+                    : i == claimed && canClaim ? DailyCardView.State.Today : DailyCardView.State.Future;
+                cards[i].SetState(s);
             }
-
-            claimButton.SetInteractable(canClaim);
-            doubleButton.SetInteractable(canClaim);
-            claimLabel.text = canClaim ? "CLAIM" : "CLAIMED";
-            UpdateTimer();
+            claimButton.interactable = doubleButton.interactable = canClaim;
         }
 
-        private void UpdateTimer()
+        private void Claim(int multiplier)
         {
-            if (DailyRewards.CanClaim)
-            {
-                timerText.text = "Your daily gift is ready!";
-                if (!claimButton.Button.interactable) Refresh();
-                return;
-            }
-
-            TimeSpan left = DailyRewards.TimeUntilNextClaim;
-            timerText.text = $"Next gift in {(int)left.TotalHours:00}:{left.Minutes:00}:{left.Seconds:00}";
+            if (claiming) return;
+            int day = DailyRewards.NextDayIndex;
+            if (!DailyRewards.Claim(multiplier, out RewardSpec reward)) return;
+            claiming = true;
+            Haptics.Light();
+            Sfx.Play("daily_claim");
+            cards[day].PlayClaimed();
+            StartCoroutine(Finish(cards[day].transform.position, reward));
         }
+
+        private IEnumerator Finish(Vector3 from, RewardSpec reward)
+        {
+            yield return new WaitForSecondsRealtime(0.55f);
+            Close();
+            UIManager ui = UIManager.Instance;
+            if (reward.coins > 0) CoinFly.Play(ui, ui != null ? ui.transform : null, coinSprite, from, HomeScreen.CoinTarget, reward.coins, 8);
+            if (reward.HasBoosters) Toast.Show(reward.BoosterText());
+        }
+
+        protected override void Update()
+        {
+            base.Update();
+            if (!IsOpen) return;
+            clock += Time.unscaledDeltaTime;
+            float pulse = 1f + 0.05f * (0.5f - 0.5f * Mathf.Cos(clock / 1.2f * Mathf.PI * 2f));           // pulse 1.2 s
+            claimPulse.localScale = Vector3.one * (claimButton.interactable ? pulse : 1f);
+            float floaty = 6f * (0.5f - 0.5f * Mathf.Cos(clock / 2.2f * Mathf.PI * 2f));                   // floaty 2.2 s
+            chest.anchoredPosition = new Vector2(chest.anchoredPosition.x, chestHomeY + floaty);
+        }
+
+        private float chestHomeY;
     }
 }

@@ -32,7 +32,8 @@ namespace BusRush.EditorTools
             {
                 SavePopup(BuildSettingsPopup()),
                 SavePopup(BuildPausePopup()),
-                SavePopup(BuildDaily()),
+                SavePopup(BuildDailyPopup()),
+                SavePopup(BuildLuckySpinPopup()),
                 SavePopup(BuildBoosterPopup()),
                 SavePopup(BuildFreeCoins())
             };

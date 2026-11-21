@@ -57,9 +57,10 @@
     <Compile Include="Assets\BusRush\Scripts\UI\Screens\BayLockOverlay.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Screens\DebugPopupPanel.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\SafeAreaFitter.cs" />
+    <Compile Include="Assets\BusRush\Scripts\UI\Popups\DailyCardView.cs" />
+    <Compile Include="Assets\BusRush\Scripts\Gameplay\RewardSpec.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\VehicleExhaust.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\UiSkew.cs" />
-    <Compile Include="Assets\BusRush\Scripts\UI\Popups\DayCardView.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\PopupCatalog.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Map\MapNodeView.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\GameFx.cs" />
@@ -76,6 +77,7 @@
     <Compile Include="Assets\BusRush\Scripts\Core\GameColor.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\ScreenRef.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\ScreenGrab.cs" />
+    <Compile Include="Assets\BusRush\Scripts\Gameplay\LuckySpin.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\CssCurve.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Popups\DailyRewardPopup.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\UIManager.cs" />
@@ -119,6 +121,7 @@
     <Compile Include="Assets\BusRush\Scripts\Gameplay\BoardGeometry.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\BayState.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\UiFitWidthToText.cs" />
+    <Compile Include="Assets\BusRush\Scripts\UI\Popups\LuckySpinPopup.cs" />
     <Compile Include="Assets\BusRush\Scripts\Core\MonetizationPlaceholder.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\TutorialController.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\LivesText.cs" />
