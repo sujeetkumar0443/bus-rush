@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Bus Rush – Level Failed</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Lilita+One&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#FFFFFF}a:hover{color:#FFF3B0}
+
+@keyframes popIn{0%{transform:scale(.5);opacity:0}70%{transform:scale(1.05);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes drop{0%{transform:translateY(-40px) scale(.8);opacity:0}100%{transform:translateY(0) scale(1);opacity:1}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes rise{0%{transform:translateY(24px);opacity:0}100%{transform:translateY(0);opacity:1}}
+@keyframes shine{0%{transform:translateX(-80px) skewX(-20deg)}60%,100%{transform:translateX(320px) skewX(-20deg)}}
+.fade{animation:fade .25s ease-out both}
+.panel{animation:popIn .45s cubic-bezier(.3,1.5,.5,1) .05s both}
+.ribbon{animation:drop .45s cubic-bezier(.3,1.5,.5,1) .2s both}
+.rays{animation:spin 14s linear infinite}
+.pulse{animation:pulse 1.2s ease-in-out infinite}
+.floaty{animation:floaty 2.2s ease-in-out infinite}
+.rise{animation:rise .45s ease-out both}
+.shine{animation:shine 2.4s ease-in-out 1s infinite}
+
+@keyframes sway{0%,100%{transform:rotate(-3deg)}50%{transform:rotate(3deg)}}
+@keyframes tear{0%{transform:translateY(0);opacity:0}20%{opacity:1}100%{transform:translateY(40px);opacity:0}}
+@keyframes shakeT{0%,100%{transform:translateX(0)}20%{transform:translateX(-6px)}40%{transform:translateX(6px)}60%{transform:translateX(-4px)}80%{transform:translateX(4px)}}
+.sway{animation:sway 2.4s ease-in-out infinite;transform-origin:50% 100%}
+.tear{position:absolute;width:8px;height:12px;border-radius:50% 50% 50% 50%/60% 60% 40% 40%;background:#7FD3FF;animation:tear 1.4s ease-in infinite}
+.shakeT{animation:popIn .45s cubic-bezier(.3,1.5,.5,1) both, shakeT .5s ease-in-out .5s both}
+
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: #14204F; font-family: 'Fredoka', sans-serif">
+  <img src="/_blob/e24944e66a0d0ea962303d02839ab729" alt="" style="position: absolute; left: -10px; top: -10px; width: 410px; height: 864px; filter: blur(4px)">
+  <div class="fade" style="position: absolute; inset: 0; background: rgba(40,12,40,0.70)"></div>
+  <div class="shakeT" style="position: absolute; left: 0; top: 70px; width: 390px; text-align: center; font-family: 'Lilita One', sans-serif; font-size: 46px; line-height: 1; color: #FF5A5F; text-shadow: 0 6px 0 #5A0A10, -3px 0 0 #5A0A10, 3px 0 0 #5A0A10, 0 -3px 0 #5A0A10, -3px -3px 0 #5A0A10, 3px -3px 0 #5A0A10, -3px 3px 0 #5A0A10, 3px 3px 0 #5A0A10">OUT OF SPACE!</div>
+  <div class="rise" style="position: absolute; left: 0; top: 130px; width: 390px; text-align: center; font-size: 18px; font-weight: 600; color: #FFFFFF; animation-delay: .2s">All parking bays are full</div>
+  <div style="position: absolute; left: 115px; top: 176px; width: 160px; height: 292px">
+    <img class="sway" src="/_blob/f14eb7b21aa16c81320a608002365184" alt="Sad passenger" style="width: 160px; height: 290px; display: block">
+    <div class="tear" style="left: 44px; top: 98px; animation-delay: 0s"></div>
+    <div class="tear" style="left: 106px; top: 98px; animation-delay: .7s"></div>
+  </div>
+  <div class="rise" style="position: absolute; left: 45px; top: 494px; width: 300px; height: 74px; border-radius: 22px; background: rgba(255,255,255,0.14); border: 2px solid rgba(255,255,255,0.35); box-sizing: border-box; display: flex; align-items: center; gap: 12px; padding: 0 16px; animation-delay: .5s">
+    <img src="/_blob/339e63c6bf283122a4edc64e7034a540" alt="" style="width: 36px; height: 52px">
+    <div style="font-size: 16px; font-weight: 600; color: #FFFFFF; line-height: 1.25">Get <b style="color: #FFE27A">1 extra bay</b> and keep playing!</div>
+  </div>
+  <a href="HUD.dc.html" class="pulse" style="position: absolute; left: 45px; top: 594px; width: 300px; overflow: hidden; display: flex; align-items: center; justify-content: center; gap: 10px; box-sizing: border-box; height: 74px; border-radius: 26px; background: linear-gradient(180deg, #A4F560 0%, #56D134 50%, #36A920 100%); border: 3px solid #1D5F12; box-shadow: inset 0 -7px 0 rgba(0,0,0,0.13), inset 0 4px 0 rgba(255,255,255,0.5), 0 6px 0 #1D5F12, 0 12px 18px rgba(10,20,50,0.3); font-family: 'Lilita One', sans-serif; font-size: 28px; color: #FFFFFF; text-decoration: none; cursor: pointer; padding: 0 18px; text-shadow: 0 3px 0 #1D5F12, -2px 0 0 #1D5F12, 2px 0 0 #1D5F12, 0 -2px 0 #1D5F12, -2px -2px 0 #1D5F12, 2px -2px 0 #1D5F12, -2px 2px 0 #1D5F12, 2px 2px 0 #1D5F12"><span class="shine" aria-hidden="true" style="position: absolute; left: 0; top: 0; width: 40px; height: 100%; background: rgba(255,255,255,0.35)"></span><img src="/_blob/143520337bca7373482d80831b9c77e7" alt="" style="width: 40px; height: 33px; position: relative"><span style="position: relative">Extra bay</span></a>
+  <a href="HUD.dc.html" style="position: absolute; left: 45px; top: 690px; width: 300px; display: flex; align-items: center; justify-content: center; gap: 10px; box-sizing: border-box; height: 60px; border-radius: 22px; background: linear-gradient(180deg, #FFD36B 0%, #FFA22E 50%, #F07F12 100%); border: 3px solid #8A3E05; box-shadow: inset 0 -7px 0 rgba(0,0,0,0.13), inset 0 4px 0 rgba(255,255,255,0.5), 0 6px 0 #8A3E05, 0 12px 18px rgba(10,20,50,0.3); font-family: 'Lilita One', sans-serif; font-size: 24px; color: #FFFFFF; text-decoration: none; cursor: pointer; padding: 0 18px; text-shadow: 0 3px 0 #8A3E05, -2px 0 0 #8A3E05, 2px 0 0 #8A3E05, 0 -2px 0 #8A3E05, -2px -2px 0 #8A3E05, 2px -2px 0 #8A3E05, -2px 2px 0 #8A3E05, 2px 2px 0 #8A3E05">Retry</a>
+  <a href="Home.dc.html" style="position: absolute; left: 145px; top: 768px; width: 100px; height: 40px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 17px; color: #FFFFFF; text-decoration: underline; text-underline-offset: 4px">Home</a>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

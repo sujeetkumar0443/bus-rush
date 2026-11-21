@@ -84,7 +84,7 @@ namespace BusRush.UI
 
             if (BoosterInventory.Count(type) <= 0)
             {
-                OpenShop();
+                OpenBoosterPopup();
                 return;
             }
 
@@ -97,12 +97,12 @@ namespace BusRush.UI
             controller.Request(type, outcome =>
             {
                 if (outcome == Gameplay.BoosterOutcome.Used) Tween.Scale(this, transform, Vector3.one * 1.15f, Vector3.one, 0.25f, Ease.OutBack);
-                else if (outcome == Gameplay.BoosterOutcome.NoneLeft) OpenShop();
+                else if (outcome == Gameplay.BoosterOutcome.NoneLeft) OpenBoosterPopup();
                 else Shake();
             });
         }
 
-        private void OpenShop()
+        private void OpenBoosterPopup()
         {
             BoosterPopup popup = UIManager.Instance != null ? UIManager.Instance.Open<BoosterPopup>() : null;
             if (popup != null) popup.Select(type);

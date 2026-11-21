@@ -14,12 +14,11 @@ Reference resolution 390×844, Canvas Scaler *Scale With Screen Size*, match 0.5
 
 | Prefab | Scene | Script |
 |---|---|---|
-| `Splash` | Boot | `SplashScreen` (logo, 3D hero vehicles, loading bar, version). `BootLoader` waits for it, then loads Home. |
+| `Splash` | Boot | `SplashController` (UI v2: bg, rays, bus, logo, sparkles, loading bar). Preloads Home, then fades to it. Built by **Tools › Bus Rush › Build Splash (R1)**. |
 | `HomeScreen` | Home | `HomeScreen`, `LevelPathView`, `CoinText`, `LivesText`. Contains the empty `BannerSlot` (320×50). |
 | `GameHUD` | Game | `GameHUD`, `BoosterButtonView` ×3, plus the temporary `DebugPanel (TEMP)` (`DebugOnly` + `DebugPopupPanel`). |
 | `UIManager` | Home, Game | Popup canvas (sort order 100) + `UIManager`, reads `PopupCatalog.asset`. |
 | `SettingsPopup` | – | Settings from Home; Pause (Home / Restart / Resume) in Game. |
-| `ShopPopup` | – | Remove Ads, Booster Pack, 3 coin packs (`[PRICE]` placeholders), Free coins. |
 | `DailyRewardPopup` | – | 7 day cards, Claim (real save logic), x2 (ad placeholder). |
 | `BoosterPopup` | – | VIP / Arrange / Shuffle tabs, owned count, buy with coins. Empty `Icon3D` image slot for the 3D icon. |
 | `LevelCompletePopup` | – | Rays, 3 stars, coin reward, Claim, Next Level, empty `MrecSlot` (300×250). |
@@ -31,7 +30,6 @@ Reference resolution 390×844, Canvas Scaler *Scale With Screen Size*, match 0.5
 using BusRush.UI;
 
 UIManager.Instance.Open<SettingsPopup>();
-UIManager.Instance.Open<ShopPopup>();
 UIManager.Instance.Open<DailyRewardPopup>();
 UIManager.Instance.Open<BoosterPopup>().Select(BoosterType.Arrange);
 UIManager.Instance.Open<OutOfSpacePopup>();
@@ -59,6 +57,6 @@ Useful hooks:
 
 ## Placeholders (nothing real yet)
 
-- `MonetizationPlaceholder.ShowRewarded()` / `.Purchase()` only log – no ads, no IAP, nothing granted.
+- `MonetizationPlaceholder.ShowRewarded()` only logs – no ads integrated yet, nothing granted. There is no shop and no IAP.
 - Lives timer shows `FULL` / `--:--`.
 - `DebugPanel (TEMP)` in the Game HUD is temporary; delete it (or the `DebugOnly` object) when real flow reaches the popups.

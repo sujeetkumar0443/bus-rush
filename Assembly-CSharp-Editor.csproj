@@ -53,12 +53,14 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Assets\BusRush\Scripts\Editor\GameplayBuilder.Step6.cs" />
+    <Compile Include="Assets\BusRush\Scripts\Editor\UIBuilder.Splash.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\GameplayBuilder.Step5b.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\UIBuilder.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\AndroidBuild.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\BusRushSetup.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\UIScreenshotTool.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\GameplayBuilder.cs" />
+    <Compile Include="Assets\BusRush\Scripts\Editor\SplashScreenshotTool.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\UIKit.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\UIBuilder.Popups.cs" />
     <Compile Include="Assets\BusRush\Tests\Editor\TrafficScheduleTests.cs" />
@@ -74,6 +76,7 @@
     <Compile Include="Assets\BusRush\Scripts\Editor\UIArtGenerator.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\GameplayBuilder.Step4.cs" />
     <Compile Include="Assets\BusRush\Tests\Editor\CrowdTests.cs" />
+    <Compile Include="Assets\BusRush\Scripts\Editor\UiV2Importer.cs" />
   </ItemGroup>
   <ItemGroup>
     <Reference Include="UnityEngine">
@@ -1330,6 +1333,10 @@
     </Reference>
     <Reference Include="Unity.PlasticSCM.Editor.Assistant">
       <HintPath>Library\ScriptAssemblies\Unity.PlasticSCM.Editor.Assistant.dll</HintPath>
+      <Private>False</Private>
+    </Reference>
+    <Reference Include="Unity.2D.Sprite.Editor">
+      <HintPath>Library\ScriptAssemblies\Unity.2D.Sprite.Editor.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="UnityEditor.UI.Analytics">

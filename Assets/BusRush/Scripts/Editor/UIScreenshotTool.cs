@@ -96,7 +96,6 @@ namespace BusRush.EditorTools
                 SafeAreaFitter.Simulated = null;
 
                 yield return OpenAndCapture<SettingsPopup>("03_settings");
-                yield return OpenAndCapture<ShopPopup>("04_shop");
 
                 yield return OpenAndCapture<DailyRewardPopup>("05_daily", false);
                 ClickButton(UIManager.Instance.Get<DailyRewardPopup>().transform, "ClaimButton");

@@ -4,12 +4,11 @@ using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
-using UnityEngine.Rendering;
+
 using UnityEngine.SceneManagement;
 using UnityEngine.UI;
 using static BusRush.EditorTools.UIKit;
 using Object = UnityEngine.Object;
-using SplashScreen = BusRush.UI.SplashScreen;
 
 namespace BusRush.EditorTools
 {
@@ -32,7 +31,6 @@ namespace BusRush.EditorTools
             Popup[] popups =
             {
                 SavePopup(BuildSettings()),
-                SavePopup(BuildShop()),
                 SavePopup(BuildDaily()),
                 SavePopup(BuildBoosters()),
                 SavePopup(BuildLevelComplete()),
@@ -129,17 +127,15 @@ namespace BusRush.EditorTools
             LivesText livesText = livesCount.gameObject.AddComponent<LivesText>();
             Wire(livesText, ("timerText", livesTimer));
 
-            // Coins pill (+ opens shop)
+            // Coins pill (coins come from rewards only)
             Chunk coins = Chunky(top, "CoinsPill", Navy, NavyLip, 132f, 44f, -1f, 5f, false, true, false);
             // Anchored to the gear so it never collides with the lives pill on narrow screens.
             Place(coins.Root, 1f, 0.5f, -74f, 0f, 132f, 44f, 1f, 0.5f);
             Image coinIcon = IconImg(coins.Root, "Coin", "coin", 48f);
             Place(coinIcon.rectTransform, 0f, 0.5f, -24f, 2f, 48f, 48f, 0f, 0.5f);
             TextMeshProUGUI coinCount = Label(coins.Face, "Count", "100", 22f, TextStyle.Heading);
-            Stretch(coinCount.rectTransform, 26f, 0f, 36f, 0f);
+            Stretch(coinCount.rectTransform, 26f, 0f, 12f, 0f);
             Wire(coinCount.gameObject.AddComponent<CoinText>(), ("punchTarget", coinIcon.transform));
-            Chunk plus = IconButton(coins.Root, "AddCoinsButton", "plus", Green, GreenLip, 34f, 36f, 20f, 10f);
-            Place(plus.Root, 1f, 0.5f, 10f, 2f, 34f, 36f, 1f, 0.5f);
 
             // Settings gear
             Chunk gear = IconButton(top, "SettingsButton", "gear", Blue, BlueLip, 50f, 54f, 34f, 16f);
@@ -157,10 +153,8 @@ namespace BusRush.EditorTools
                 return b;
             }
 
-            Chunk shop = SideButton("ShopButton", "cart", "SHOP", 0f, 84f);
-            Chunk daily = SideButton("DailyButton", "gift", "DAILY", 0f, 200f);
-            Chunk noAds = SideButton("NoAdsButton", "noads", "NO ADS", 1f, 84f);
-            Chunk boosts = SideButton("BoostsButton", "crown", "BOOSTS", 1f, 200f);
+            Chunk daily = SideButton("DailyButton", "gift", "DAILY", 0f, 84f);
+            Chunk boosts = SideButton("BoostsButton", "crown", "BOOSTS", 1f, 84f);
 
             Image badge = Badge(daily.Root, "Badge", Red, 26f, out RectTransform badgeContent);
             Place(badge.rectTransform, 1f, 1f, 6f, 6f, 26f, 26f, 0.5f, 0.5f);
@@ -206,8 +200,8 @@ namespace BusRush.EditorTools
 
             HomeScreen screen = go.AddComponent<HomeScreen>();
             Wire(screen, ("playButton", play.Button), ("playPulseTarget", play.Root), ("playLevelText", playLevel),
-                ("addCoinsButton", plus.Button), ("settingsButton", gear.Button), ("shopButton", shop.Button),
-                ("dailyButton", daily.Button), ("dailyBadge", badge.gameObject), ("noAdsButton", noAds.Button),
+                ("settingsButton", gear.Button),
+                ("dailyButton", daily.Button), ("dailyBadge", badge.gameObject),
                 ("boostsButton", boosts.Button), ("unlockFill", fillRt), ("unlockText", unlockText),
                 ("unlockProgressText", unlockProgress));
             return go;
@@ -424,123 +418,11 @@ namespace BusRush.EditorTools
                 ("autoDepartLabel", autoDepart.transform.Find("Body/Face/Label").GetComponent<TextMeshProUGUI>()));
         }
 
-        // ------------------------------------------------------------------ Splash
-
-        private static GameObject BuildSplash()
-        {
-            var root = new GameObject("Splash");
-
-            // 3D stage with its own light and ground.
-            var stage = new GameObject("HeroStage").transform;
-            stage.SetParent(root.transform, false);
-            var lightGo = new GameObject("Directional Light");
-            lightGo.transform.SetParent(stage, false);
-            lightGo.transform.rotation = Quaternion.Euler(50f, 140f, 0f);
-            Light light = lightGo.AddComponent<Light>();
-            light.type = LightType.Directional;
-            light.intensity = 1.1f;
-            light.shadows = LightShadows.Soft;
-            light.shadowStrength = 0.5f;
-
-            GameObject ground = GameObject.CreatePrimitive(PrimitiveType.Quad);
-            ground.name = "Ground";
-            Object.DestroyImmediate(ground.GetComponent<Collider>());
-            ground.transform.SetParent(stage, false);
-            // Deep enough that its far edge is above the top of the screen.
-            ground.transform.SetLocalPositionAndRotation(new Vector3(0f, -0.01f, 140f), Quaternion.Euler(90f, 0f, 0f));
-            ground.transform.localScale = new Vector3(240f, 300f, 1f);
-            ground.GetComponent<MeshRenderer>().sharedMaterial = SplashGroundMaterial();
-            ground.GetComponent<MeshRenderer>().shadowCastingMode = ShadowCastingMode.Off;
-
-            // UI
-            var canvasGo = new GameObject("Canvas");
-            canvasGo.transform.SetParent(root.transform, false);
-            RootCanvas(canvasGo, 10);
-            RectTransform safe = SafeArea(canvasGo.transform);
-
-            RectTransform logo = Rect(safe, "Logo");
-            Place(logo, 0.5f, 1f, 0f, -150f, 340f, 220f, 0.5f, 0.5f);
-            logo.localRotation = Quaternion.Euler(0f, 0f, 5f);
-            TextMeshProUGUI bus = Label(logo, "Bus", "BUS", 104f, TextStyle.Heading);
-            Place(bus.rectTransform, 0.5f, 0.5f, -10f, 48f, 330f, 110f);
-            TextMeshProUGUI rush = Label(logo, "Rush", "RUSH", 104f, TextStyle.Heading, Gold);
-            Place(rush.rectTransform, 0.5f, 0.5f, 14f, -46f, 330f, 110f);
-
-            TextMeshProUGUI loading = Label(safe, "LoadingText", "Loading", 20f, TextStyle.Body);
-            Bottom(loading.rectTransform, 112f, 260f, 28f);
-            Image track = Img(safe, "LoadingTrack", Circle, new Color(0.12f, 0.16f, 0.27f, 0.55f));
-            MakePill(track, 26f);
-            Bottom(track.rectTransform, 78f, 260f, 26f);
-            Image fill = Img(track.transform, "Fill", Circle, Green);
-            MakePill(fill, 20f);
-            RectTransform fillRt = fill.rectTransform;
-            fillRt.anchorMin = Vector2.zero;
-            fillRt.anchorMax = new Vector2(0.06f, 1f);
-            fillRt.offsetMin = new Vector2(3f, 3f);
-            fillRt.offsetMax = new Vector2(-3f, -3f);
-            Image fillShine = Img(fill.transform, "Shine", Circle, new Color(1f, 1f, 1f, 0.3f));
-            MakePill(fillShine, 7f);
-            fillShine.rectTransform.anchorMin = new Vector2(0f, 0.55f);
-            fillShine.rectTransform.anchorMax = new Vector2(1f, 0.9f);
-            fillShine.rectTransform.offsetMin = new Vector2(6f, 0f);
-            fillShine.rectTransform.offsetMax = new Vector2(-6f, 0f);
-
-            TextMeshProUGUI version = Label(safe, "Version", "v1.0", 14f, TextStyle.BodyBoldPlain, new Color(1f, 1f, 1f, 0.85f), TextAlignmentOptions.BottomRight);
-            Place(version.rectTransform, 1f, 0f, -12f, 10f, 120f, 20f, 1f, 0f);
-
-            SplashScreen splash = root.AddComponent<SplashScreen>();
-            Wire(splash, ("logo", logo), ("loadingFill", fillRt), ("loadingText", loading), ("versionText", version),
-                ("stage", stage), ("heroes", new object[3]));
-            GameObject Prefab(string n) => AssetDatabase.LoadAssetAtPath<GameObject>($"Assets/BusRush/Prefabs/Vehicles/{n}.prefab");
-            (string prefab, GameColor color, Vector3 pos, float yaw, float from, float delay)[] heroes =
-            {
-                ("Van", GameColor.Blue, new Vector3(-0.4f, 0f, 2.6f), 90f, -9f, 0.35f),
-                ("Bus", GameColor.Yellow, new Vector3(0f, 0f, 0f), 90f, -8f, 0.15f),
-                ("Car", GameColor.Red, new Vector3(0.6f, 0f, -2.5f), -90f, 9f, 0.55f)
-            };
-            for (int i = 0; i < heroes.Length; i++)
-            {
-                string p = $"heroes.Array.data[{i}].";
-                Wire(splash, (p + "prefab", Prefab(heroes[i].prefab)), (p + "color", heroes[i].color), (p + "position", heroes[i].pos),
-                    (p + "yaw", heroes[i].yaw), (p + "enterFromX", heroes[i].from), (p + "delay", heroes[i].delay));
-            }
-            return root;
-        }
-
-        private static Material SplashGroundMaterial()
-        {
-            const string path = "Assets/BusRush/Art/Materials/Splash_Ground.mat";
-            var m = AssetDatabase.LoadAssetAtPath<Material>(path);
-            if (m == null)
-            {
-                m = new Material(Shader.Find("Universal Render Pipeline/Lit")) { name = "Splash_Ground" };
-                AssetDatabase.CreateAsset(m, path);
-            }
-            m.SetColor("_BaseColor", UIArtGenerator.Hex(0x8CCBF7));
-            m.SetFloat("_Smoothness", 0.1f);
-            EditorUtility.SetDirty(m);
-            return m;
-        }
-
         // ------------------------------------------------------------------ scenes
 
         private static void WireScenes(GameObject splash, GameObject home, GameObject hud, GameObject uiManager)
         {
-            // Boot
-            Scene boot = EditorSceneManager.OpenScene($"{ScenesDir}/Boot.unity", OpenSceneMode.Single);
-            RemoveRoots(boot, "Splash");
-            var splashInstance = (GameObject)PrefabUtility.InstantiatePrefab(splash, boot);
-            Camera bootCam = FindRoot(boot, "Main Camera").GetComponent<Camera>();
-            bootCam.orthographic = false;
-            bootCam.fieldOfView = 50f;
-            bootCam.backgroundColor = UIArtGenerator.Hex(0x5FB6F7);
-            // Steep enough that the horizon stays above the screen; far enough to frame all three vehicles.
-            bootCam.transform.SetPositionAndRotation(new Vector3(0f, 6.5f, -11.3f), Quaternion.Euler(30f, 0f, 0f));
-            bootCam.nearClipPlane = 0.3f;
-            bootCam.farClipPlane = 100f;
-            BootLoader loader = FindRoot(boot, "Boot").GetComponent<BootLoader>();
-            Wire(loader, ("splash", splashInstance.GetComponent<SplashScreen>()));
-            EditorSceneManager.SaveScene(boot);
+            WireBoot(splash);
 
             // Home
             Scene homeScene = EditorSceneManager.OpenScene($"{ScenesDir}/Home.unity", OpenSceneMode.Single);

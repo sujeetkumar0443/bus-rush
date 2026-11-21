@@ -44,6 +44,31 @@ namespace BusRush
             fader.StartCoroutine(LoadRoutine(sceneName, fadeDuration));
         }
 
+        /// <summary>
+        /// Finishes a scene preloaded with allowSceneActivation = false (the splash): fade out, activate, fade in.
+        /// Runs on the persistent fader, so the caller's scene may unload meanwhile.
+        /// </summary>
+        public static void ActivatePreloaded(AsyncOperation op, string sceneName, float fadeDuration = DefaultFadeDuration)
+        {
+            if (IsLoading || op == null) return;
+            EnsureTransitionCanvas();
+            fader.StartCoroutine(ActivateRoutine(op, sceneName, fadeDuration));
+        }
+
+        private static IEnumerator ActivateRoutine(AsyncOperation op, string sceneName, float fadeDuration)
+        {
+            IsLoading = true;
+            yield return fader.FadeTo(1f, fadeDuration);
+            op.allowSceneActivation = true;
+            while (!op.isDone)
+            {
+                yield return null;
+            }
+            SceneReady?.Invoke(sceneName);
+            yield return fader.FadeTo(0f, fadeDuration);
+            IsLoading = false;
+        }
+
         private static IEnumerator LoadRoutine(string sceneName, float fadeDuration)
         {
             IsLoading = true;

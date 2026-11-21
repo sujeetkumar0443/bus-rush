@@ -1,0 +1,22 @@
+BUS RUSH SPLASH - layout + animation spec
+Reference canvas 390 x 844 (origin top-left, y down). Scale to screen like the rest of the UI.
+
+LAYERS (back to front)
+1 splash_bg.png      941x1672. Fill the screen (cover), centred.
+2 rays (procedural)  white wedges, alpha 0.16, centre (-40,-40), radius 500, fade out past 50%, rotate 360 deg / 70 s.
+3 bus_shadow.png     x 72..332, y 722..762.
+4 splash_bus.png     1287x1080 -> shown 300x252 at left 52, top 500.
+5 splash_logo.png    553x597 -> shown 277x299 at left 56, top 42.
+6 sparkle.png        sizes 22/16/20/14 at (48,120) (326,96) (330,300) (70,330).
+7 loading bar        bar_frame.png (9-slice, border 26) at left 40, top 774, 310x26.
+                     bar_fill.png (9-slice, border 20) inside with 3 px padding, fills 0->100% with real load progress.
+                     White shine strip 40 px wide, skewed -20 deg, sweeps left->right every 1.6 s (masked to the fill).
+                     "Loading..." Lilita One 17, white, 2 px navy (#1B2A6B) drop shadow, centred at y 808, alpha pulses 1->0.4 every 1.4 s.
+
+TIMELINE
+0.2 s  bus drives in: from offset (-8,-175) scale 0.28 alpha 0 -> (0,0) scale 1 alpha 1, 1.2 s, ease out back (overshoot small). Pivot bottom-centre.
+1.1 s  logo pops: scale 0.2 + y+40 alpha 0 -> 1.08 -> 0.97 -> 1.0 over 0.9 s.
+1.4 s+ bus bounce loop 0.9 s: y 0 -> -10 (rot -1.5) -> -3 (rot 0.8) -> 0. Shadow scales 1 -> 0.86 and alpha 0.45 -> 0.3 in sync.
+2.1 s+ logo breathe loop 3 s: scale 1 -> 1.035, rot 0 -> -1 deg -> back.
+sparkles loop 2.2 s each, staggered 1.8 / 2.4 / 3.0 / 3.5 s: scale 0 -> 1 -> 0 with 90 deg spin.
+Splash stays at least 2.6 s, then fades to Home (0.3 s) when loading is done.

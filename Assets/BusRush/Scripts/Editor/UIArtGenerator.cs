@@ -448,14 +448,6 @@ namespace BusRush.EditorTools
                 {
                     L(Sub(Union(C(0.5f, 0.5f, 0.29f), Teeth(8, 0.335f, 0.075f, 0.075f)), C(0.5f, 0.5f, 0.11f)), white),
                 },
-                ["cart"] = new[]
-                {
-                    L(Union(Seg(0.08f, 0.76f, 0.2f, 0.76f, 0.04f), Seg(0.2f, 0.76f, 0.3f, 0.36f, 0.04f)), navy),
-                    L(Poly(0.03f, 0.22f, 0.66f, 0.86f, 0.66f, 0.77f, 0.38f, 0.31f, 0.38f), blue),
-                    Shine(B(0.54f, 0.6f, 0.24f, 0.025f, 0.02f), 0.5f),
-                    L(C(0.37f, 0.22f, 0.075f), navy),
-                    L(C(0.7f, 0.22f, 0.075f), navy)
-                },
                 ["gift"] = new[]
                 {
                     L(Union(C(0.38f, 0.75f, 0.085f), C(0.62f, 0.75f, 0.085f)), gold),
@@ -463,14 +455,6 @@ namespace BusRush.EditorTools
                     L(B(0.5f, 0.6f, 0.34f, 0.08f, 0.03f), redLight),
                     L(B(0.5f, 0.45f, 0.065f, 0.3f, 0.01f), gold, false),
                     Shine(B(0.32f, 0.62f, 0.1f, 0.025f, 0.02f), 0.5f)
-                },
-                ["noads"] = new[]
-                {
-                    L(B(0.5f, 0.5f, 0.3f, 0.21f, 0.05f), white),
-                    L(Union(Seg(0.3f, 0.39f, 0.37f, 0.61f, 0.032f), Seg(0.37f, 0.61f, 0.44f, 0.39f, 0.032f), Seg(0.33f, 0.47f, 0.41f, 0.47f, 0.028f),
-                            Seg(0.53f, 0.39f, 0.53f, 0.61f, 0.032f), Arc(0.56f, 0.5f, 0.11f, -90f, 90f, 0.032f, 14),
-                            Seg(0.53f, 0.61f, 0.56f, 0.61f, 0.032f), Seg(0.53f, 0.39f, 0.56f, 0.39f, 0.032f)), navy, false),
-                    L(Union(Sub(C(0.5f, 0.5f, 0.42f), C(0.5f, 0.5f, 0.34f)), Rot(B(0.5f, 0.5f, 0.38f, 0.04f, 0.02f), -45f)), red)
                 },
                 ["play"] = new[] { L(Poly(0.06f, 0.34f, 0.24f, 0.34f, 0.76f, 0.78f, 0.5f), white) },
                 ["pause"] = new[] { L(Union(B(0.36f, 0.5f, 0.085f, 0.27f, 0.05f), B(0.64f, 0.5f, 0.085f, 0.27f, 0.05f)), white) },
@@ -559,22 +543,6 @@ namespace BusRush.EditorTools
                     L(Poly(0.02f, 0.36f, 0.38f, 0.36f, 0.62f, 0.56f, 0.5f), blue, false)
                 }
             };
-
-            // Coin piles for shop packs.
-            var pile = new List<Layer>();
-            pile.AddRange(Coin(0.34f, 0.36f, 0.24f, gold, goldDark, goldLight));
-            pile.AddRange(Coin(0.66f, 0.36f, 0.24f, gold, goldDark, goldLight));
-            pile.AddRange(Coin(0.5f, 0.62f, 0.24f, gold, goldDark, goldLight));
-            icons["coins_pile"] = pile.ToArray();
-
-            var heap = new List<Layer>();
-            heap.AddRange(Coin(0.24f, 0.28f, 0.19f, gold, goldDark, goldLight));
-            heap.AddRange(Coin(0.5f, 0.26f, 0.19f, gold, goldDark, goldLight));
-            heap.AddRange(Coin(0.76f, 0.28f, 0.19f, gold, goldDark, goldLight));
-            heap.AddRange(Coin(0.37f, 0.5f, 0.19f, gold, goldDark, goldLight));
-            heap.AddRange(Coin(0.63f, 0.5f, 0.19f, gold, goldDark, goldLight));
-            heap.AddRange(Coin(0.5f, 0.73f, 0.19f, gold, goldDark, goldLight));
-            icons["coins_heap"] = heap.ToArray();
 
             return icons;
         }

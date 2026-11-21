@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Bus Rush – Road Map</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Lilita+One&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#FFFFFF}a:hover{color:#FFF3B0}
+
+@keyframes drive{0.0%{offset-distance:0.00%}1.7%{offset-distance:0.08%}3.3%{offset-distance:0.33%}5.0%{offset-distance:0.73%}6.7%{offset-distance:1.27%}8.3%{offset-distance:1.97%}10.0%{offset-distance:2.80%}11.7%{offset-distance:3.77%}13.3%{offset-distance:4.86%}15.0%{offset-distance:6.08%}16.7%{offset-distance:7.41%}18.3%{offset-distance:8.85%}20.0%{offset-distance:10.40%}21.7%{offset-distance:12.05%}23.3%{offset-distance:13.79%}25.0%{offset-distance:15.62%}26.7%{offset-distance:17.54%}28.3%{offset-distance:19.53%}30.0%{offset-distance:21.60%}31.7%{offset-distance:23.73%}33.3%{offset-distance:25.93%}35.0%{offset-distance:28.17%}36.7%{offset-distance:30.47%}38.3%{offset-distance:32.82%}40.0%{offset-distance:35.20%}41.7%{offset-distance:37.62%}43.3%{offset-distance:40.06%}45.0%{offset-distance:42.53%}46.7%{offset-distance:45.01%}48.3%{offset-distance:47.50%}50.0%{offset-distance:50.00%}51.7%{offset-distance:52.50%}53.3%{offset-distance:54.99%}55.0%{offset-distance:57.48%}56.7%{offset-distance:59.94%}58.3%{offset-distance:62.38%}60.0%{offset-distance:64.80%}61.7%{offset-distance:67.18%}63.3%{offset-distance:69.53%}65.0%{offset-distance:71.83%}66.7%{offset-distance:74.07%}68.3%{offset-distance:76.27%}70.0%{offset-distance:78.40%}71.7%{offset-distance:80.47%}73.3%{offset-distance:82.46%}75.0%{offset-distance:84.38%}76.7%{offset-distance:86.21%}78.3%{offset-distance:87.95%}80.0%{offset-distance:89.60%}81.7%{offset-distance:91.15%}83.3%{offset-distance:92.59%}85.0%{offset-distance:93.92%}86.7%{offset-distance:95.14%}88.3%{offset-distance:96.23%}90.0%{offset-distance:97.20%}91.7%{offset-distance:98.03%}93.3%{offset-distance:98.73%}95.0%{offset-distance:99.28%}96.7%{offset-distance:99.67%}98.3%{offset-distance:99.92%}100.0%{offset-distance:100.00%}}
+@keyframes frames{0.0%{background-position:-560px 0}1.7%{background-position:-560px 0}3.3%{background-position:-560px 0}5.0%{background-position:-560px 0}6.7%{background-position:-560px 0}8.3%{background-position:-560px 0}10.0%{background-position:-560px 0}11.7%{background-position:-560px 0}13.3%{background-position:-560px 0}15.0%{background-position:-560px 0}16.7%{background-position:-560px 0}18.3%{background-position:-560px 0}20.0%{background-position:-560px 0}21.7%{background-position:-560px 0}23.3%{background-position:-560px 0}25.0%{background-position:-560px 0}26.7%{background-position:-560px 0}28.3%{background-position:-560px 0}30.0%{background-position:-560px 0}31.7%{background-position:-560px 0}33.3%{background-position:-560px 0}35.0%{background-position:-560px 0}36.7%{background-position:-560px 0}38.3%{background-position:-560px 0}40.0%{background-position:-560px 0}41.7%{background-position:-560px 0}43.3%{background-position:-560px 0}45.0%{background-position:-672px 0}46.7%{background-position:-672px 0}48.3%{background-position:-672px 0}50.0%{background-position:-672px 0}51.7%{background-position:-672px 0}53.3%{background-position:-672px 0}55.0%{background-position:-672px 0}56.7%{background-position:-672px 0}58.3%{background-position:-672px 0}60.0%{background-position:-784px 0}61.7%{background-position:-784px 0}63.3%{background-position:-784px 0}65.0%{background-position:-784px 0}66.7%{background-position:-784px 0}68.3%{background-position:-784px 0}70.0%{background-position:-784px 0}71.7%{background-position:-784px 0}73.3%{background-position:-896px 0}75.0%{background-position:-896px 0}76.7%{background-position:-896px 0}78.3%{background-position:-896px 0}80.0%{background-position:-896px 0}81.7%{background-position:-896px 0}83.3%{background-position:-896px 0}85.0%{background-position:-896px 0}86.7%{background-position:-896px 0}88.3%{background-position:-896px 0}90.0%{background-position:-896px 0}91.7%{background-position:-896px 0}93.3%{background-position:-896px 0}95.0%{background-position:-896px 0}96.7%{background-position:-896px 0}98.3%{background-position:-896px 0}100.0%{background-position:-896px 0}}@keyframes pdir{0.0%{transform:rotate(-43.5deg)}1.7%{transform:rotate(-43.5deg)}3.3%{transform:rotate(-43.5deg)}5.0%{transform:rotate(-43.5deg)}6.7%{transform:rotate(-43.5deg)}8.3%{transform:rotate(-43.5deg)}10.0%{transform:rotate(-43.5deg)}11.7%{transform:rotate(-43.8deg)}13.3%{transform:rotate(-43.8deg)}15.0%{transform:rotate(-44.3deg)}16.7%{transform:rotate(-44.3deg)}18.3%{transform:rotate(-44.6deg)}20.0%{transform:rotate(-44.6deg)}21.7%{transform:rotate(-44.9deg)}23.3%{transform:rotate(-45.8deg)}25.0%{transform:rotate(-45.8deg)}26.7%{transform:rotate(-46.6deg)}28.3%{transform:rotate(-46.9deg)}30.0%{transform:rotate(-47.2deg)}31.7%{transform:rotate(-47.8deg)}33.3%{transform:rotate(-48.8deg)}35.0%{transform:rotate(-49.0deg)}36.7%{transform:rotate(-49.8deg)}38.3%{transform:rotate(-51.0deg)}40.0%{transform:rotate(-52.7deg)}41.7%{transform:rotate(-53.9deg)}43.3%{transform:rotate(-54.1deg)}45.0%{transform:rotate(-56.7deg)}46.7%{transform:rotate(-57.4deg)}48.3%{transform:rotate(-58.9deg)}50.0%{transform:rotate(-59.9deg)}51.7%{transform:rotate(-60.7deg)}53.3%{transform:rotate(-62.8deg)}55.0%{transform:rotate(-62.8deg)}56.7%{transform:rotate(-65.9deg)}58.3%{transform:rotate(-66.6deg)}60.0%{transform:rotate(-69.3deg)}61.7%{transform:rotate(-71.1deg)}63.3%{transform:rotate(-74.6deg)}65.0%{transform:rotate(-76.1deg)}66.7%{transform:rotate(-77.4deg)}68.3%{transform:rotate(-78.9deg)}70.0%{transform:rotate(-81.5deg)}71.7%{transform:rotate(-81.9deg)}73.3%{transform:rotate(-84.7deg)}75.0%{transform:rotate(-85.3deg)}76.7%{transform:rotate(-87.0deg)}78.3%{transform:rotate(-88.3deg)}80.0%{transform:rotate(-90.0deg)}81.7%{transform:rotate(-91.0deg)}83.3%{transform:rotate(-91.5deg)}85.0%{transform:rotate(-94.0deg)}86.7%{transform:rotate(-94.6deg)}88.3%{transform:rotate(-94.6deg)}90.0%{transform:rotate(-96.0deg)}91.7%{transform:rotate(-96.0deg)}93.3%{transform:rotate(-96.5deg)}95.0%{transform:rotate(-96.5deg)}96.7%{transform:rotate(-96.5deg)}98.3%{transform:rotate(-96.5deg)}100.0%{transform:rotate(-96.5deg)}}
+@keyframes rumble{0%,100%{transform:translateY(0)}50%{transform:translateY(-2px)}}
+@keyframes puff{0%{opacity:.9;transform:translate(0,0) scale(.35)}100%{opacity:0;transform:translate(-44px,0) scale(1.8)}}
+@keyframes march{to{stroke-dashoffset:-38}}
+@keyframes trailOut{0%,85%{opacity:1}100%{opacity:0}}
+@keyframes shake{0%,100%{transform:rotate(0)}20%{transform:rotate(-9deg)}40%{transform:rotate(8deg)}60%{transform:rotate(-6deg)}80%{transform:rotate(5deg)}}
+@keyframes burst{0%{transform:scale(1);opacity:1}100%{transform:scale(1.6);opacity:0}}
+@keyframes greenIn{0%{transform:scale(.4);opacity:0}60%{transform:scale(1.18);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes ray{0%{transform:rotate(var(--a)) translateY(0) scale(.2);opacity:0}20%{opacity:1}100%{transform:rotate(var(--a)) translateY(-78px) scale(1);opacity:0}}
+@keyframes glow{0%,100%{transform:scale(1);opacity:.85}50%{transform:scale(1.25);opacity:.45}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes hop{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes twk{0%,100%{transform:scale(0) rotate(0);opacity:0}50%{transform:scale(1) rotate(90deg);opacity:1}}
+@keyframes popIn{0%{transform:scale(.3);opacity:0}70%{transform:scale(1.08);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes chestB{0%,100%{transform:translateY(0) rotate(0)}50%{transform:translateY(-4px) rotate(-3deg)}}
+.bus{position:absolute;left:0;top:0;width:112px;height:112px;offset-path:path('M 233.1 2215.6 L 233.9 2214.8 L 234.7 2214.0 L 235.5 2213.3 L 236.3 2212.5 L 237.1 2211.7 L 237.9 2210.9 L 238.7 2210.1 L 239.5 2209.3 L 240.3 2208.5 L 241.1 2207.7 L 241.8 2206.9 L 242.6 2206.1 L 243.4 2205.3 L 244.1 2204.4 L 244.9 2203.6 L 245.6 2202.8 L 246.4 2201.9 L 247.1 2201.0 L 247.8 2200.2 L 248.5 2199.3 L 249.2 2198.4 L 249.9 2197.5 L 250.5 2196.6 L 251.2 2195.7 L 251.8 2194.8 L 252.4 2193.8 L 253.0 2192.9 L 253.6 2191.9 L 254.2 2191.0 L 254.8 2190.0 L 255.3 2189.0 L 255.8 2188.0 L 256.4 2187.0 L 256.9 2186.0 L 257.4 2185.0 L 257.8 2184.0 L 258.3 2183.0 L 258.7 2181.9 L 259.1 2180.9 L 259.4 2179.8 L 259.8 2178.7 L 260.1 2177.6 L 260.3 2176.6 L 260.6 2175.5 L 260.8 2174.4 L 261.0 2173.2 L 261.2 2172.1 L 261.3 2171.0 L 261.4 2169.9 L 261.5 2168.8 L 261.6 2167.7 L 261.6 2166.5 L 261.6 2165.4 L 261.6 2164.3 L 261.6 2163.2 L 261.5 2162.1 L 261.4 2160.9 L 261.3 2159.8 L 261.2 2158.7');offset-rotate:0deg;offset-anchor:50% 70%;animation:drive 2.4s linear .6s both}
+.sprite{position:absolute;left:0;top:0;width:112px;height:112px;background-repeat:no-repeat;background-size:3584px 112px;background-image:url('/_blob/3ffda32b06e877623894043f473d5087');animation:frames 2.4s step-end .6s both}
+.pdir{position:absolute;left:56px;top:69px;width:0;height:0;animation:pdir 2.4s linear .6s both}
+.rumble{animation:rumble .22s linear infinite}
+.puff{position:absolute;width:28px;height:28px;border-radius:50%;background:radial-gradient(circle,#FFFFFF 0%,rgba(240,240,245,0.85) 45%,rgba(255,255,255,0) 72%);animation:puff .7s ease-out infinite}
+.trail{animation:trailOut 2.7s linear both}
+.march{animation:march .6s linear infinite}
+.greyDisc{animation:shake .5s ease-in-out 2.6s both, burst .35s ease-out 3.1s both}
+.greenIn{animation:greenIn .5s cubic-bezier(.3,1.5,.5,1) 3.1s both}
+.ray{position:absolute;left:24px;top:2px;width:18px;height:18px;animation:ray .8s ease-out 3.1s both}
+.glowC{animation:greenIn .4s ease-out 3.1s both}
+.glowR{animation:glow 1.6s ease-in-out infinite}
+.spin{animation:spin 6s linear infinite}
+.hop{animation:hop 1s ease-in-out 3.7s infinite}
+.twk{position:absolute;animation:twk 1.8s ease-in-out infinite}
+.playIn{animation:popIn .45s cubic-bezier(.3,1.5,.5,1) 3.6s both, pulse 1.2s ease-in-out 4.2s infinite}
+.chestB{animation:chestB 2s ease-in-out infinite}
+
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: #7CCB4E; font-family: 'Fredoka', sans-serif">
+  <sc-if value="{{run}}" hint-placeholder-val="{{true}}">
+  <div style="position: absolute; left: 0; top: 0; width: 390px; height: 844px; overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column-reverse">
+  <div style="position: relative; flex-shrink: 0; width: 390px; height: 2537px">
+    <img src="/_blob/6c59dd531612dc36e46c4ed75384765e" alt="" style="position: absolute; left: -43px; top: 0; width: 476px; height: 846.8px; display: block">
+    <img src="/_blob/9e5718a93a812b256ab05bf32eb10690" alt="" style="position: absolute; left: -43px; top: 845.8px; width: 476px; height: 846.8px; display: block">
+    <img src="/_blob/60c13cbfad1377450dd031741d3dc4c9" alt="" style="position: absolute; left: -43px; top: 1691.5px; width: 476px; height: 845.8px; display: block">
+    <svg aria-hidden="true" width="390" height="2537" viewBox="0 0 390 2537" style="position: absolute; left: 0; top: 0">
+      <path d="M 194.9 0.0 L 193.8 6.1 L 192.6 12.1 L 191.3 18.2 L 190.1 24.3 L 189.4 30.4 L 189.5 36.4 L 190.3 42.5 L 191.8 48.6 L 194.3 54.6 L 197.6 60.7 L 201.6 66.8 L 206.2 72.8 L 211.4 78.9 L 216.9 85.0 L 222.5 91.1 L 228.0 97.1 L 233.2 103.2 L 237.9 109.3 L 242.0 115.3 L 245.5 121.4 L 248.2 127.5 L 250.0 133.5 L 251.0 139.6 L 251.2 145.7 L 250.5 151.8 L 248.9 157.8 L 246.1 163.9 L 242.3 170.0 L 237.3 176.0 L 231.0 182.1 L 223.1 188.2 L 214.2 194.2 L 204.4 200.3 L 194.0 206.4 L 183.1 212.5 L 172.3 218.5 L 161.6 224.6 L 151.0 230.7 L 140.8 236.7 L 131.1 242.8 L 122.3 248.9 L 114.4 254.9 L 107.6 261.0 L 102.3 267.1 L 98.2 273.2 L 95.3 279.2 L 93.6 285.3 L 92.8 291.4 L 93.1 297.4 L 94.4 303.5 L 96.7 309.6 L 100.0 315.6 L 104.3 321.7 L 109.7 327.8 L 115.8 333.9 L 122.8 339.9 L 130.5 346.0 L 138.8 352.1 L 147.6 358.1 L 156.7 364.2 L 166.0 370.3 L 175.3 376.3 L 184.5 382.4 L 193.4 388.5 L 202.0 394.6 L 210.3 400.6 L 218.1 406.7 L 225.4 412.8 L 232.2 418.8 L 238.3 424.9 L 243.8 431.0 L 248.5 437.0 L 252.4 443.1 L 255.7 449.2 L 258.3 455.3 L 260.1 461.3 L 261.2 467.4 L 261.6 473.5 L 261.3 479.5 L 260.2 485.6 L 258.2 491.7 L 255.2 497.8 L 251.4 503.8 L 246.8 509.9 L 241.3 516.0 L 235.2 522.0 L 228.7 528.1 L 222.0 534.2 L 215.2 540.2 L 208.3 546.3 L 201.5 552.4 L 194.7 558.5 L 187.9 564.5 L 181.0 570.6 L 174.3 576.7 L 167.8 582.7 L 161.6 588.8 L 155.9 594.9 L 150.7 600.9 L 145.9 607.0 L 141.8 613.1 L 138.1 619.2 L 134.8 625.2 L 132.0 631.3 L 129.7 637.4 L 127.8 643.4 L 126.3 649.5 L 125.3 655.6 L 124.8 661.6 L 124.8 667.7 L 125.1 673.8 L 126.0 679.9 L 127.3 685.9 L 129.1 692.0 L 131.4 698.1 L 134.1 704.1 L 137.4 710.2 L 141.1 716.3 L 145.2 722.3 L 149.5 728.4 L 154.0 734.5 L 158.6 740.6 L 163.2 746.6 L 167.8 752.7 L 172.2 758.8 L 176.4 764.8 L 180.2 770.9 L 183.8 777.0 L 186.8 783.0 L 189.6 789.1 L 192.0 795.2 L 193.9 801.3 L 195.5 807.3 L 196.9 813.4 L 198.1 819.5 L 198.9 825.5 L 199.3 831.6 L 199.6 837.7 L 199.7 843.7 L 194.9 845.8 L 193.8 851.8 L 192.6 857.9 L 191.3 864.0 L 190.1 870.1 L 189.4 876.1 L 189.5 882.2 L 190.3 888.3 L 191.8 894.3 L 194.3 900.4 L 197.6 906.5 L 201.6 912.5 L 206.2 918.6 L 211.4 924.7 L 216.9 930.8 L 222.5 936.8 L 228.0 942.9 L 233.2 949.0 L 237.9 955.0 L 242.0 961.1 L 245.5 967.2 L 248.2 973.2 L 250.0 979.3 L 251.0 985.4 L 251.2 991.5 L 250.5 997.5 L 248.9 1003.6 L 246.1 1009.7 L 242.3 1015.7 L 237.3 1021.8 L 231.0 1027.9 L 223.1 1033.9 L 214.2 1040.0 L 204.4 1046.1 L 194.0 1052.2 L 183.1 1058.2 L 172.3 1064.3 L 161.6 1070.4 L 151.0 1076.4 L 140.8 1082.5 L 131.1 1088.6 L 122.3 1094.6 L 114.4 1100.7 L 107.6 1106.8 L 102.3 1112.9 L 98.2 1118.9 L 95.3 1125.0 L 93.6 1131.1 L 92.8 1137.1 L 93.1 1143.2 L 94.4 1149.3 L 96.7 1155.3 L 100.0 1161.4 L 104.3 1167.5 L 109.7 1173.6 L 115.8 1179.6 L 122.8 1185.7 L 130.5 1191.8 L 138.8 1197.8 L 147.6 1203.9 L 156.7 1210.0 L 166.0 1216.1 L 175.3 1222.1 L 184.5 1228.2 L 193.4 1234.3 L 202.0 1240.3 L 210.3 1246.4 L 218.1 1252.5 L 225.4 1258.5 L 232.2 1264.6 L 238.3 1270.7 L 243.8 1276.8 L 248.5 1282.8 L 252.4 1288.9 L 255.7 1295.0 L 258.3 1301.0 L 260.1 1307.1 L 261.2 1313.2 L 261.6 1319.2 L 261.3 1325.3 L 260.2 1331.4 L 258.2 1337.5 L 255.2 1343.5 L 251.4 1349.6 L 246.8 1355.7 L 241.3 1361.7 L 235.2 1367.8 L 228.7 1373.9 L 222.0 1379.9 L 215.2 1386.0 L 208.3 1392.1 L 201.5 1398.2 L 194.7 1404.2 L 187.9 1410.3 L 181.0 1416.4 L 174.3 1422.4 L 167.8 1428.5 L 161.6 1434.6 L 155.9 1440.6 L 150.7 1446.7 L 145.9 1452.8 L 141.8 1458.9 L 138.1 1464.9 L 134.8 1471.0 L 132.0 1477.1 L 129.7 1483.1 L 127.8 1489.2 L 126.3 1495.3 L 125.3 1501.3 L 124.8 1507.4 L 124.8 1513.5 L 125.1 1519.6 L 126.0 1525.6 L 127.3 1531.7 L 129.1 1537.8 L 131.4 1543.8 L 134.1 1549.9 L 137.4 1556.0 L 141.1 1562.0 L 145.2 1568.1 L 149.5 1574.2 L 154.0 1580.3 L 158.6 1586.3 L 163.2 1592.4 L 167.8 1598.5 L 172.2 1604.5 L 176.4 1610.6 L 180.2 1616.7 L 183.8 1622.8 L 186.8 1628.8 L 189.6 1634.9 L 192.0 1641.0 L 193.9 1647.0 L 195.5 1653.1 L 196.9 1659.2 L 198.1 1665.2 L 198.9 1671.3 L 199.3 1677.4 L 199.6 1683.5 L 199.7 1689.5 L 194.9 1691.5 L 193.8 1697.6 L 192.6 1703.7 L 191.3 1709.8 L 190.1 1715.8 L 189.4 1721.9 L 189.5 1728.0 L 190.3 1734.0 L 191.8 1740.1 L 194.3 1746.2 L 197.6 1752.2 L 201.6 1758.3 L 206.2 1764.4 L 211.4 1770.5 L 216.9 1776.5 L 222.5 1782.6 L 228.0 1788.7 L 233.2 1794.7 L 237.9 1800.8 L 242.0 1806.9 L 245.5 1812.9 L 248.2 1819.0 L 250.0 1825.1 L 251.0 1831.2 L 251.2 1837.2 L 250.5 1843.3 L 248.9 1849.4 L 246.1 1855.4 L 242.3 1861.5 L 237.3 1867.6 L 231.0 1873.6 L 223.1 1879.7 L 214.2 1885.8 L 204.4 1891.9 L 194.0 1897.9 L 183.1 1904.0 L 172.3 1910.1 L 161.6 1916.1 L 151.0 1922.2 L 140.8 1928.3 L 131.1 1934.4 L 122.3 1940.4 L 114.4 1946.5 L 107.6 1952.6 L 102.3 1958.6 L 98.2 1964.7 L 95.3 1970.8 L 93.6 1976.8 L 92.8 1982.9 L 93.1 1989.0 L 94.4 1995.1 L 96.7 2001.1 L 100.0 2007.2 L 104.3 2013.3 L 109.7 2019.3 L 115.8 2025.4 L 122.8 2031.5 L 130.5 2037.5 L 138.8 2043.6 L 147.6 2049.7 L 156.7 2055.8 L 166.0 2061.8 L 175.3 2067.9 L 184.5 2074.0 L 193.4 2080.0 L 202.0 2086.1 L 210.3 2092.2 L 218.1 2098.2 L 225.4 2104.3 L 232.2 2110.4 L 238.3 2116.5 L 243.8 2122.5 L 248.5 2128.6 L 252.4 2134.7 L 255.7 2140.7 L 258.3 2146.8 L 260.1 2152.9 L 261.2 2158.9 L 261.6 2165.0 L 261.3 2171.1 L 260.2 2177.2 L 258.2 2183.2 L 255.2 2189.3 L 251.4 2195.4 L 246.8 2201.4 L 241.3 2207.5 L 235.2 2213.6 L 228.7 2219.6 L 222.0 2225.7 L 215.2 2231.8 L 208.3 2237.9 L 201.5 2243.9 L 194.7 2250.0 L 187.9 2256.1 L 181.0 2262.1 L 174.3 2268.2 L 167.8 2274.3 L 161.6 2280.3 L 155.9 2286.4 L 150.7 2292.5 L 145.9 2298.6 L 141.8 2304.6 L 138.1 2310.7 L 134.8 2316.8 L 132.0 2322.8 L 129.7 2328.9 L 127.8 2335.0 L 126.3 2341.0 L 125.3 2347.1 L 124.8 2353.2 L 124.8 2359.3 L 125.1 2365.3 L 126.0 2371.4 L 127.3 2377.5 L 129.1 2383.5 L 131.4 2389.6 L 134.1 2395.7 L 137.4 2401.8 L 141.1 2407.8 L 145.2 2413.9 L 149.5 2420.0 L 154.0 2426.0 L 158.6 2432.1 L 163.2 2438.2 L 167.8 2444.2 L 172.2 2450.3 L 176.4 2456.4 L 180.2 2462.5 L 183.8 2468.5 L 186.8 2474.6 L 189.6 2480.7 L 192.0 2486.7 L 193.9 2492.8 L 195.5 2498.9 L 196.9 2504.9 L 198.1 2511.0 L 198.9 2517.1 L 199.3 2523.2 L 199.6 2529.2 L 199.7 2535.3" fill="none" stroke="#FFFFFF" stroke-width="4" stroke-linecap="round" stroke-dasharray="11 13" opacity="0.9"></path>
+      <g class="trail">
+        <path d="M 230.1 2218.3 L 232.7 2216.0 L 235.2 2213.6 L 237.6 2211.2 L 240.1 2208.7 L 242.5 2206.2 L 244.8 2203.7 L 247.1 2201.0 L 249.2 2198.3 L 251.3 2195.5 L 253.2 2192.6 L 255.0 2189.7 L 256.6 2186.6 L 258.1 2183.5 L 259.3 2180.2 L 260.3 2176.9 L 261.0 2173.5 L 261.4 2170.1 L 261.6 2166.6 L 261.6 2163.2 L 261.3 2159.7 L 260.8 2156.3 L 260.1 2152.9 L 259.2 2149.6 L 258.1 2146.3 L 256.7 2143.1 L 255.3 2140.0 L 253.7 2136.9 L 252.0 2133.9 L 250.1 2131.0" fill="none" stroke="#B8FF4A" stroke-width="12" stroke-linecap="round" opacity="0.35"></path>
+        <path class="march" d="M 230.1 2218.3 L 232.7 2216.0 L 235.2 2213.6 L 237.6 2211.2 L 240.1 2208.7 L 242.5 2206.2 L 244.8 2203.7 L 247.1 2201.0 L 249.2 2198.3 L 251.3 2195.5 L 253.2 2192.6 L 255.0 2189.7 L 256.6 2186.6 L 258.1 2183.5 L 259.3 2180.2 L 260.3 2176.9 L 261.0 2173.5 L 261.4 2170.1 L 261.6 2166.6 L 261.6 2163.2 L 261.3 2159.7 L 260.8 2156.3 L 260.1 2152.9 L 259.2 2149.6 L 258.1 2146.3 L 256.7 2143.1 L 255.3 2140.0 L 253.7 2136.9 L 252.0 2133.9 L 250.1 2131.0" fill="none" stroke="#E6FF9A" stroke-width="6" stroke-linecap="round" stroke-dasharray="12 7"></path>
+      </g>
+    </svg>
+    <div aria-label="Level 1, 3 stars" style="position: absolute; left: 147.3px; top: 2432.6px; width: 66px; height: 54px">
+      <img src="/_blob/39a4bc2fb310c181255e08e9edff48e8" alt="" style="position: absolute; left: 0; top: 0; width: 66px; height: 54px; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.3))">
+      <div style="position: absolute; left: 0; top: 2px; width: 66px; height: 36px; display: flex; align-items: center; justify-content: center; font-family: 'Lilita One', sans-serif; font-size: 23px; color: #FFFFFF; text-shadow: 0 3px 0 #8A4A05, -2px 0 0 #8A4A05, 2px 0 0 #8A4A05, 0 -2px 0 #8A4A05, -2px -2px 0 #8A4A05, 2px -2px 0 #8A4A05, -2px 2px 0 #8A4A05, 2px 2px 0 #8A4A05">1</div>
+    </div><div style="position: absolute; left: 150.3px; top: 2474.6px; width: 60px; height: 22px">
+      <img src="/_blob/2792467b225512e20d53e04947dc8259" alt="" style="position: absolute; left: 0; top: 2px; width: 19px; height: 19px">
+      <img src="/_blob/2792467b225512e20d53e04947dc8259" alt="" style="position: absolute; left: 19px; top: 4px; width: 21px; height: 21px">
+      <img src="/_blob/2792467b225512e20d53e04947dc8259" alt="" style="position: absolute; left: 41px; top: 2px; width: 19px; height: 19px">
+    </div><div aria-label="Level 2, 3 stars" style="position: absolute; left: 94.4px; top: 2347.9px; width: 66px; height: 54px">
+      <img src="/_blob/39a4bc2fb310c181255e08e9edff48e8" alt="" style="position: absolute; left: 0; top: 0; width: 66px; height: 54px; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.3))">
+      <div style="position: absolute; left: 0; top: 2px; width: 66px; height: 36px; display: flex; align-items: center; justify-content: center; font-family: 'Lilita One', sans-serif; font-size: 23px; color: #FFFFFF; text-shadow: 0 3px 0 #8A4A05, -2px 0 0 #8A4A05, 2px 0 0 #8A4A05, 0 -2px 0 #8A4A05, -2px -2px 0 #8A4A05, 2px -2px 0 #8A4A05, -2px 2px 0 #8A4A05, 2px 2px 0 #8A4A05">2</div>
+    </div><div style="position: absolute; left: 97.4px; top: 2389.9px; width: 60px; height: 22px">
+      <img src="/_blob/2792467b225512e20d53e04947dc8259" alt="" style="position: absolute; left: 0; top: 2px; width: 19px; height: 19px">
+      <img src="/_blob/2792467b225512e20d53e04947dc8259" alt="" style="position: absolute; left: 19px; top: 4px; width: 21px; height: 21px">
+      <img src="/_blob/2792467b225512e20d53e04947dc8259" alt="" style="position: absolute; left: 41px; top: 2px; width: 19px; height: 19px">
+    </div><div aria-label="Level 3, 3 stars" style="position: absolute; left: 123.1px; top: 2256.2px; width: 66px; height: 54px">
+      <img src="/_blob/39a4bc2fb310c181255e08e9edff48e8" alt="" style="position: absolute; left: 0; top: 0; width: 66px; height: 54px; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.3))">
+      <div style="position: absolute; left: 0; top: 2px; width: 66px; height: 36px; display: flex; align-items: center; justify-content: center; font-family: 'Lilita One', sans-serif; font-size: 23px; color: #FFFFFF; text-shadow: 0 3px 0 #8A4A05, -2px 0 0 #8A4A05, 2px 0 0 #8A4A05, 0 -2px 0 #8A4A05, -2px -2px 0 #8A4A05, 2px -2px 0 #8A4A05, -2px 2px 0 #8A4A05, 2px 2px 0 #8A4A05">3</div>
+    </div><div style="position: absolute; left: 126.1px; top: 2298.2px; width: 60px; height: 22px">
+      <img src="/_blob/2792467b225512e20d53e04947dc8259" alt="" style="position: absolute; left: 0; top: 2px; width: 19px; height: 19px">
+      <img src="/_blob/2792467b225512e20d53e04947dc8259" alt="" style="position: absolute; left: 19px; top: 4px; width: 21px; height: 21px">
+      <img src="/_blob/2792467b225512e20d53e04947dc8259" alt="" style="position: absolute; left: 41px; top: 2px; width: 19px; height: 19px">
+    </div><div aria-label="Level 4, 3 stars" style="position: absolute; left: 197.1px; top: 2188.3px; width: 66px; height: 54px">
+      <img src="/_blob/39a4bc2fb310c181255e08e9edff48e8" alt="" style="position: absolute; left: 0; top: 0; width: 66px; height: 54px; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.3))">
+      <div style="position: absolute; left: 0; top: 2px; width: 66px; height: 36px; display: flex; align-items: center; justify-content: center; font-family: 'Lilita One', sans-serif; font-size: 23px; color: #FFFFFF; text-shadow: 0 3px 0 #8A4A05, -2px 0 0 #8A4A05, 2px 0 0 #8A4A05, 0 -2px 0 #8A4A05, -2px -2px 0 #8A4A05, 2px -2px 0 #8A4A05, -2px 2px 0 #8A4A05, 2px 2px 0 #8A4A05">4</div>
+    </div><div style="position: absolute; left: 200.1px; top: 2230.3px; width: 60px; height: 22px">
+      <img src="/_blob/2792467b225512e20d53e04947dc8259" alt="" style="position: absolute; left: 0; top: 2px; width: 19px; height: 19px">
+      <img src="/_blob/2792467b225512e20d53e04947dc8259" alt="" style="position: absolute; left: 19px; top: 4px; width: 21px; height: 21px">
+      <img src="/_blob/2792467b225512e20d53e04947dc8259" alt="" style="position: absolute; left: 41px; top: 2px; width: 19px; height: 19px">
+    </div><a href="HUD.dc.html" aria-label="Play level 5" style="position: absolute; left: 217.1px; top: 2101.0px; width: 66px; height: 54px; display: block">
+      <div class="playIn" style="position: absolute; left: -17px; top: -58px; width: 100px; height: 40px; z-index: 3">
+        <div class="hop" style="height: 40px; border-radius: 14px; background: linear-gradient(180deg, #A4F560 0%, #45C02A 100%); border: 3px solid #1D5F12; box-sizing: border-box; box-shadow: 0 4px 0 #1D5F12; display: flex; align-items: center; justify-content: center; font-family: 'Lilita One', sans-serif; font-size: 20px; color: #FFFFFF; text-shadow: 0 2px 0 #1D5F12, -2px 0 0 #1D5F12, 2px 0 0 #1D5F12, 0 -2px 0 #1D5F12, -2px -2px 0 #1D5F12, 2px -2px 0 #1D5F12, -2px 2px 0 #1D5F12, 2px 2px 0 #1D5F12">PLAY</div>
+        <div style="position: absolute; left: 41px; top: 34px; width: 0; height: 0; border-left: 9px solid transparent; border-right: 9px solid transparent; border-top: 11px solid #1D5F12"></div>
+      </div>
+      <div class="glowC" style="position: absolute; left: -34px; top: -44px; width: 134px; height: 134px">
+        <div class="spin" style="position: absolute; inset: 0; border-radius: 50%; background: repeating-conic-gradient(rgba(255,255,170,0.55) 0deg 8deg, rgba(255,255,170,0) 8deg 24deg); -webkit-mask-image: radial-gradient(circle, #000 18%, transparent 62%); mask-image: radial-gradient(circle, #000 18%, transparent 62%)"></div>
+        <div class="glowR" style="position: absolute; left: 27px; top: 30px; width: 80px; height: 66px; border-radius: 50%; background: radial-gradient(ellipse, rgba(210,255,120,0.95) 0%, rgba(150,240,70,0) 70%)"></div>
+      </div>
+      <div class="hop" style="position: absolute; inset: 0">
+        <div class="greenIn" style="position: absolute; left: -3px; top: -3px; width: 72px; height: 58px">
+          <img src="/_blob/e6de1b983ff25bf3cc2d8f1d0458b22e" alt="" style="width: 72px; height: 58px; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.3))">
+          <div style="position: absolute; left: 0; top: 2px; width: 72px; height: 38px; display: flex; align-items: center; justify-content: center; font-family: 'Lilita One', sans-serif; font-size: 26px; color: #FFFFFF; text-shadow: 0 3px 0 #1D5F12, -2px 0 0 #1D5F12, 2px 0 0 #1D5F12, 0 -2px 0 #1D5F12, -2px -2px 0 #1D5F12, 2px -2px 0 #1D5F12, -2px 2px 0 #1D5F12, 2px 2px 0 #1D5F12">5</div>
+        </div>
+      </div>
+      <img class="greyDisc" src="/_blob/247c2abfe343ae7ea8468d42e60584b5" alt="" style="position: absolute; left: 0; top: 0; width: 66px; height: 54px; transform-origin: 50% 60%">
+      <img class="ray" src="/_blob/2792467b225512e20d53e04947dc8259" alt="" style="--a: 0deg"><img class="ray" src="/_blob/2792467b225512e20d53e04947dc8259" alt="" style="--a: 40deg"><img class="ray" src="/_blob/2792467b225512e20d53e04947dc8259" alt="" style="--a: 80deg"><img class="ray" src="/_blob/2792467b225512e20d53e04947dc8259" alt="" style="--a: 120deg"><img class="ray" src="/_blob/2792467b225512e20d53e04947dc8259" alt="" style="--a: 160deg"><img class="ray" src="/_blob/2792467b225512e20d53e04947dc8259" alt="" style="--a: 200deg"><img class="ray" src="/_blob/2792467b225512e20d53e04947dc8259" alt="" style="--a: 240deg"><img class="ray" src="/_blob/2792467b225512e20d53e04947dc8259" alt="" style="--a: 280deg"><img class="ray" src="/_blob/2792467b225512e20d53e04947dc8259" alt="" style="--a: 320deg">
+      <svg class="twk" aria-hidden="true" width="16" height="16" viewBox="0 0 24 24" style="left: -14px; top: -10px; animation-delay: 3.4s"><path d="M12 0 L14.5 9.5 L24 12 L14.5 14.5 L12 24 L9.5 14.5 L0 12 L9.5 9.5 Z" fill="#FFFFFF"></path></svg>
+      <svg class="twk" aria-hidden="true" width="12" height="12" viewBox="0 0 24 24" style="left: 66px; top: -6px; animation-delay: 3.9s"><path d="M12 0 L14.5 9.5 L24 12 L14.5 14.5 L12 24 L9.5 14.5 L0 12 L9.5 9.5 Z" fill="#FFF6B0"></path></svg>
+      <svg class="twk" aria-hidden="true" width="14" height="14" viewBox="0 0 24 24" style="left: 58px; top: 44px; animation-delay: 4.3s"><path d="M12 0 L14.5 9.5 L24 12 L14.5 14.5 L12 24 L9.5 14.5 L0 12 L9.5 9.5 Z" fill="#FFFFFF"></path></svg>
+    </a><div aria-label="Level 6, locked" style="position: absolute; left: 142.6px; top: 2038.8px; width: 62px; height: 50px">
+      <img src="/_blob/247c2abfe343ae7ea8468d42e60584b5" alt="" style="width: 62px; height: 50px; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.3))">
+    </div><div aria-label="Level 7, locked" style="position: absolute; left: 66.5px; top: 1974.8px; width: 62px; height: 50px">
+      <img src="/_blob/247c2abfe343ae7ea8468d42e60584b5" alt="" style="width: 62px; height: 50px; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.3))">
+    </div><div aria-label="Level 8, locked" style="position: absolute; left: 113.2px; top: 1898.2px; width: 62px; height: 50px">
+      <img src="/_blob/247c2abfe343ae7ea8468d42e60584b5" alt="" style="width: 62px; height: 50px; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.3))">
+    </div><div aria-label="Level 9, locked" style="position: absolute; left: 199.1px; top: 1846.3px; width: 62px; height: 50px">
+      <img src="/_blob/247c2abfe343ae7ea8468d42e60584b5" alt="" style="width: 62px; height: 50px; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.3))">
+    </div><div aria-label="Level 10, boss, locked" style="position: absolute; left: 194.2px; top: 1747.8px; width: 66px; height: 64px">
+      <img src="/_blob/3c5f77ba279b8af0d982cf174f7fd592" alt="" style="position: absolute; left: 0; top: 0; width: 66px; height: 64px; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.3))">
+      <div style="position: absolute; left: 13px; top: 56px; width: 40px; height: 20px; border-radius: 10px; background: #7A1016; border: 2px solid #FFFFFF; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-family: 'Lilita One', sans-serif; font-size: 12px; color: #FFFFFF">10</div>
+    </div><div aria-label="Level 11, locked" style="position: absolute; left: 149.3px; top: 1588.9px; width: 62px; height: 50px">
+      <img src="/_blob/247c2abfe343ae7ea8468d42e60584b5" alt="" style="width: 62px; height: 50px; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.3))">
+    </div><div aria-label="Level 12, locked" style="position: absolute; left: 96.4px; top: 1504.2px; width: 62px; height: 50px">
+      <img src="/_blob/247c2abfe343ae7ea8468d42e60584b5" alt="" style="width: 62px; height: 50px; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.3))">
+    </div><div aria-label="Level 13, locked" style="position: absolute; left: 125.1px; top: 1412.4px; width: 62px; height: 50px">
+      <img src="/_blob/247c2abfe343ae7ea8468d42e60584b5" alt="" style="width: 62px; height: 50px; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.3))">
+    </div><div aria-label="Level 14, locked" style="position: absolute; left: 199.1px; top: 1344.6px; width: 62px; height: 50px">
+      <img src="/_blob/247c2abfe343ae7ea8468d42e60584b5" alt="" style="width: 62px; height: 50px; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.3))">
+    </div><div aria-label="Level 15, locked" style="position: absolute; left: 219.1px; top: 1257.2px; width: 62px; height: 50px">
+      <img src="/_blob/247c2abfe343ae7ea8468d42e60584b5" alt="" style="width: 62px; height: 50px; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.3))">
+    </div><div aria-label="Level 16, locked" style="position: absolute; left: 142.6px; top: 1193.0px; width: 62px; height: 50px">
+      <img src="/_blob/247c2abfe343ae7ea8468d42e60584b5" alt="" style="width: 62px; height: 50px; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.3))">
+    </div><div aria-label="Level 17, locked" style="position: absolute; left: 66.5px; top: 1129.0px; width: 62px; height: 50px">
+      <img src="/_blob/247c2abfe343ae7ea8468d42e60584b5" alt="" style="width: 62px; height: 50px; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.3))">
+    </div><div aria-label="Level 18, locked" style="position: absolute; left: 113.2px; top: 1052.4px; width: 62px; height: 50px">
+      <img src="/_blob/247c2abfe343ae7ea8468d42e60584b5" alt="" style="width: 62px; height: 50px; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.3))">
+    </div><div aria-label="Level 19, locked" style="position: absolute; left: 199.1px; top: 1000.6px; width: 62px; height: 50px">
+      <img src="/_blob/247c2abfe343ae7ea8468d42e60584b5" alt="" style="width: 62px; height: 50px; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.3))">
+    </div><div aria-label="Level 20, boss, locked" style="position: absolute; left: 194.2px; top: 902.0px; width: 66px; height: 64px">
+      <img src="/_blob/3c5f77ba279b8af0d982cf174f7fd592" alt="" style="position: absolute; left: 0; top: 0; width: 66px; height: 64px; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.3))">
+      <div style="position: absolute; left: 13px; top: 56px; width: 40px; height: 20px; border-radius: 10px; background: #7A1016; border: 2px solid #FFFFFF; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-family: 'Lilita One', sans-serif; font-size: 12px; color: #FFFFFF">20</div>
+    </div><div aria-label="Level 21, locked" style="position: absolute; left: 149.3px; top: 743.1px; width: 62px; height: 50px">
+      <img src="/_blob/247c2abfe343ae7ea8468d42e60584b5" alt="" style="width: 62px; height: 50px; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.3))">
+    </div><div aria-label="Level 22, locked" style="position: absolute; left: 96.4px; top: 658.4px; width: 62px; height: 50px">
+      <img src="/_blob/247c2abfe343ae7ea8468d42e60584b5" alt="" style="width: 62px; height: 50px; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.3))">
+    </div><div aria-label="Level 23, locked" style="position: absolute; left: 125.1px; top: 566.6px; width: 62px; height: 50px">
+      <img src="/_blob/247c2abfe343ae7ea8468d42e60584b5" alt="" style="width: 62px; height: 50px; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.3))">
+    </div><div aria-label="Level 24, locked" style="position: absolute; left: 199.1px; top: 498.8px; width: 62px; height: 50px">
+      <img src="/_blob/247c2abfe343ae7ea8468d42e60584b5" alt="" style="width: 62px; height: 50px; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.3))">
+    </div><div aria-label="Level 25, locked" style="position: absolute; left: 219.1px; top: 411.4px; width: 62px; height: 50px">
+      <img src="/_blob/247c2abfe343ae7ea8468d42e60584b5" alt="" style="width: 62px; height: 50px; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.3))">
+    </div><div aria-label="Level 26, locked" style="position: absolute; left: 142.6px; top: 347.3px; width: 62px; height: 50px">
+      <img src="/_blob/247c2abfe343ae7ea8468d42e60584b5" alt="" style="width: 62px; height: 50px; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.3))">
+    </div><div aria-label="Level 27, locked" style="position: absolute; left: 66.5px; top: 283.3px; width: 62px; height: 50px">
+      <img src="/_blob/247c2abfe343ae7ea8468d42e60584b5" alt="" style="width: 62px; height: 50px; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.3))">
+    </div><div aria-label="Level 28, locked" style="position: absolute; left: 113.2px; top: 206.7px; width: 62px; height: 50px">
+      <img src="/_blob/247c2abfe343ae7ea8468d42e60584b5" alt="" style="width: 62px; height: 50px; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.3))">
+    </div><div aria-label="Level 29, locked" style="position: absolute; left: 199.1px; top: 154.8px; width: 62px; height: 50px">
+      <img src="/_blob/247c2abfe343ae7ea8468d42e60584b5" alt="" style="width: 62px; height: 50px; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.3))">
+    </div><div aria-label="Level 30, boss, locked" style="position: absolute; left: 194.2px; top: 56.2px; width: 66px; height: 64px">
+      <img src="/_blob/3c5f77ba279b8af0d982cf174f7fd592" alt="" style="position: absolute; left: 0; top: 0; width: 66px; height: 64px; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.3))">
+      <div style="position: absolute; left: 13px; top: 56px; width: 40px; height: 20px; border-radius: 10px; background: #7A1016; border: 2px solid #FFFFFF; box-sizing: border-box; display: flex; align-items: center; justify-content: center; font-family: 'Lilita One', sans-serif; font-size: 12px; color: #FFFFFF">30</div>
+    </div>
+    <a href="GiftChest.dc.html" aria-label="Open gift chest" style="text-decoration: none; position: absolute; left: 146.1px; top: 2091.0px; width: 60px; display: flex; flex-direction: column; align-items: center">
+      <img class="chestB" src="/_blob/31123b59aa18059273ef4a5a598ca2f8" alt="Gift chest" style="width: 56px; height: 48px; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.35))">
+      <div style="margin-top: -4px; padding: 1px 8px; border-radius: 10px; background: #7A4A16; border: 2px solid #FFE27A; font-family: 'Lilita One', sans-serif; font-size: 11px; color: #FFE27A">Gift</div>
+    </a><a href="GiftChest.dc.html" aria-label="Open gift chest" style="text-decoration: none; position: absolute; left: 146.1px; top: 1245.2px; width: 60px; display: flex; flex-direction: column; align-items: center">
+      <img class="chestB" src="/_blob/31123b59aa18059273ef4a5a598ca2f8" alt="Gift chest" style="width: 56px; height: 48px; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.35))">
+      <div style="margin-top: -4px; padding: 1px 8px; border-radius: 10px; background: #7A4A16; border: 2px solid #FFE27A; font-family: 'Lilita One', sans-serif; font-size: 11px; color: #FFE27A">Gift</div>
+    </a><a href="GiftChest.dc.html" aria-label="Open gift chest" style="text-decoration: none; position: absolute; left: 146.1px; top: 399.4px; width: 60px; display: flex; flex-direction: column; align-items: center">
+      <img class="chestB" src="/_blob/31123b59aa18059273ef4a5a598ca2f8" alt="Gift chest" style="width: 56px; height: 48px; filter: drop-shadow(0 4px 3px rgba(0,0,0,0.35))">
+      <div style="margin-top: -4px; padding: 1px 8px; border-radius: 10px; background: #7A4A16; border: 2px solid #FFE27A; font-family: 'Lilita One', sans-serif; font-size: 11px; color: #FFE27A">Gift</div>
+    </a>
+    <div style="position: absolute; left: -85px; top: 1656px; width: 150px; height: 80px; border-radius: 50%; background: radial-gradient(ellipse, #FFFFFF 0%, rgba(255,255,255,0.92) 45%, rgba(255,255,255,0) 72%)"></div><div style="position: absolute; left: -15px; top: 1643px; width: 170px; height: 86px; border-radius: 50%; background: radial-gradient(ellipse, #FFFFFF 0%, rgba(255,255,255,0.92) 45%, rgba(255,255,255,0) 72%)"></div><div style="position: absolute; left: 70px; top: 1658px; width: 180px; height: 84px; border-radius: 50%; background: radial-gradient(ellipse, #FFFFFF 0%, rgba(255,255,255,0.92) 45%, rgba(255,255,255,0) 72%)"></div><div style="position: absolute; left: 165px; top: 1644px; width: 170px; height: 88px; border-radius: 50%; background: radial-gradient(ellipse, #FFFFFF 0%, rgba(255,255,255,0.92) 45%, rgba(255,255,255,0) 72%)"></div><div style="position: absolute; left: 250px; top: 1658px; width: 160px; height: 80px; border-radius: 50%; background: radial-gradient(ellipse, #FFFFFF 0%, rgba(255,255,255,0.92) 45%, rgba(255,255,255,0) 72%)"></div><div style="position: absolute; left: 325px; top: 1653px; width: 150px; height: 78px; border-radius: 50%; background: radial-gradient(ellipse, #FFFFFF 0%, rgba(255,255,255,0.92) 45%, rgba(255,255,255,0) 72%)"></div>
+    <a href="WorldUnlocked.dc.html" aria-label="Snow world" style="text-decoration: none; position: absolute; left: 85px; top: 1662px; width: 220px; height: 60px; border-radius: 20px; background: linear-gradient(180deg, #7FD3FF 0%, #2F86E8 100%); border: 4px solid #103E86; box-sizing: border-box; box-shadow: 0 5px 0 #103E86, 0 10px 18px rgba(0,0,0,0.25); display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.05">
+      <div style="font-family: 'Lilita One', sans-serif; font-size: 11px; color: #D6F0FF; letter-spacing: 1px">WORLD 2</div>
+      <div style="font-family: 'Lilita One', sans-serif; font-size: 22px; color: #FFFFFF; text-shadow: 0 2px 0 #103E86, -2px 0 0 #103E86, 2px 0 0 #103E86, 0 -2px 0 #103E86, -2px -2px 0 #103E86, 2px -2px 0 #103E86, -2px 2px 0 #103E86, 2px 2px 0 #103E86">Snow</div>
+      <div style="position: absolute; right: -16px; top: -16px; display: flex; align-items: center; gap: 2px; padding: 3px 8px 3px 4px; border-radius: 12px; background: #24345E; border: 2px solid #FFFFFF; font-family: 'Lilita One', sans-serif; font-size: 12px; color: #FFFFFF"><img src="/_blob/9d51fe3b01640ac123c3095245de96fa" alt="" style="width: 16px; height: 20px">Level 11</div>
+    </a>
+    <div style="position: absolute; left: -85px; top: 810px; width: 150px; height: 80px; border-radius: 50%; background: radial-gradient(ellipse, #FFFFFF 0%, rgba(255,255,255,0.92) 45%, rgba(255,255,255,0) 72%)"></div><div style="position: absolute; left: -15px; top: 797px; width: 170px; height: 86px; border-radius: 50%; background: radial-gradient(ellipse, #FFFFFF 0%, rgba(255,255,255,0.92) 45%, rgba(255,255,255,0) 72%)"></div><div style="position: absolute; left: 70px; top: 812px; width: 180px; height: 84px; border-radius: 50%; background: radial-gradient(ellipse, #FFFFFF 0%, rgba(255,255,255,0.92) 45%, rgba(255,255,255,0) 72%)"></div><div style="position: absolute; left: 165px; top: 798px; width: 170px; height: 88px; border-radius: 50%; background: radial-gradient(ellipse, #FFFFFF 0%, rgba(255,255,255,0.92) 45%, rgba(255,255,255,0) 72%)"></div><div style="position: absolute; left: 250px; top: 812px; width: 160px; height: 80px; border-radius: 50%; background: radial-gradient(ellipse, #FFFFFF 0%, rgba(255,255,255,0.92) 45%, rgba(255,255,255,0) 72%)"></div><div style="position: absolute; left: 325px; top: 807px; width: 150px; height: 78px; border-radius: 50%; background: radial-gradient(ellipse, #FFFFFF 0%, rgba(255,255,255,0.92) 45%, rgba(255,255,255,0) 72%)"></div>
+    <a href="WorldUnlocked.dc.html" aria-label="Beach world" style="text-decoration: none; position: absolute; left: 85px; top: 816px; width: 220px; height: 60px; border-radius: 20px; background: linear-gradient(180deg, #7FD3FF 0%, #2F86E8 100%); border: 4px solid #103E86; box-sizing: border-box; box-shadow: 0 5px 0 #103E86, 0 10px 18px rgba(0,0,0,0.25); display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1.05">
+      <div style="font-family: 'Lilita One', sans-serif; font-size: 11px; color: #D6F0FF; letter-spacing: 1px">WORLD 3</div>
+      <div style="font-family: 'Lilita One', sans-serif; font-size: 22px; color: #FFFFFF; text-shadow: 0 2px 0 #103E86, -2px 0 0 #103E86, 2px 0 0 #103E86, 0 -2px 0 #103E86, -2px -2px 0 #103E86, 2px -2px 0 #103E86, -2px 2px 0 #103E86, 2px 2px 0 #103E86">Beach</div>
+      <div style="position: absolute; right: -16px; top: -16px; display: flex; align-items: center; gap: 2px; padding: 3px 8px 3px 4px; border-radius: 12px; background: #24345E; border: 2px solid #FFFFFF; font-family: 'Lilita One', sans-serif; font-size: 12px; color: #FFFFFF"><img src="/_blob/9d51fe3b01640ac123c3095245de96fa" alt="" style="width: 16px; height: 20px">Level 21</div>
+    </a>
+    <div class="bus" aria-label="Your bus">
+      <div class="pdir">
+        <div class="puff" style="left: -52px; top: -14px; animation-delay: 0s"></div>
+        <div class="puff" style="left: -52px; top: -14px; animation-delay: .23s"></div>
+        <div class="puff" style="left: -52px; top: -14px; animation-delay: .46s"></div>
+      </div>
+      <div class="rumble" style="position: absolute; left: 0; top: 0; width: 112px; height: 112px">
+        <div class="sprite" style="background-position: -560px 0"></div>
+      </div>
+    </div>
+  </div>
+  </div>
+  </sc-if>
+  <div style="position: absolute; left: 0; top: 0; width: 390px; height: 92px; background: linear-gradient(180deg, rgba(20,60,140,0.55) 0%, rgba(20,60,140,0) 100%); pointer-events: none"></div>
+  <a href="Home.dc.html" aria-label="Home" style="position: absolute; left: 12px; top: 14px; width: 56px; height: 56px; border-radius: 20px; background: radial-gradient(circle at 50% 35%, #FFFFFF 0%, #DDF1FF 100%); border: 3px solid #1B4FA0; box-sizing: border-box; box-shadow: 0 4px 0 #1B4FA0; display: flex; align-items: center; justify-content: center"><img src="/_blob/4d08216608f9c7b01798c60bfbe7551f" alt="" style="width: 40px; height: 42px"></a>
+  <div style="position: absolute; left: 90px; top: 18px; width: 150px; height: 48px; border-radius: 16px; background: linear-gradient(180deg, #7FD3FF 0%, #2F86E8 100%); border: 3px solid #103E86; box-sizing: border-box; box-shadow: 0 4px 0 #103E86; display: flex; flex-direction: column; align-items: center; justify-content: center; line-height: 1">
+    <div style="font-family: 'Lilita One', sans-serif; font-size: 11px; color: #D6F0FF; letter-spacing: 1px">WORLD 1</div>
+    <div style="font-family: 'Lilita One', sans-serif; font-size: 22px; color: #FFFFFF; text-shadow: 0 2px 0 #103E86, -2px 0 0 #103E86, 2px 0 0 #103E86, 0 -2px 0 #103E86, -2px -2px 0 #103E86, 2px -2px 0 #103E86, -2px 2px 0 #103E86, 2px 2px 0 #103E86">City</div>
+  </div>
+  <div style="position: absolute; left: 258px; top: 22px; display: flex; align-items: center; height: 40px">
+    <img src="/_blob/566c3ef6800bd5c2d34f89d24992f46f" alt="" style="width: 44px; height: 47px; position: relative; z-index: 2; filter: drop-shadow(0 3px 2px rgba(0,0,0,0.25))">
+    <div style="margin-left: -22px; height: 34px; padding: 0 16px 0 28px; display: flex; align-items: center; border-radius: 18px; background: linear-gradient(180deg, #FFFFFF 0%, #FFF1CF 100%); border: 3px solid #7A4A16; box-sizing: border-box; font-family: 'Lilita One', sans-serif; font-size: 20px; color: #5A3410; position: relative">320</div>
+    
+  </div>
+  <button type="button" onClick="{{replay}}" style="position: absolute; right: 12px; top: 84px; height: 32px; padding: 0 12px; border-radius: 14px; border: 2px solid #FFFFFF; background: rgba(16,40,90,0.6); color: #FFFFFF; font-family: 'Fredoka', sans-serif; font-weight: 600; font-size: 13px; cursor: pointer">Replay unlock</button>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    const run = !(this.state && this.state.run === false);
+    return {
+      run: run,
+      replay: () => { this.setState({ run: false }); setTimeout(() => this.setState({ run: true }), 60); }
+    };
+  }
+}
+</script>
+</body>
+</html>

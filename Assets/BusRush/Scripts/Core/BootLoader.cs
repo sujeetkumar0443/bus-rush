@@ -4,10 +4,10 @@ using UnityEngine;
 
 namespace BusRush
 {
-    /// <summary>Boot scene entry point: creates persistent systems, plays the splash, then loads Home.</summary>
+    /// <summary>Boot scene entry point: creates persistent systems, then the splash preloads and opens Home.</summary>
     public sealed class BootLoader : MonoBehaviour
     {
-        [SerializeField] private SplashScreen splash;
+        [SerializeField] private SplashController splash;
         [Tooltip("Used only when there is no splash screen.")]
         [SerializeField, Min(0f)] private float delay = 0.5f;
 
@@ -22,12 +22,10 @@ namespace BusRush
         {
             if (splash != null)
             {
-                yield return splash.Play();
+                yield return splash.Play(); // loads Home itself
+                yield break;
             }
-            else
-            {
-                yield return new WaitForSecondsRealtime(delay);
-            }
+            yield return new WaitForSecondsRealtime(delay);
             SceneLoader.LoadHome();
         }
     }

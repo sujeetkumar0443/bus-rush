@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Bus Rush – Gameplay HUD</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Lilita+One&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#FFFFFF}a:hover{color:#FFF3B0}
+
+@keyframes popIn{0%{transform:scale(.5);opacity:0}70%{transform:scale(1.05);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes drop{0%{transform:translateY(-40px) scale(.8);opacity:0}100%{transform:translateY(0) scale(1);opacity:1}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.05)}}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-6px)}}
+@keyframes rise{0%{transform:translateY(24px);opacity:0}100%{transform:translateY(0);opacity:1}}
+@keyframes shine{0%{transform:translateX(-80px) skewX(-20deg)}60%,100%{transform:translateX(320px) skewX(-20deg)}}
+.fade{animation:fade .25s ease-out both}
+.panel{animation:popIn .45s cubic-bezier(.3,1.5,.5,1) .05s both}
+.ribbon{animation:drop .45s cubic-bezier(.3,1.5,.5,1) .2s both}
+.rays{animation:spin 14s linear infinite}
+.pulse{animation:pulse 1.2s ease-in-out infinite}
+.floaty{animation:floaty 2.2s ease-in-out infinite}
+.rise{animation:rise .45s ease-out both}
+.shine{animation:shine 2.4s ease-in-out 1s infinite}
+
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: #14204F; font-family: 'Fredoka', sans-serif">
+  <img src="/_blob/e24944e66a0d0ea962303d02839ab729" alt="" style="position: absolute; left: 0; top: 0; width: 390px; height: 844px">
+  <div style="position: absolute; left: 0; top: 0; width: 390px; height: 96px; background: linear-gradient(180deg, rgba(20,40,90,0.45) 0%, rgba(20,40,90,0) 100%)"></div>
+  <a href="Pause.dc.html" aria-label="Pause" style="position: absolute; left: 12px; top: 14px; width: 56px; height: 56px; border-radius: 20px; background: linear-gradient(180deg, #7FD3FF 0%, #2F86E8 100%); border: 3px solid #103E86; box-sizing: border-box; box-shadow: 0 4px 0 #103E86; display: flex; align-items: center; justify-content: center; gap: 6px">
+    <span style="width: 8px; height: 22px; border-radius: 3px; background: #FFFFFF"></span><span style="width: 8px; height: 22px; border-radius: 3px; background: #FFFFFF"></span>
+  </a>
+  <div style="position: absolute; left: 95px; top: 12px; width: 200px; height: 66px; border-radius: 20px; background: linear-gradient(180deg, #7FD3FF 0%, #2F86E8 100%); border: 3px solid #103E86; box-sizing: border-box; box-shadow: 0 4px 0 #103E86; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 4px">
+    <div style="font-family: 'Lilita One', sans-serif; font-size: 22px; line-height: 1; color: #FFFFFF; text-shadow: 0 2px 0 #103E86, -2px 0 0 #103E86, 2px 0 0 #103E86, 0 -2px 0 #103E86, -2px -2px 0 #103E86, 2px -2px 0 #103E86, -2px 2px 0 #103E86, 2px 2px 0 #103E86">Level 5</div>
+    <div style="position: relative; width: 160px; height: 18px; border-radius: 9px; background: #0E2E66; border: 2px solid #FFFFFF; box-sizing: border-box; overflow: hidden">
+      <div style="width: 60%; height: 100%; border-radius: 7px; background: linear-gradient(180deg, #A4F560 0%, #45C02A 100%)"></div>
+      <div style="position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; font-family: 'Fredoka', sans-serif; font-weight: 700; font-size: 11px; color: #FFFFFF">24 / 40</div>
+    </div>
+  </div>
+  <div style="position: absolute; left: 300px; top: 24px; display: flex; align-items: center; height: 40px">
+    <img src="/_blob/566c3ef6800bd5c2d34f89d24992f46f" alt="" style="width: 44px; height: 47px; position: relative; z-index: 2; filter: drop-shadow(0 3px 2px rgba(0,0,0,0.25))">
+    <div style="margin-left: -22px; height: 34px; padding: 0 10px 0 26px; display: flex; align-items: center; border-radius: 18px; background: linear-gradient(180deg, #FFFFFF 0%, #FFF1CF 100%); border: 3px solid #7A4A16; box-sizing: border-box; font-family: 'Lilita One', sans-serif; font-size: 20px; color: #5A3410; position: relative">320</div>
+    
+  </div>
+  <button type="button" aria-label="Unlock bay for 200 coins" style="position: absolute; left: 247px; top: 292px; width: 40px; height: 66px; border: 0; background: none; padding: 0; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px">
+      <img src="/_blob/9d51fe3b01640ac123c3095245de96fa" alt="" style="width: 26px; height: 32px">
+      <span style="display: flex; align-items: center; gap: 1px; padding: 1px 5px 1px 2px; border-radius: 10px; background: #24345E; border: 2px solid #FFE27A; font-family: 'Lilita One', sans-serif; font-size: 11px; color: #FFE27A"><img src="/_blob/566c3ef6800bd5c2d34f89d24992f46f" alt="" style="width: 14px; height: 15px">200</span>
+    </button><button type="button" aria-label="Unlock bay for 200 coins" style="position: absolute; left: 292px; top: 292px; width: 40px; height: 66px; border: 0; background: none; padding: 0; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px">
+      <img src="/_blob/9d51fe3b01640ac123c3095245de96fa" alt="" style="width: 26px; height: 32px">
+      <span style="display: flex; align-items: center; gap: 1px; padding: 1px 5px 1px 2px; border-radius: 10px; background: #24345E; border: 2px solid #FFE27A; font-family: 'Lilita One', sans-serif; font-size: 11px; color: #FFE27A"><img src="/_blob/566c3ef6800bd5c2d34f89d24992f46f" alt="" style="width: 14px; height: 15px">200</span>
+    </button><button type="button" aria-label="Unlock bay for 200 coins" style="position: absolute; left: 337px; top: 292px; width: 40px; height: 66px; border: 0; background: none; padding: 0; cursor: pointer; display: flex; flex-direction: column; align-items: center; gap: 4px">
+      <img src="/_blob/9d51fe3b01640ac123c3095245de96fa" alt="" style="width: 26px; height: 32px">
+      <span style="display: flex; align-items: center; gap: 1px; padding: 1px 5px 1px 2px; border-radius: 10px; background: #24345E; border: 2px solid #FFE27A; font-family: 'Lilita One', sans-serif; font-size: 11px; color: #FFE27A"><img src="/_blob/566c3ef6800bd5c2d34f89d24992f46f" alt="" style="width: 14px; height: 15px">200</span>
+    </button>
+  <button type="button" aria-label="VIP" style="position: absolute; left: 28px; top: 748px; width: 96px; height: 84px; border-radius: 24px; background: linear-gradient(180deg, #FFFFFF 0%, #DDF1FF 100%); border: 3px solid #1B4FA0; box-shadow: 0 5px 0 #1B4FA0, 0 10px 14px rgba(0,0,0,0.25); box-sizing: border-box; display: flex; align-items: center; justify-content: center; padding: 0 0 14px; cursor: pointer; text-decoration: none">
+      <img src="/_blob/013045dc4110705efd8803882abdc0a8" alt="" style="width: 54px; height: 47px; "><div style="position: absolute; left: 0; bottom: 4px; width: 100%; text-align: center; font-family: 'Lilita One', sans-serif; font-size: 13px; color: #1B4FA0">VIP</div><div style="position: absolute; right: -8px; top: -10px; min-width: 28px; height: 28px; padding: 0 6px; box-sizing: border-box; border-radius: 14px; background: #FF3B47; border: 3px solid #FFFFFF; display: flex; align-items: center; justify-content: center; font-family: 'Lilita One', sans-serif; font-size: 15px; color: #FFFFFF">2</div>
+    </button>
+  <button type="button" aria-label="Arrange" style="position: absolute; left: 147px; top: 748px; width: 96px; height: 84px; border-radius: 24px; background: linear-gradient(180deg, #FFFFFF 0%, #DDF1FF 100%); border: 3px solid #1B4FA0; box-shadow: 0 5px 0 #1B4FA0, 0 10px 14px rgba(0,0,0,0.25); box-sizing: border-box; display: flex; align-items: center; justify-content: center; padding: 0 0 14px; cursor: pointer; text-decoration: none">
+      <img src="/_blob/2f83890ec1b110212fbc6bf46f756f66" alt="" style="width: 46px; height: 55px; "><div style="position: absolute; left: 0; bottom: 4px; width: 100%; text-align: center; font-family: 'Lilita One', sans-serif; font-size: 13px; color: #1B4FA0">Arrange</div><div style="position: absolute; right: -8px; top: -10px; min-width: 28px; height: 28px; padding: 0 6px; box-sizing: border-box; border-radius: 14px; background: #FF3B47; border: 3px solid #FFFFFF; display: flex; align-items: center; justify-content: center; font-family: 'Lilita One', sans-serif; font-size: 15px; color: #FFFFFF">1</div>
+    </button>
+  <div style="position: absolute; right: 10px; top: 84px; display: flex; gap: 6px"><a href="LevelComplete.dc.html" style="padding: 4px 10px; border-radius: 12px; border: 2px dashed #FFFFFF; background: rgba(16,40,90,0.55); color: #FFFFFF; font-size: 12px; font-weight: 700; text-decoration: none">Demo: Win</a><a href="LevelFailed.dc.html" style="padding: 4px 10px; border-radius: 12px; border: 2px dashed #FFFFFF; background: rgba(16,40,90,0.55); color: #FFFFFF; font-size: 12px; font-weight: 700; text-decoration: none">Demo: Fail</a></div>
+  <a href="BoosterPopup.dc.html" aria-label="Shuffle" style="position: absolute; left: 266px; top: 748px; width: 96px; height: 84px; border-radius: 24px; background: linear-gradient(180deg, #FFFFFF 0%, #DDF1FF 100%); border: 3px solid #1B4FA0; box-shadow: 0 5px 0 #1B4FA0, 0 10px 14px rgba(0,0,0,0.25); box-sizing: border-box; display: flex; align-items: center; justify-content: center; padding: 0 0 14px; cursor: pointer; text-decoration: none">
+      <img src="/_blob/284fd4d551cee32b9017e6b5cde73063" alt="" style="width: 58px; height: 44px; "><div style="position: absolute; left: 0; bottom: 4px; width: 100%; text-align: center; font-family: 'Lilita One', sans-serif; font-size: 13px; color: #1B4FA0">Shuffle</div><div style="position: absolute; right: -8px; top: -10px; min-width: 28px; height: 28px; padding: 0 6px; box-sizing: border-box; border-radius: 14px; background: #3DB52A; border: 3px solid #FFFFFF; display: flex; align-items: center; justify-content: center; font-family: 'Lilita One', sans-serif; font-size: 15px; color: #FFFFFF">+</div>
+    </a>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {};
+  }
+}
+</script>
+</body>
+</html>

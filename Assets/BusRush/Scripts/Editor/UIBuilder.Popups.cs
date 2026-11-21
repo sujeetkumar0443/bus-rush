@@ -129,62 +129,6 @@ namespace BusRush.EditorTools
             return sw;
         }
 
-        // ------------------------------------------------------------------ Shop
-
-        private static GameObject BuildShop()
-        {
-            const float w = 350f, h = 548f, rowW = 306f, rowH = 70f, step = 78f;
-            Shell s = PopupShell<ShopPopup>("ShopPopup", w, h, "SHOP", Gold, GoldLip);
-
-            (Button button, TextMeshProUGUI price, RectTransform row) Product(string name, float y, string icon, string title, string sub,
-                                                                            Color face, Color lip, string buttonText = null)
-            {
-                RectTransform row = Row(s.Face, name, y, rowW, rowH);
-                Image ic = IconImg(row, "Icon", icon, 52f);
-                Place(ic.rectTransform, 0f, 0.5f, 10f, 0f, 52f, 52f, 0f, 0.5f);
-                TextMeshProUGUI t = Label(row, "Title", title, 21f, TextStyle.BodyPlain, DarkNavy, TextAlignmentOptions.BottomLeft);
-                Stretch(t.rectTransform, 72f, 34f, 112f, 8f);
-                TextMeshProUGUI st = Label(row, "Subtitle", sub, 14f, TextStyle.BodyBoldPlain, TextGrey, TextAlignmentOptions.TopLeft);
-                Stretch(st.rectTransform, 72f, 8f, 112f, 38f);
-
-                Chunk b = Chunky(row, "BuyButton", face, lip, 98f, 48f, 14f, 6f, true);
-                Place(b.Root, 1f, 0.5f, -10f, 1f, 98f, 48f, 1f, 0.5f);
-                TextMeshProUGUI label = Label(b.Face, "Price", buttonText ?? MonetizationPlaceholder.PriceLabel, 19f, TextStyle.Body);
-                Stretch(label.rectTransform, 6f, 0f, 6f, 0f);
-                return (b.Button, label, row);
-            }
-
-            var removeAds = Product("RemoveAdsRow", 56f, "noads", "Remove Ads", "No more banner ads", Green, GreenLip);
-            TextMeshProUGUI owned = Label(removeAds.row, "OwnedLabel", "OWNED", 18f, TextStyle.BodyPlain, GreenLip, TextAlignmentOptions.Right);
-            Stretch(owned.rectTransform, 200f, 0f, 16f, 0f);
-            owned.gameObject.SetActive(false);
-
-            var pack = Product("BoosterPackRow", 56f + step, "gift", "Booster Pack", "2x VIP, Arrange, Shuffle", Green, GreenLip);
-            var c1 = Product("Coins500Row", 56f + step * 2, "coin", "500 Coins", "A handy top-up", Green, GreenLip);
-            var c2 = Product("Coins1200Row", 56f + step * 3, "coins_pile", "1,200 Coins", "Popular", Green, GreenLip);
-            var c3 = Product("Coins3000Row", 56f + step * 4, "coins_heap", "3,000 Coins", "Best value!", Green, GreenLip);
-            var free = Product("FreeCoinsRow", 56f + step * 5, "video", "Free Coins", "Watch a short video", Blue, BlueLip, "");
-
-            // Free coins button: video icon + amount.
-            Transform freeFace = free.button.transform.Find("Body/Face");
-            free.price.text = "+50";
-            Stretch(free.price.rectTransform, 30f, 0f, 6f, 0f);
-            Image vid = IconImg(freeFace, "Icon", "coin", 26f);
-            Place(vid.rectTransform, 0f, 0.5f, 8f, 0f, 26f, 26f, 0f, 0.5f);
-
-            Wire(s.Root.GetComponent<ShopPopup>(),
-                ("removeAds.productId", "remove_ads"), ("removeAds.button", removeAds.button), ("removeAds.priceText", removeAds.price),
-                ("removeAdsOwnedLabel", owned.gameObject),
-                ("boosterPack.productId", "booster_pack"), ("boosterPack.button", pack.button), ("boosterPack.priceText", pack.price),
-                ("coinPacks", new object[3]),
-                ("freeCoinsButton", free.button), ("freeCoinsAmount", free.price));
-            Wire(s.Root.GetComponent<ShopPopup>(),
-                ("coinPacks.Array.data[0].productId", "coins_500"), ("coinPacks.Array.data[0].button", c1.button), ("coinPacks.Array.data[0].priceText", c1.price),
-                ("coinPacks.Array.data[1].productId", "coins_1200"), ("coinPacks.Array.data[1].button", c2.button), ("coinPacks.Array.data[1].priceText", c2.price),
-                ("coinPacks.Array.data[2].productId", "coins_3000"), ("coinPacks.Array.data[2].button", c3.button), ("coinPacks.Array.data[2].priceText", c3.price));
-            return s.Root;
-        }
-
         // ------------------------------------------------------------------ Daily reward
 
         private static GameObject BuildDaily()

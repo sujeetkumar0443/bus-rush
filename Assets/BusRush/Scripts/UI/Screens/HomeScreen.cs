@@ -10,12 +10,9 @@ namespace BusRush.UI
         [SerializeField] private Button playButton;
         [SerializeField] private Transform playPulseTarget;
         [SerializeField] private TMP_Text playLevelText;
-        [SerializeField] private Button addCoinsButton;
         [SerializeField] private Button settingsButton;
-        [SerializeField] private Button shopButton;
         [SerializeField] private Button dailyButton;
         [SerializeField] private GameObject dailyBadge;
-        [SerializeField] private Button noAdsButton;
         [SerializeField] private Button boostsButton;
         [SerializeField] private RectTransform unlockFill;
         [SerializeField] private TMP_Text unlockText;
@@ -27,9 +24,6 @@ namespace BusRush.UI
         private void Awake()
         {
             playButton.onClick.AddListener(SceneLoader.LoadGame);
-            addCoinsButton.onClick.AddListener(() => Open<ShopPopup>());
-            shopButton.onClick.AddListener(() => Open<ShopPopup>());
-            noAdsButton.onClick.AddListener(() => Open<ShopPopup>());
             dailyButton.onClick.AddListener(() => Open<DailyRewardPopup>());
             boostsButton.onClick.AddListener(() =>
             {
@@ -64,7 +58,6 @@ namespace BusRush.UI
         {
             SaveData data = SaveSystem.Data;
             playLevelText.text = "Level " + data.level;
-            noAdsButton.gameObject.SetActive(!data.adsRemoved);
 
             bool canClaim = DailyRewards.CanClaim;
             if (dailyBadge.activeSelf != canClaim || (canClaim && badgePulse == null))

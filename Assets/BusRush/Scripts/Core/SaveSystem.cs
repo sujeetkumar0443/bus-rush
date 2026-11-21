@@ -27,8 +27,6 @@ namespace BusRush
         /// <summary>Daily reward days claimed in the current 7-day cycle (0..6).</summary>
         public int dailyStreak;
 
-        public bool adsRemoved;
-
         /// <summary>Best stars per level (index = level - 1; 0 = not completed).</summary>
         public List<int> levelStars = new List<int>();
 

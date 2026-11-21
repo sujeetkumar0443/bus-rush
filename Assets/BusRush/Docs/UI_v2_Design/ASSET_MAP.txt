@@ -1,0 +1,39 @@
+Image ids used in the design HTML files and the matching file in this pack:
+/_blob/92c4e73b138425ca4e6f3497a22122c5  ->  Backgrounds/home_bg.png
+/_blob/60c13cbfad1377450dd031741d3dc4c9  ->  Backgrounds/map_city.png
+/_blob/79efae7d628787dae66b2874c991154f  ->  Icons/airplane.png
+/_blob/0292b462b1a19fd9cad9b6d9ec14a535  ->  Characters/hero_happy.png
+/_blob/1c688a83a2654d528bdf79d0d3d7c173  ->  (unused)
+/_blob/fec27ef4b7b345be03996e96b4712d54  ->  (unused)
+/_blob/8b5eb766a6b1f33535d52630eb8e7df1  ->  (unused)
+/_blob/0685c3221ea91aa04d10e327034d912e  ->  (unused)
+/_blob/240d615d9b35618f143e4927b5954a19  ->  (unused)
+/_blob/9d51fe3b01640ac123c3095245de96fa  ->  Map/lock.png
+/_blob/31123b59aa18059273ef4a5a598ca2f8  ->  Map/chest_closed.png
+/_blob/f5190b7bba097c30e1d18a620fff963e  ->  Map/chest_open.png
+/_blob/566c3ef6800bd5c2d34f89d24992f46f  ->  Icons/coin.png
+/_blob/9e18f7dc9ad16a30065fb0973055ee0c  ->  Icons/daily.png
+/_blob/6e5242d1ea74ef6bc97207b5988333d3  ->  Icons/lucky_spin.png
+/_blob/643d734fb11ac801589a56e77a1b7a96  ->  Icons/settings.png
+/_blob/25126b5afdf10302fbf109e2e797833d  ->  Icons/map.png
+/_blob/4d08216608f9c7b01798c60bfbe7551f  ->  Icons/home.png
+/_blob/143520337bca7373482d80831b9c77e7  ->  Icons/video.png
+/_blob/2792467b225512e20d53e04947dc8259  ->  Icons/star.png
+/_blob/77be46ddb97c3b473596c95c103c439e  ->  Characters/bus_passengers.png
+/_blob/e24944e66a0d0ea962303d02839ab729  ->  (gameplay screenshot – live game in Unity)
+/_blob/9e5718a93a812b256ab05bf32eb10690  ->  Backgrounds/map_snow.png
+/_blob/6c59dd531612dc36e46c4ed75384765e  ->  Backgrounds/map_beach.png
+/_blob/2619badfad36cafabf820a07f18c8f9f  ->  (unused)
+/_blob/39a4bc2fb310c181255e08e9edff48e8  ->  Map/disc_gold.png
+/_blob/e6de1b983ff25bf3cc2d8f1d0458b22e  ->  Map/disc_green.png
+/_blob/247c2abfe343ae7ea8468d42e60584b5  ->  Map/disc_grey_locked.png
+/_blob/3c5f77ba279b8af0d982cf174f7fd592  ->  Map/disc_boss.png
+/_blob/3ffda32b06e877623894043f473d5087  ->  Map/map_bus_32dir.png (frames 128px in the demo; file has 192px frames)
+/_blob/f14eb7b21aa16c81320a608002365184  ->  Characters/hero_sad.png
+/_blob/013045dc4110705efd8803882abdc0a8  ->  Boosters/vip.png
+/_blob/2f83890ec1b110212fbc6bf46f756f66  ->  Boosters/arrange.png
+/_blob/284fd4d551cee32b9017e6b5cde73063  ->  Boosters/shuffle.png
+/_blob/339e63c6bf283122a4edc64e7034a540  ->  Boosters/extra_bay.png
+/_blob/8f2865a8966b0f3cd740bfba80052511  ->  Backgrounds/splash_bg.png
+/_blob/77be46ddb97c3b473596c95c103c439e  ->  Characters/bus_passengers.png
+/_blob/503d02259d6b4904625a600c282696fc  ->  Splash/splash_logo.png

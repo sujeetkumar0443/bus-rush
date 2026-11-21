@@ -1,0 +1,112 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Bus Rush – Home</title>
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet>
+<link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&amp;family=Lilita+One&amp;display=swap" rel="stylesheet">
+<style>
+body{margin:0}
+a{color:#FFFFFF}a:hover{color:#FFF3B0}
+
+@keyframes fly{0%{transform:translate(-150px,0)}75%{transform:translate(430px,-30px)}100%{transform:translate(430px,-30px)}}
+@keyframes bobP{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-5px) rotate(1deg)}}
+@keyframes trail{0%{opacity:0;transform:scale(.4)}1%{opacity:.95;transform:scale(.6)}30%{opacity:0;transform:scale(2.2)}100%{opacity:0;transform:scale(2.2)}}
+@keyframes idle{0%,100%{transform:translateY(0) scaleY(1)}50%{transform:translateY(-4px) scaleY(1.01)}}
+@keyframes exhaust{0%{opacity:.85;transform:translate(0,0) scale(.35)}100%{opacity:0;transform:translate(-46px,-34px) scale(1.7)}}
+@keyframes pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.06)}}
+@keyframes wobble{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(6deg)}}
+@keyframes dot{0%,100%{transform:scale(1)}50%{transform:scale(1.25)}}
+@keyframes floaty{0%,100%{transform:translateY(0)}50%{transform:translateY(-4px)}}
+@keyframes popIn{0%{transform:scale(.3);opacity:0}70%{transform:scale(1.06);opacity:1}100%{transform:scale(1);opacity:1}}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.fly{position:absolute;left:0;top:118px;animation:fly 10s linear infinite}
+.bobP{animation:bobP 1.6s ease-in-out infinite}
+.puff{position:absolute;border-radius:50%;background:radial-gradient(circle,#FFFFFF 0%,rgba(255,255,255,0.85) 45%,rgba(255,255,255,0) 72%);opacity:0;animation:trail 10s linear infinite both}
+.idle{animation:idle 1.4s ease-in-out infinite;transform-origin:50% 100%}
+.exh{position:absolute;width:26px;height:26px;border-radius:50%;background:radial-gradient(circle,rgba(235,238,245,0.95) 0%,rgba(220,225,235,0.6) 50%,rgba(255,255,255,0) 72%);animation:exhaust 1.5s ease-out infinite}
+.pulse{animation:pulse 1.2s ease-in-out infinite}
+.wob{animation:wobble 2.4s ease-in-out infinite;transform-origin:50% 90%}
+.dot{animation:dot 1s ease-in-out infinite}
+.floaty{animation:floaty 2s ease-in-out infinite}
+.popIn{animation:popIn .35s cubic-bezier(.3,1.5,.5,1) both}
+.fade{animation:fade .2s ease-out both}
+
+</style>
+</helmet>
+<div style="width: 390px; height: 844px; position: relative; overflow: hidden; background: #4AB3F4; font-family: 'Fredoka', sans-serif">
+  <img src="/_blob/92c4e73b138425ca4e6f3497a22122c5" alt="" style="position: absolute; left: -43px; top: 0; width: 476px; height: 844px; display: block">
+
+  <div class="puff" aria-hidden="true" style="left: -18px; top: 137px; width: 16px; height: 16px; animation-delay: 1.75s"></div><div class="puff" aria-hidden="true" style="left: 8px; top: 136px; width: 16px; height: 16px; animation-delay: 2.08s"></div><div class="puff" aria-hidden="true" style="left: 34px; top: 134px; width: 16px; height: 16px; animation-delay: 2.42s"></div><div class="puff" aria-hidden="true" style="left: 60px; top: 133px; width: 16px; height: 16px; animation-delay: 2.75s"></div><div class="puff" aria-hidden="true" style="left: 86px; top: 132px; width: 16px; height: 16px; animation-delay: 3.09s"></div><div class="puff" aria-hidden="true" style="left: 112px; top: 130px; width: 16px; height: 16px; animation-delay: 3.43s"></div><div class="puff" aria-hidden="true" style="left: 138px; top: 129px; width: 16px; height: 16px; animation-delay: 3.76s"></div><div class="puff" aria-hidden="true" style="left: 164px; top: 128px; width: 16px; height: 16px; animation-delay: 4.10s"></div><div class="puff" aria-hidden="true" style="left: 190px; top: 126px; width: 16px; height: 16px; animation-delay: 4.44s"></div><div class="puff" aria-hidden="true" style="left: 216px; top: 125px; width: 16px; height: 16px; animation-delay: 4.77s"></div><div class="puff" aria-hidden="true" style="left: 242px; top: 124px; width: 16px; height: 16px; animation-delay: 5.11s"></div><div class="puff" aria-hidden="true" style="left: 268px; top: 122px; width: 16px; height: 16px; animation-delay: 5.44s"></div><div class="puff" aria-hidden="true" style="left: 294px; top: 121px; width: 16px; height: 16px; animation-delay: 5.78s"></div><div class="puff" aria-hidden="true" style="left: 320px; top: 120px; width: 16px; height: 16px; animation-delay: 6.12s"></div><div class="puff" aria-hidden="true" style="left: 346px; top: 118px; width: 16px; height: 16px; animation-delay: 6.45s"></div><div class="puff" aria-hidden="true" style="left: 372px; top: 117px; width: 16px; height: 16px; animation-delay: 6.79s"></div>
+  <div class="fly" aria-hidden="true"><img class="bobP" src="/_blob/79efae7d628787dae66b2874c991154f" alt="" style="width: 124px; height: 64px; display: block"></div>
+
+  <div style="position: absolute; left: 14px; top: 18px; display: flex; align-items: center; height: 46px">
+    <img src="/_blob/566c3ef6800bd5c2d34f89d24992f46f" alt="" style="width: 44px; height: 47px; position: relative; z-index: 2; filter: drop-shadow(0 3px 2px rgba(0,0,0,0.25))">
+    <div style="margin-left: -22px; height: 36px; padding: 0 44px 0 30px; display: flex; align-items: center; border-radius: 18px; background: linear-gradient(180deg, #FFFFFF 0%, #FFF1CF 100%); border: 3px solid #7A4A16; box-sizing: border-box; font-family: 'Lilita One', sans-serif; font-size: 21px; color: #5A3410; position: relative">300</div>
+    <button type="button" aria-label="Get free coins" onClick="{{openCoins}}" style="margin-left: -38px; position: relative; z-index: 3; width: 34px; height: 34px; border-radius: 12px; border: 3px solid #1D5F12; background: linear-gradient(180deg, #A4F560 0%, #45C02A 100%); box-shadow: 0 3px 0 #1D5F12; color: #FFFFFF; font-family: 'Lilita One', sans-serif; font-size: 24px; line-height: 1; padding: 0; cursor: pointer; text-shadow: 0 2px 0 #1D5F12, -1px 0 0 #1D5F12, 1px 0 0 #1D5F12, 0 -1px 0 #1D5F12, -1px -1px 0 #1D5F12, 1px -1px 0 #1D5F12, -1px 1px 0 #1D5F12, 1px 1px 0 #1D5F12">+</button>
+  </div>
+  <a href="Settings.dc.html" aria-label="Settings" style="position: absolute; right: 14px; top: 12px; width: 56px; height: 56px; display: block"><img src="/_blob/643d734fb11ac801589a56e77a1b7a96" alt="" style="width: 54px; height: 56px; filter: drop-shadow(0 4px 2px rgba(10,30,80,0.35))"></a>
+
+  <a href="DailyReward.dc.html" aria-label="Daily" class="floaty" style="position: absolute; left: 12px; top: 96px; width: 78px; display: flex; flex-direction: column; align-items: center; gap: 0; background: none; border: 0; padding: 0; cursor: pointer; text-decoration: none; animation-delay: 0s">
+    <div style="position: relative; width: 76px; height: 76px; border-radius: 26px; background: radial-gradient(circle at 50% 35%, #FFFFFF 0%, #DDF1FF 100%); border: 3px solid #1B4FA0; box-sizing: border-box; box-shadow: 0 5px 0 #1B4FA0, 0 9px 14px rgba(10,30,80,0.3); display: flex; align-items: center; justify-content: center">
+      <img src="/_blob/9e18f7dc9ad16a30065fb0973055ee0c" alt="" style="width: 52px; height: 59px">
+      <span class="dot" style="position: absolute; right: -6px; top: -6px; width: 20px; height: 20px; border-radius: 50%; background: #FF3B47; border: 3px solid #FFFFFF; box-sizing: border-box"></span>
+    </div>
+    <div style="margin-top: 6px; font-family: 'Lilita One', sans-serif; font-size: 16px; color: #FFFFFF; text-shadow: 0 2px 0 #1B4FA0, -2px 0 0 #1B4FA0, 2px 0 0 #1B4FA0, 0 -2px 0 #1B4FA0, -2px -2px 0 #1B4FA0, 2px -2px 0 #1B4FA0, -2px 2px 0 #1B4FA0, 2px 2px 0 #1B4FA0">Daily</div>
+  </a>
+  <a href="RoadMap.dc.html" aria-label="Road Map" class="floaty" style="position: absolute; left: 12px; top: 210px; width: 78px; display: flex; flex-direction: column; align-items: center; gap: 0; background: none; border: 0; padding: 0; cursor: pointer; text-decoration: none; animation-delay: .5s">
+    <div style="position: relative; width: 76px; height: 76px; border-radius: 26px; background: radial-gradient(circle at 50% 35%, #FFFFFF 0%, #DDF1FF 100%); border: 3px solid #1B4FA0; box-sizing: border-box; box-shadow: 0 5px 0 #1B4FA0, 0 9px 14px rgba(10,30,80,0.3); display: flex; align-items: center; justify-content: center">
+      <img src="/_blob/25126b5afdf10302fbf109e2e797833d" alt="" style="width: 56px; height: 54px">
+      
+    </div>
+    <div style="margin-top: 6px; font-family: 'Lilita One', sans-serif; font-size: 16px; color: #FFFFFF; text-shadow: 0 2px 0 #1B4FA0, -2px 0 0 #1B4FA0, 2px 0 0 #1B4FA0, 0 -2px 0 #1B4FA0, -2px -2px 0 #1B4FA0, 2px -2px 0 #1B4FA0, -2px 2px 0 #1B4FA0, 2px 2px 0 #1B4FA0">Road Map</div>
+  </a>
+  <a href="LuckySpin.dc.html" aria-label="Lucky Spin" class="floaty" style="position: absolute; right: 12px; top: 96px; width: 78px; display: flex; flex-direction: column; align-items: center; gap: 0; background: none; border: 0; padding: 0; cursor: pointer; text-decoration: none; animation-delay: .25s">
+    <div style="position: relative; width: 76px; height: 76px; border-radius: 26px; background: radial-gradient(circle at 50% 35%, #FFFFFF 0%, #DDF1FF 100%); border: 3px solid #1B4FA0; box-sizing: border-box; box-shadow: 0 5px 0 #1B4FA0, 0 9px 14px rgba(10,30,80,0.3); display: flex; align-items: center; justify-content: center">
+      <img src="/_blob/6e5242d1ea74ef6bc97207b5988333d3" alt="" style="width: 50px; height: 59px">
+      <img src="/_blob/143520337bca7373482d80831b9c77e7" alt="" style="position: absolute; right: -10px; bottom: -8px; width: 30px; height: 25px">
+    </div>
+    <div style="margin-top: 6px; font-family: 'Lilita One', sans-serif; font-size: 16px; color: #FFFFFF; text-shadow: 0 2px 0 #1B4FA0, -2px 0 0 #1B4FA0, 2px 0 0 #1B4FA0, 0 -2px 0 #1B4FA0, -2px -2px 0 #1B4FA0, 2px -2px 0 #1B4FA0, -2px 2px 0 #1B4FA0, 2px 2px 0 #1B4FA0">Lucky Spin</div>
+  </a>
+
+  <div style="position: absolute; left: 64px; top: 508px; width: 270px; height: 236px">
+    <div aria-hidden="true" style="position: absolute; left: 16px; top: 196px; width: 240px; height: 34px; border-radius: 50%; background: radial-gradient(ellipse, rgba(20,25,40,0.5) 0%, rgba(20,25,40,0) 70%)"></div>
+    <div class="exh" aria-hidden="true" style="left: -4px; top: 150px; animation-delay: 0s"></div>
+    <div class="exh" aria-hidden="true" style="left: -4px; top: 150px; animation-delay: .5s"></div>
+    <div class="exh" aria-hidden="true" style="left: -4px; top: 150px; animation-delay: 1s"></div>
+    <img class="idle" src="/_blob/77be46ddb97c3b473596c95c103c439e" alt="Bus full of happy passengers" style="position: absolute; left: 0; top: 0; width: 270px; height: 227px; display: block">
+  </div>
+
+  <a href="HUD.dc.html" class="pulse" style="position: absolute; left: 50px; top: 752px; width: 290px; display: flex; align-items: center; justify-content: center; gap: 10px; box-sizing: border-box; height: 74px; border-radius: 26px; background: linear-gradient(180deg, #A4F560 0%, #56D134 50%, #36A920 100%); border: 3px solid #1D5F12; box-shadow: inset 0 -7px 0 rgba(0,0,0,0.13), inset 0 4px 0 rgba(255,255,255,0.5), 0 6px 0 #1D5F12, 0 12px 18px rgba(10,20,50,0.3); font-family: 'Lilita One', sans-serif; font-size: 36px; color: #FFFFFF; text-decoration: none; cursor: pointer; padding: 0 18px; text-shadow: 0 3px 0 #1D5F12, -2px 0 0 #1D5F12, 2px 0 0 #1D5F12, 0 -2px 0 #1D5F12, -2px -2px 0 #1D5F12, 2px -2px 0 #1D5F12, -2px 2px 0 #1D5F12, 2px 2px 0 #1D5F12">Level 5</a>
+
+  <sc-if value="{{showCoins}}" hint-placeholder-val="{{false}}">
+    <div class="fade" style="position: absolute; inset: 0; background: rgba(10,20,55,0.62); display: flex; align-items: center; justify-content: center">
+      <div class="popIn" style="position: relative; width: 318px; padding: 64px 22px 24px; box-sizing: border-box; border-radius: 30px; background: linear-gradient(180deg, #FFFFFF 0%, #E6F2FF 100%); border: 4px solid #1B4FA0; box-shadow: 0 8px 0 #1B4FA0, 0 20px 40px rgba(0,0,0,0.35); display: flex; flex-direction: column; align-items: center; gap: 12px">
+        <div style="position: absolute; left: 34px; top: -26px; width: 250px; height: 56px; border-radius: 18px; background: linear-gradient(180deg, #7FD3FF 0%, #2F86E8 100%); border: 3px solid #103E86; box-sizing: border-box; box-shadow: 0 5px 0 #103E86; display: flex; align-items: center; justify-content: center; font-family: 'Lilita One', sans-serif; font-size: 28px; color: #FFFFFF; text-shadow: 0 3px 0 #103E86, -2px 0 0 #103E86, 2px 0 0 #103E86, 0 -2px 0 #103E86, -2px -2px 0 #103E86, 2px -2px 0 #103E86, -2px 2px 0 #103E86, 2px 2px 0 #103E86">FREE COINS</div>
+        <button type="button" aria-label="Close" onClick="{{closeCoins}}" style="position: absolute; right: -14px; top: -14px; width: 44px; height: 44px; border-radius: 50%; border: 3px solid #7A1016; background: linear-gradient(180deg, #FF8A8A 0%, #D12A33 100%); box-shadow: 0 4px 0 #7A1016; color: #FFFFFF; font-family: 'Lilita One', sans-serif; font-size: 22px; padding: 0; cursor: pointer">X</button>
+        <img src="/_blob/566c3ef6800bd5c2d34f89d24992f46f" alt="" style="width: 96px; height: 102px; filter: drop-shadow(0 6px 4px rgba(0,0,0,0.25))">
+        <div style="font-family: 'Lilita One', sans-serif; font-size: 44px; color: #FFC531; text-shadow: 0 4px 0 #7A4A16, -2px 0 0 #7A4A16, 2px 0 0 #7A4A16, 0 -2px 0 #7A4A16, -2px -2px 0 #7A4A16, 2px -2px 0 #7A4A16, -2px 2px 0 #7A4A16, 2px 2px 0 #7A4A16">+50</div>
+        <div style="font-size: 17px; font-weight: 600; color: #24345E; text-align: center">Watch a short video to get 50 coins.</div>
+        <button type="button" onClick="{{closeCoins}}" style="width: 250px; margin-top: 6px; display: flex; align-items: center; justify-content: center; gap: 10px; box-sizing: border-box; height: 62px; border-radius: 22px; background: linear-gradient(180deg, #A4F560 0%, #56D134 50%, #36A920 100%); border: 3px solid #1D5F12; box-shadow: inset 0 -7px 0 rgba(0,0,0,0.13), inset 0 4px 0 rgba(255,255,255,0.5), 0 6px 0 #1D5F12, 0 12px 18px rgba(10,20,50,0.3); font-family: 'Lilita One', sans-serif; font-size: 26px; color: #FFFFFF; text-decoration: none; cursor: pointer; padding: 0 18px; text-shadow: 0 3px 0 #1D5F12, -2px 0 0 #1D5F12, 2px 0 0 #1D5F12, 0 -2px 0 #1D5F12, -2px -2px 0 #1D5F12, 2px -2px 0 #1D5F12, -2px 2px 0 #1D5F12, 2px 2px 0 #1D5F12"><img src="/_blob/143520337bca7373482d80831b9c77e7" alt="" style="width: 36px; height: 30px">Watch</button>
+      </div>
+    </div>
+  </sc-if>
+</div>
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props='{"$preview":{"width":390,"height":844}}'>
+class Component extends DCLogic {
+  renderVals() {
+    return {
+      showCoins: !!(this.state && this.state.showCoins),
+      openCoins: () => this.setState({ showCoins: true }),
+      closeCoins: () => this.setState({ showCoins: false })
+    };
+  }
+}
+</script>
+</body>
+</html>
