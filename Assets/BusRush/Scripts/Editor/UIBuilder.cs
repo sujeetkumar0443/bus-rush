@@ -51,6 +51,7 @@ namespace BusRush.EditorTools
             GameObject home = Save(BuildHome(), "HomeScreen");
             GameObject hud = Save(BuildHud(), "GameHUD");
             GameObject splash = Save(BuildSplash(), "Splash");
+            Save(BuildRoadMap(), "RoadMap");
 
             AssetDatabase.SaveAssets();
             WireScenes(splash, home, hud, uiManager);

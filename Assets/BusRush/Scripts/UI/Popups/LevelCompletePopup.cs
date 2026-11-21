@@ -107,7 +107,9 @@ namespace BusRush.UI
             SaveSystem.Data.level = Mathf.Max(SaveSystem.Data.level, completedLevel + 1);
             SaveSystem.Commit();
             Close();
-            SceneLoader.LoadGame();
+            // Show the progress on the Road Map (unlock animation for this level), from where the next level starts.
+            RoadMapScreen.PendingUnlockLevel = completedLevel;
+            SceneLoader.LoadHome();
         }
     }
 }

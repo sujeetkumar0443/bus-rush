@@ -7,7 +7,8 @@ namespace BusRush.UI
     [RequireComponent(typeof(CanvasGroup))]
     public sealed class Toast : MonoBehaviour
     {
-        private static Toast instance;
+        /// <summary>All toasts alive (Home, Road Map, HUD); the newest active one shows the message.</summary>
+        private static readonly System.Collections.Generic.List<Toast> instances = new System.Collections.Generic.List<Toast>();
 
         [SerializeField] private TMP_Text label;
         [SerializeField] private float holdTime = 1.1f;
@@ -18,7 +19,7 @@ namespace BusRush.UI
 
         private void Awake()
         {
-            instance = this;
+            if (!instances.Contains(this)) instances.Add(this);
             group = GetComponent<CanvasGroup>();
             group.alpha = 0f;
             group.blocksRaycasts = false;
@@ -27,12 +28,18 @@ namespace BusRush.UI
 
         private void OnDestroy()
         {
-            if (instance == this) instance = null;
+            instances.Remove(this);
         }
 
         public static void Show(string message)
         {
-            if (instance != null && instance.isActiveAndEnabled) instance.Display(message);
+            for (int i = instances.Count - 1; i >= 0; i--)
+            {
+                Toast t = instances[i];
+                if (t == null || !t.isActiveAndEnabled) continue;
+                t.Display(message);
+                return;
+            }
         }
 
         private void Display(string message)

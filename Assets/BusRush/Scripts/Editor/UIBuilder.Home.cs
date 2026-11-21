@@ -63,8 +63,16 @@ namespace BusRush.EditorTools
         {
             Scene homeScene = EditorSceneManager.OpenScene($"{ScenesDir}/Home.unity", OpenSceneMode.Single);
             RemoveRoots(homeScene, "Canvas", "HomeScreen", "UIManager");
-            PrefabUtility.InstantiatePrefab(home, homeScene);
+            RemoveRoots(homeScene, "RoadMap");
+            var homeInstance = (GameObject)PrefabUtility.InstantiatePrefab(home, homeScene);
             PrefabUtility.InstantiatePrefab(uiManager, homeScene);
+            GameObject mapPrefab = AssetDatabase.LoadAssetAtPath<GameObject>($"{PrefabDir}/RoadMap.prefab");
+            if (mapPrefab != null)
+            {
+                var map = (GameObject)PrefabUtility.InstantiatePrefab(mapPrefab, homeScene);
+                map.SetActive(false); // opened by the Road Map button / after a win
+                Wire(homeInstance.GetComponent<HomeScreen>(), ("roadMap", map.GetComponent<RoadMapScreen>()));
+            }
             FindRoot(homeScene, "Main Camera").GetComponent<Camera>().backgroundColor = UIArtGenerator.Hex(0x4AB3F4);
             EditorSceneManager.SaveScene(homeScene);
         }

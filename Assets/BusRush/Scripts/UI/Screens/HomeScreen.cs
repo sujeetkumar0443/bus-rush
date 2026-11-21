@@ -22,6 +22,8 @@ namespace BusRush.UI
         [SerializeField] private GameObject dailyDot;
         [SerializeField] private Button roadMapButton;
         [SerializeField] private Button luckySpinButton;
+        [Tooltip("Road Map overlay in the Home scene (wired by the builder).")]
+        [SerializeField] private RoadMapScreen roadMap;
 
         private void Awake()
         {
@@ -29,8 +31,19 @@ namespace BusRush.UI
             addCoinsButton.onClick.AddListener(() => Open<FreeCoinsPopup>());
             settingsButton.onClick.AddListener(() => Open<SettingsPopup>());
             dailyButton.onClick.AddListener(() => Open<DailyRewardPopup>());
-            roadMapButton.onClick.AddListener(() => Toast.Show("Coming soon"));
+            roadMapButton.onClick.AddListener(() =>
+            {
+                if (roadMap != null) roadMap.Open();
+            });
             luckySpinButton.onClick.AddListener(() => Toast.Show("Coming soon"));
+        }
+
+        private void Start()
+        {
+            // After a win: straight to the map with that level's unlock animation.
+            int unlocked = RoadMapScreen.PendingUnlockLevel;
+            RoadMapScreen.PendingUnlockLevel = 0;
+            if (unlocked > 0 && roadMap != null) roadMap.Open(unlocked);
         }
 
         private void OnEnable()

@@ -60,6 +60,7 @@
     <Compile Include="Assets\BusRush\Scripts\UI\UiSkew.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Popups\DayCardView.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\PopupCatalog.cs" />
+    <Compile Include="Assets\BusRush\Scripts\UI\Map\MapNodeView.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\GameFx.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\WorldBackground.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\LotGridView.cs" />
@@ -67,6 +68,7 @@
     <Compile Include="Assets\BusRush\Scripts\Gameplay\PassengerView.cs" />
     <Compile Include="Assets\BusRush\Scripts\Data\VehicleData.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\ScreenFlash.cs" />
+    <Compile Include="Assets\BusRush\Scripts\UI\UiLoopBob.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\BoosterController.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\UiGradient.cs" />
     <Compile Include="Assets\BusRush\Scripts\Core\SaveSystem.cs" />
@@ -84,12 +86,14 @@
     <Compile Include="Assets\BusRush\Scripts\UI\Popup.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Screens\GameHUD.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Toast.cs" />
+    <Compile Include="Assets\BusRush\Scripts\UI\Map\MapDragWatcher.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\LevelBanner.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Rotator.cs" />
     <Compile Include="Assets\TutorialInfo\Readme.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\FloatingText.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\CameraFitter.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Screens\HomeAmbience.cs" />
+    <Compile Include="Assets\BusRush\Scripts\UI\Map\MapSeamView.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Screens\HomeScreen.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\VehicleMotion.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Popups\OutOfSpacePopup.cs" />
@@ -99,6 +103,7 @@
     <Compile Include="Assets\BusRush\Scripts\Core\DailyRewards.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Popups\FreeCoinsPopup.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\WorldManager.cs" />
+    <Compile Include="Assets\BusRush\Scripts\UI\Map\RoadMapGeometry.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\LevelGenerator.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\PathFollower.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\CoinText.cs" />
@@ -117,6 +122,7 @@
     <Compile Include="Assets\BusRush\Scripts\Gameplay\RouteBuilder.cs" />
     <Compile Include="Assets\BusRush\Scripts\Data\LevelData.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\UiTheme.cs" />
+    <Compile Include="Assets\BusRush\Scripts\UI\Map\RoadMapScreen.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\IVehicleExitBehaviour.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\TrafficSchedule.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\BoosterLogic.cs" />
@@ -126,6 +132,7 @@
     <Compile Include="Assets\BusRush\Scripts\Data\VehicleType.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\UIButton.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Screens\SplashController.cs" />
+    <Compile Include="Assets\BusRush\Scripts\UI\Map\UiPolyline.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\BoardView.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\CrowdView.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\GameTuning.cs" />
