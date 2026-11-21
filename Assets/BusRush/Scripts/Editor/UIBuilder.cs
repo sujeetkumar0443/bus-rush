@@ -32,7 +32,7 @@ namespace BusRush.EditorTools
             {
                 SavePopup(BuildSettings()),
                 SavePopup(BuildDaily()),
-                SavePopup(BuildBoosters()),
+                SavePopup(BuildBoosterPopup()),
                 SavePopup(BuildOutOfSpace()),
                 SavePopup(BuildFreeCoins())
             };
@@ -92,56 +92,6 @@ namespace BusRush.EditorTools
             return go;
         }
 
-        private static GameObject BuildHud()
-        {
-            var go = new GameObject("GameHUD");
-            RootCanvas(go, 10);
-
-            // Wrong-tap flash covers the whole screen (outside the safe area too), behind the HUD controls.
-            Image flash = Img(go.transform, "WrongTapFlash", Vignette, new Color(1f, 0.1f, 0.1f, 0f));
-            Stretch(flash.rectTransform);
-            flash.gameObject.AddComponent<ScreenFlash>();
-
-            RectTransform safe = SafeArea(go.transform);
-
-            Chunk restart = IconButton(safe, "RestartButton", "restart", Blue, BlueLip, 54f, 58f, 34f, 16f);
-            Place(restart.Root, 0f, 1f, 14f, -10f, 54f, 58f, 0f, 1f);
-            Chunk pause = IconButton(safe, "PauseButton", "pause", Blue, BlueLip, 54f, 58f, 32f, 16f);
-            Place(pause.Root, 1f, 1f, -14f, -10f, 54f, 58f, 1f, 1f);
-            // Level badge: "Level N" with a small "N passengers left" second line (kept off the crowd).
-            Chunk levelPill = Chunky(safe, "LevelPill", Navy, NavyLip, 170f, 60f, 26f, 6f, false, true, false);
-            Place(levelPill.Root, 0.5f, 1f, 0f, -12f, 170f, 60f, 0.5f, 1f);
-            TextMeshProUGUI level = Label(levelPill.Face, "Label", "Level 1", 26f, TextStyle.Heading);
-            Stretch(level.rectTransform, 10f, 18f, 10f, 2f);
-            TextMeshProUGUI passengers = Label(levelPill.Face, "PassengersLeft", "0 passengers left", 13f, TextStyle.Body);
-            Stretch(passengers.rectTransform, 10f, 3f, 10f, 34f);
-
-            // Booster row
-            RectTransform row = Rect(safe, "BoosterRow");
-            Bottom(row, 18f, 320f, 96f);
-            var types = new[] { BoosterType.Vip, BoosterType.Arrange, BoosterType.Shuffle };
-            string[] icons = { "crown", "arrange", "shuffle" };
-            string[] names = { "VIP", "ARRANGE", "SHUFFLE" };
-            for (int i = 0; i < 3; i++) BoosterButton(row, types[i], icons[i], names[i], (i - 1) * 104f);
-
-            BuildDebugPanel(safe);
-            LevelBanner banner = BuildLevelBanner(safe);
-            BuildHints(go.transform);
-
-            // Toast pill ("No free bay!") above the lot.
-            Chunk toast = Chunky(safe, "Toast", DarkNavy, NavyLip, 230f, 46f, -1f, 4f, false, true, false);
-            Place(toast.Root, 0.5f, 1f, 0f, -230f, 230f, 46f, 0.5f, 1f);
-            TextMeshProUGUI toastLabel = Label(toast.Face, "Label", "No free bay!", 22f, TextStyle.Body);
-            Stretch(toastLabel.rectTransform, 12f, 0f, 12f, 0f);
-            toast.Root.gameObject.AddComponent<CanvasGroup>();
-            Wire(toast.Root.gameObject.AddComponent<Toast>(), ("label", toastLabel));
-
-            GameHUD hud = go.AddComponent<GameHUD>();
-            Wire(hud, ("restartButton", restart.Button), ("pauseButton", pause.Button), ("levelText", level),
-                ("passengersText", passengers), ("banner", banner));
-            return go;
-        }
-
         private static LevelBanner BuildLevelBanner(RectTransform safe)
         {
             RectTransform holder = Rect(safe, "LevelBanner");
@@ -189,40 +139,6 @@ namespace BusRush.EditorTools
 
             HintView view = area.gameObject.AddComponent<HintView>();
             Wire(view, ("area", area), ("hand", hand), ("bubble", bubble), ("bubbleText", text), ("bubbleTail", tail.rectTransform));
-        }
-
-        private static void BoosterButton(RectTransform row, BoosterType type, string icon, string label, float x)
-        {
-            Chunk b = Chunky(row, label + "Booster", Color.white, PanelLip, 84f, 92f, 22f, 7f, true);
-            Place(b.Root, 0.5f, 0f, x, 0f, 84f, 92f, 0.5f, 0f);
-            Image ic = IconImg(b.Face, "Icon", icon, 52f);
-            Place(ic.rectTransform, 0.5f, 0.5f, 0f, 9f, 52f, 52f);
-            Image icon3D = Img(b.Face, "Icon3D", null, new Color(1f, 1f, 1f, 0f));
-            Place(icon3D.rectTransform, 0.5f, 0.5f, 0f, 9f, 64f, 64f);
-            TextMeshProUGUI name = Label(b.Face, "Name", label, 13f, TextStyle.BodyPlain, TextGrey);
-            Place(name.rectTransform, 0.5f, 0f, 0f, 5f, 80f, 18f, 0.5f, 0f);
-
-            Image count = Badge(b.Root, "CountBadge", Red, 32f, out RectTransform countContent);
-            Place(count.rectTransform, 1f, 1f, 6f, 6f, 32f, 32f, 0.5f, 0.5f);
-            TextMeshProUGUI countText = Label(countContent, "Count", "2", 19f, TextStyle.Heading);
-            Stretch(countText.rectTransform, 0f, 1f, 0f, 0f);
-
-            Image plus = Badge(b.Root, "PlusBadge", Green, 32f, out RectTransform plusContent);
-            Place(plus.rectTransform, 1f, 1f, 6f, 6f, 32f, 32f, 0.5f, 0.5f);
-            Image plusIcon = IconImg(plusContent, "Plus", "plus", 20f);
-            Place(plusIcon.rectTransform, 0.5f, 0.5f, 0f, 0f, 20f, 20f);
-
-            Image lockOverlay = Img(b.Body, "LockOverlay", Round, new Color(0.12f, 0.16f, 0.27f, 0.88f), 22f);
-            Stretch(lockOverlay.rectTransform);
-            Image lockIcon = IconImg(lockOverlay.transform, "Lock", "lock", 40f);
-            Place(lockIcon.rectTransform, 0.5f, 0.5f, 0f, 10f, 40f, 40f);
-            TextMeshProUGUI lockText = Label(lockOverlay.transform, "Text", "LV 13", 17f, TextStyle.Heading);
-            Place(lockText.rectTransform, 0.5f, 0f, 0f, 9f, 80f, 22f, 0.5f, 0f); // same slot as the name label
-
-            BoosterButtonView view = b.Root.gameObject.AddComponent<BoosterButtonView>();
-            Wire(view, ("type", type), ("button", b.Button), ("countBadge", count.gameObject), ("countText", countText),
-                ("plusBadge", plus.gameObject), ("lockOverlay", lockOverlay.gameObject), ("lockText", lockText),
-                ("nameLabel", name.gameObject));
         }
 
         private static void BuildDebugPanel(RectTransform safe)

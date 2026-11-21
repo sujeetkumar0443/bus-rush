@@ -4,20 +4,27 @@ using UnityEngine.UI;
 
 namespace BusRush.UI
 {
-    /// <summary>Gameplay HUD shell: restart, level label, pause, booster row. No gameplay logic yet.</summary>
+    /// <summary>
+    /// Gameplay HUD (UI v2, Docs/UI_v2_Design/HUD.dc.html): pause, level badge with a live passengers progress bar
+    /// (boarded / total, smooth fill), coin pill, booster bar and locked-bay tags (<see cref="BayLockOverlay"/>).
+    /// </summary>
     public sealed class GameHUD : MonoBehaviour
     {
-        [SerializeField] private Button restartButton;
         [SerializeField] private Button pauseButton;
         [SerializeField] private TMP_Text levelText;
-        [SerializeField] private TMP_Text passengersText;
+        [SerializeField] private RectTransform progressFill;
+        [SerializeField] private TMP_Text progressText;
+        [Tooltip("Smallest visible fill width (the rounded ends), UI units.")]
+        [SerializeField] private float minFillWidth = 14f;
+        [Tooltip("Fill animation speed (fraction of the bar per second at most).")]
+        [SerializeField] private float fillSpeed = 1.5f;
         [SerializeField] private LevelBanner banner;
 
-        private int shownPassengers = -1;
+        private float shownFraction = -1f;
+        private int shownBoarded = -1, shownTotal = -1;
 
         private void Awake()
         {
-            restartButton.onClick.AddListener(SceneLoader.LoadGame);
             pauseButton.onClick.AddListener(OpenPause);
         }
 
@@ -46,19 +53,29 @@ namespace BusRush.UI
             SaveSystem.Changed -= Refresh;
         }
 
-        private void Update()
-        {
-            if (passengersText == null) return;
-            Gameplay.GameSession session = Gameplay.GameSession.Current;
-            int left = session != null ? session.PassengersLeft : 0;
-            if (left == shownPassengers) return;
-            shownPassengers = left;
-            passengersText.text = left == 1 ? "1 passenger left" : $"{left} passengers left";
-        }
-
         private void OnDestroy()
         {
             if (UIManager.Instance != null) UIManager.Instance.BackPressedWithNoPopup -= OpenPause;
+        }
+
+        private void Update()
+        {
+            Gameplay.GameSession session = Gameplay.GameSession.Current;
+            int total = session != null ? session.TotalPassengers : 0;
+            int boarded = session != null ? Mathf.Min(session.BoardedCount, total) : 0;
+            if (boarded != shownBoarded || total != shownTotal)
+            {
+                shownBoarded = boarded;
+                shownTotal = total;
+                progressText.text = $"{boarded} / {total}";
+            }
+
+            float target = total > 0 ? boarded / (float)total : 0f;
+            shownFraction = shownFraction < 0f ? target : Mathf.MoveTowards(shownFraction, target, fillSpeed * Time.unscaledDeltaTime);
+            var area = (RectTransform)progressFill.parent;
+            float w = shownFraction <= 0f ? 0f : Mathf.Max(minFillWidth, shownFraction * area.rect.width);
+            progressFill.sizeDelta = new Vector2(w, progressFill.sizeDelta.y);
+            progressFill.gameObject.SetActive(w > 0f);
         }
 
         private void Refresh()

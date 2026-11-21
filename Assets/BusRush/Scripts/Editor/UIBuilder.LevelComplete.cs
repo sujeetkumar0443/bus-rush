@@ -221,15 +221,7 @@ namespace BusRush.EditorTools
 
             // Coin pill (top-right of the safe area): target of the coin fly.
             RectTransform safe = SafeArea(root.transform);
-            RectTransform pill = V2Box(safe, "CoinPill", 17f, Color.white, H(0xFFF1CF), null, 3f, H(0x7A4A16), 0f);
-            Place(pill, 1f, 1f, -14f, -25f, 80f, 34f, 1f, 1f);
-            TextMeshProUGUI coinText = V2Text(pill, "Count", "300", 20f, true, H(0x5A3410), null, TextAlignmentOptions.Left);
-            Stretch(coinText.rectTransform, 31f, 0f, 8f, 2f);
-            coinText.gameObject.AddComponent<CoinText>();
-            Wire(pill.gameObject.AddComponent<UiFitWidthToText>(), ("text", coinText), ("padding", 50f), ("minWidth", 70f));
-            Image pillCoin = ShadowedImg(pill, "Coin", coinSprite, 3f, 0.25f);
-            Place((RectTransform)pillCoin.transform.parent, 0f, 0.5f, 0f, 0f, 44f, 47f);
-            Wire(coinText.GetComponent<CoinText>(), ("punchTarget", pillCoin.transform.parent));
+            RectTransform coinTarget = TopRightCoinPill(safe);
 
             // Toast ("Video not available").
             RectTransform toast = V2Box(safe, "Toast", 23f, H(0x24345E), H(0x14204F), null, 3f, Color.white, 0f);
@@ -245,7 +237,7 @@ namespace BusRush.EditorTools
                 ("rewardText", rewardText), ("rewardCoin", rewardCoin), ("claim", claim), ("claimGroup", claimGroup),
                 ("claimButton", claimButton), ("claimCoinsText", tagText), ("claimShine", shineRt), ("continueRt", cont),
                 ("continueGroup", contGroup), ("continueButton", contButton), ("continueText", contText),
-                ("coinTarget", (RectTransform)pillCoin.transform.parent),
+                ("coinTarget", coinTarget),
                 ("confetti", new object[confData.Count]));
             for (int i = 0; i < confData.Count; i++)
             {

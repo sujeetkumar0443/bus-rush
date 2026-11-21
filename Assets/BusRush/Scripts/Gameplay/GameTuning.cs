@@ -52,6 +52,10 @@ namespace BusRush.Gameplay
         /// <summary>Price of one booster in coins (any type).</summary>
         public const int BoosterPriceCoins = 100;
 
+        /// <summary>Coins for winning a level: base + per star (Claim x3 on Level Complete triples it).</summary>
+        public const int WinCoinsBase = 20;
+        public const int WinCoinsPerStar = 5;
+
         /// <summary>A booster pressed while vehicles move or passengers board waits up to this long for a calm board.</summary>
         public const float BoosterCalmWaitSeconds = 1f;
 

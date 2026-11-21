@@ -41,7 +41,6 @@ namespace BusRush
         [Min(0)] public int lockedBays = 3;
 
         [Header("Economy")]
-        [Min(0)] public int levelCompleteCoins = 50;
         [Min(0)] public int extraBayCost = 300;
         [Min(0)] public int freeCoinsAmount = 50;
         [Min(1)] public int maxLives = 5;

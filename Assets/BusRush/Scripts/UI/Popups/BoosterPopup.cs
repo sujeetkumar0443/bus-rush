@@ -1,151 +1,206 @@
+using System;
 using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace BusRush.UI
 {
-    /// <summary>Booster info + buy-with-coins. Tabs: VIP / Arrange / Shuffle.</summary>
+    /// <summary>
+    /// Booster popup (UI v2, Docs/UI_v2_Design/BoosterPopup.dc.html) over a blurred, dimmed game: ribbon in the
+    /// booster's colour, icon floating over rotating rays, a one-line description, "You have N", "Free +1" (rewarded
+    /// video) and "Buy 1 [coin] price" (shakes when coins are short). Also the "extra bay" offer for locked bays.
+    /// </summary>
     public sealed class BoosterPopup : Popup
     {
-        [System.Serializable]
-        private struct Tab
+        [Serializable]
+        private struct Style
         {
-            public BoosterType type;
-            public Button button;
-            public Image face;
-            public Image lip;
-            public TMP_Text label;
-            public Sprite icon;
             public string title;
             [TextArea] public string description;
+            public Sprite icon;
+            public Color top;
+            public Color bottom;
+            public Color edge;
+            public Material titleMaterial;
         }
 
-        [SerializeField] private Tab[] tabs = new Tab[0];
+        [Tooltip("Vip, Arrange, Shuffle, Extra bay.")]
+        [SerializeField] private Style[] styles = new Style[4];
+
+        [SerializeField] private RawImage blur;
+        [SerializeField] private RectTransform ribbon;
+        [SerializeField] private CanvasGroup ribbonGroup;
+        [SerializeField] private Image ribbonFace;
+        [SerializeField] private UiGradient ribbonGradient;
+        [SerializeField] private Image[] ribbonEdges = new Image[0];
+        [SerializeField] private TMP_Text titleText;
+        [SerializeField] private RectTransform rays;
+        [SerializeField] private RectTransform iconFloat;
         [SerializeField] private Image icon;
-        [SerializeField] private Transform iconRoot;
-        [SerializeField] private TMP_Text nameText;
         [SerializeField] private TMP_Text descriptionText;
+        [SerializeField] private GameObject ownedPill;
         [SerializeField] private TMP_Text ownedText;
-        [SerializeField] private TMP_Text lockText;
-        [SerializeField] private UIButton buyButton;
+        [SerializeField] private RectTransform freeRoot;
+        [SerializeField] private Button freeButton;
+        [SerializeField] private RectTransform freeShine;
+        [SerializeField] private Button buyButton;
+        [SerializeField] private CanvasGroup buyGroup;
         [SerializeField] private TMP_Text buyPrice;
-        [SerializeField] private TMP_Text feedbackText;
-        [Tooltip("Optional: rewarded ad for one booster (Ads.Service; a stub that always rewards for now).")]
-        [SerializeField] private UIButton watchAdButton;
 
-        [SerializeField] private Color selectedFace = new Color32(0x3A, 0x8D, 0xF5, 0xFF);
-        [SerializeField] private Color selectedLip = new Color32(0x1F, 0x5B, 0xB5, 0xFF);
-        [SerializeField] private Color idleFace = new Color32(0xDD, 0xE3, 0xEE, 0xFF);
-        [SerializeField] private Color idleLip = new Color32(0xB7, 0xC0, 0xD3, 0xFF);
-        [SerializeField] private Color selectedText = Color.white;
-        [SerializeField] private Color idleText = new Color32(0x4A, 0x56, 0x72, 0xFF);
-
+        private const int ExtraBay = 3;
         private BoosterType current = BoosterType.Vip;
-        private Coroutine feedbackAnim;
+        private bool extraBay;
+        private float clock;
+        private bool busy;
+
+        private static readonly Vector4 Pop = new Vector4(0.3f, 1.5f, 0.5f, 1f);
+        private static AnimationCurve dropY, dropS, dropA, floatY, pulseS, shineX;
 
         protected override void Awake()
         {
             base.Awake();
-            foreach (Tab tab in tabs)
+            freeButton.onClick.AddListener(Free);
+            buyButton.onClick.AddListener(Buy);
+            ribbonHomeY = ribbon.anchoredPosition.y;
+            iconHomeY = iconFloat.anchoredPosition.y;
+            if (dropY == null)
             {
-                BoosterType type = tab.type;
-                tab.button.onClick.AddListener(() => Select(type));
+                float[] ends = { 0f, 1f }, half = { 0f, 0.5f, 1f };
+                dropY = CssCurve.Build(ends, new[] { 40f, 0f }, Pop);
+                dropS = CssCurve.Build(ends, new[] { 0.8f, 1f }, Pop);
+                dropA = CssCurve.Build(ends, new[] { 0f, 1f }, Pop);
+                floatY = CssCurve.Build(half, new[] { 0f, 6f, 0f }, CssCurve.EaseInOut);
+                pulseS = CssCurve.Build(half, new[] { 1f, 1.05f, 1f }, CssCurve.EaseInOut);
+                shineX = CssCurve.Build(new[] { 0f, 0.6f, 1f }, new[] { -80f, 320f, 320f }, CssCurve.EaseInOut);
             }
-            buyButton.Button.onClick.AddListener(Buy);
-            if (watchAdButton != null) watchAdButton.Button.onClick.AddListener(WatchAd);
         }
 
         protected override void OnOpening()
         {
-            feedbackText.text = string.Empty;
-            Refresh(false);
+            clock = 0f;
+            busy = false;
+            Canvas canvas = GetComponentInParent<Canvas>();
+            if (blur != null && canvas != null) StartCoroutine(ScreenGrab.Blurred(blur, canvas.rootCanvas));
+            Refresh();
+            Animate();
         }
 
-        /// <summary>Selects a tab; call right after Open to show a specific booster.</summary>
+        protected override void OnClosed()
+        {
+            extraBay = false;
+        }
+
+        private void OnDestroy() => ScreenGrab.Release(blur);
+
+        /// <summary>Shows a booster (call right after Open).</summary>
         public void Select(BoosterType type)
         {
             current = type;
-            feedbackText.text = string.Empty;
-            Refresh(true);
+            extraBay = false;
+            Refresh();
         }
 
-        private void Refresh(bool animateIcon)
+        /// <summary>Shows the "extra bay" offer (locked bay tapped without enough coins).</summary>
+        public void ShowExtraBay()
         {
-            foreach (Tab tab in tabs)
-            {
-                bool selected = tab.type == current;
-                tab.face.color = selected ? selectedFace : idleFace;
-                tab.lip.color = selected ? selectedLip : idleLip;
-                tab.label.color = selected ? selectedText : idleText;
-
-                if (!selected) continue;
-                icon.sprite = tab.icon;
-                nameText.text = tab.title;
-                descriptionText.text = tab.description;
-            }
-
-            int owned = BoosterInventory.Count(current);
-            ownedText.text = "Owned: " + owned;
-            buyPrice.text = BoosterInventory.PriceCoins(current).ToString();
-
-            int unlock = BoosterInventory.UnlockLevel(current);
-            Gameplay.GameSession session = Gameplay.GameSession.Current;
-            int level = session != null && session.Level > 0 ? session.Level : SaveSystem.Data.level;
-            bool locked = !BoosterInventory.IsUnlocked(current, level);
-            lockText.gameObject.SetActive(locked);
-            lockText.text = $"Unlocks at level {unlock}";
-
-            if (animateIcon && iconRoot != null)
-            {
-                Tween.Scale(this, iconRoot, Vector3.one * 0.7f, Vector3.one, 0.3f, Ease.OutBack);
-            }
+            extraBay = true;
+            Refresh();
         }
 
-        private void WatchAd()
+        private int StyleIndex => extraBay ? ExtraBay : (int)current;
+
+        private int Price => extraBay
+            ? (GameConfig.Instance != null ? GameConfig.Instance.extraBayCost : 200)
+            : BoosterInventory.PriceCoins(current);
+
+        private void Refresh()
         {
+            Style s = styles[Mathf.Clamp(StyleIndex, 0, styles.Length - 1)];
+            titleText.text = s.title;
+            if (s.titleMaterial != null) titleText.fontSharedMaterial = s.titleMaterial;
+            ribbonGradient.Set(s.top, s.bottom);
+            foreach (Image e in ribbonEdges) e.color = s.edge;
+            icon.sprite = s.icon;
+            descriptionText.text = s.description;
+            ownedPill.SetActive(!extraBay);
+            ownedText.text = "You have " + BoosterInventory.Count(current);
+            buyPrice.text = Price.ToString();
+            bool affordable = CoinWallet.Coins >= Price;
+            buyGroup.alpha = affordable ? 1f : 0.55f;
+        }
+
+        private void Update()
+        {
+            if (!IsOpen) return;
+            clock += Time.unscaledDeltaTime;
+            Animate();
+        }
+
+        private void Animate()
+        {
+            float k = Mathf.Clamp01((clock - 0.2f) / 0.45f); // ribbon drop .45s from .2s
+            ribbon.anchoredPosition = new Vector2(ribbon.anchoredPosition.x, ribbonHomeY - dropY.Evaluate(k));
+            ribbon.localScale = Vector3.one * dropS.Evaluate(k);
+            ribbonGroup.alpha = dropA.Evaluate(k);
+            rays.localRotation = Quaternion.Euler(0f, 0f, -360f * (clock / 14f % 1f));
+            iconFloat.anchoredPosition = new Vector2(iconFloat.anchoredPosition.x, iconHomeY + floatY.Evaluate(clock / 2.2f % 1f));
+            freeRoot.localScale = Vector3.one * pulseS.Evaluate(clock / 1.2f % 1f);
+            float sh = clock >= 1f ? (clock - 1f) / 2.4f % 1f : 0f;
+            freeShine.anchoredPosition = new Vector2(shineX.Evaluate(sh), 0f);
+        }
+
+        private float ribbonHomeY, iconHomeY;
+
+        // ------------------------------------------------------------------ actions
+
+        private void Free()
+        {
+            if (busy) return;
+            busy = true;
+            bool bay = extraBay;
             BoosterType type = current;
-            Ads.Service.ShowRewarded("booster_" + type, granted =>
+            Ads.Service.ShowRewarded(bay ? "extra_bay" : "booster_" + type, granted =>
             {
+                busy = false;
                 if (this == null) return;
-                Tween.Stop(this, ref feedbackAnim);
-                if (granted)
+                if (!granted)
                 {
-                    BoosterInventory.Add(type, 1);
-                    feedbackText.color = new Color32(0x23, 0x86, 0x3D, 0xFF);
-                    feedbackText.text = "+1 added!";
-                    Refresh(true);
-                    Haptics.Light();
+                    Toast.Show("Video not available");
+                    return;
                 }
-                else
+                Haptics.Light();
+                if (bay)
                 {
-                    feedbackText.color = new Color32(0xEF, 0x3B, 0x3B, 0xFF);
-                    feedbackText.text = "Ad not available.";
+                    if (Gameplay.GameSession.Current != null) Gameplay.GameSession.Current.UnlockBayFree();
+                    Close();
+                    return;
                 }
-                feedbackAnim = Tween.Scale(this, feedbackText.transform, Vector3.one * 1.2f, Vector3.one, 0.25f, Ease.OutBack);
+                BoosterInventory.Add(type, 1);
+                Refresh();
+                Tween.Scale(this, iconFloat, Vector3.one * 1.25f, Vector3.one, 0.3f, Ease.OutBack);
             });
         }
 
         private void Buy()
         {
-            int cost = BoosterInventory.PriceCoins(current);
-            Tween.Stop(this, ref feedbackAnim);
-
-            if (CoinWallet.TrySpend(cost))
+            if (busy) return;
+            if (!CoinWallet.TrySpend(Price))
             {
-                BoosterInventory.Add(current, 1);
-                feedbackText.color = new Color32(0x23, 0x86, 0x3D, 0xFF);
-                feedbackText.text = "+1 added!";
-                Refresh(true);
-                Haptics.Medium();
+                Tween.Shake(this, (RectTransform)buyButton.transform, 10f);
+                Haptics.Light();
+                Toast.Show("Not enough coins!");
+                return;
             }
-            else
+            Haptics.Light();
+            if (extraBay)
             {
-                feedbackText.color = new Color32(0xEF, 0x3B, 0x3B, 0xFF);
-                feedbackText.text = "Not enough coins!";
-                Tween.Shake(this, (RectTransform)buyButton.transform);
+                if (Gameplay.GameSession.Current != null) Gameplay.GameSession.Current.UnlockBayFree();
+                Close();
+                return;
             }
-
-            feedbackAnim = Tween.Scale(this, feedbackText.transform, Vector3.one * 1.2f, Vector3.one, 0.25f, Ease.OutBack);
+            BoosterInventory.Add(current, 1);
+            Refresh();
+            Tween.Scale(this, iconFloat, Vector3.one * 1.25f, Vector3.one, 0.3f, Ease.OutBack);
         }
     }
 }

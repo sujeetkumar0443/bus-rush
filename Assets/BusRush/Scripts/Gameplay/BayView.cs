@@ -31,7 +31,7 @@ namespace BusRush.Gameplay
             Kind = kind;
             openGroup.SetActive(kind != BayKind.Locked);
             vipGroup.SetActive(kind == BayKind.Vip);
-            lockedGroup.SetActive(kind == BayKind.Locked);
+            lockedGroup.SetActive(kind == BayKind.Locked && !lockLabelHidden);
             if (tapCollider != null) tapCollider.enabled = kind == BayKind.Locked;
         }
 
@@ -41,7 +41,6 @@ namespace BusRush.Gameplay
 
         public void SetPill(int filled, int capacity) => pillText.text = $"{filled}/{capacity}";
 
-        /// <summary>Tap on a locked bay. The purchase flow arrives in a later step.</summary>
         /// <summary>VIP booster: a short glow pulse on the crown and label.</summary>
         public void PlayVipOpen()
         {
@@ -49,9 +48,19 @@ namespace BusRush.Gameplay
             BusRush.UI.Tween.Scale(this, vipGroup.transform, Vector3.one * 1.45f, Vector3.one, 0.5f, BusRush.UI.Ease.OutBack);
         }
 
+        /// <summary>Tap on a locked bay: buy it (or offer the extra-bay popup).</summary>
         public void RequestUnlock()
         {
-            Debug.Log($"[BusRush] Unlock bay requested (bay {Index}).");
+            if (GameSession.Current != null) GameSession.Current.RequestBayUnlock();
         }
+
+        /// <summary>The HUD draws the lock + price tag for locked bays; the world label is then hidden.</summary>
+        public void HideLockLabel()
+        {
+            lockLabelHidden = true;
+            SetKind(Kind);
+        }
+
+        private bool lockLabelHidden;
     }
 }

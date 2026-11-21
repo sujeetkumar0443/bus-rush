@@ -81,7 +81,6 @@ namespace BusRush.UI
         private bool finishing;
         private readonly bool[] starSounded = new bool[3];
         private Vector2 ribbonHome, titleHome, heroInHome, rewardHome, claimHome, continueHome;
-        private RenderTexture grab;
         private AnimationCurve[] starRot;
 
         private static readonly Vector4 Pop = new Vector4(0.3f, 1.5f, 0.5f, 1f);
@@ -112,7 +111,7 @@ namespace BusRush.UI
         private void OnDestroy()
         {
             if (Instance == this) Instance = null;
-            ReleaseGrab();
+            ScreenGrab.Release(blurImage);
         }
 
         /// <summary>Opens the screen for a won level.</summary>
@@ -140,55 +139,8 @@ namespace BusRush.UI
             blurImage.enabled = false;
             gameObject.SetActive(true);
             Apply(0f);
-            StartCoroutine(GrabBackground());
+            StartCoroutine(ScreenGrab.Blurred(blurImage, GetComponent<Canvas>()));
             Sfx.Play("win_jingle");
-        }
-
-        // ------------------------------------------------------------------ background grab + blur
-
-        /// <summary>Grabs the game frame once (before this overlay shows), downsamples to 1/4 and blurs by a down/up chain.</summary>
-        private IEnumerator GrabBackground()
-        {
-            Canvas canvas = GetComponent<Canvas>();
-            if (canvas != null) canvas.enabled = false;
-            yield return new WaitForEndOfFrame();
-            try
-            {
-                int w = Mathf.Max(4, Screen.width), h = Mathf.Max(4, Screen.height);
-                var full = RenderTexture.GetTemporary(w, h, 0, RenderTextureFormat.ARGB32);
-                ScreenCapture.CaptureScreenshotIntoRenderTexture(full);
-                ReleaseGrab();
-                grab = new RenderTexture(w / 4, h / 4, 0, RenderTextureFormat.ARGB32) { filterMode = FilterMode.Bilinear };
-                var eighth = RenderTexture.GetTemporary(w / 8, h / 8, 0, RenderTextureFormat.ARGB32);
-                var sixteenth = RenderTexture.GetTemporary(Mathf.Max(2, w / 16), Mathf.Max(2, h / 16), 0, RenderTextureFormat.ARGB32);
-                eighth.filterMode = sixteenth.filterMode = FilterMode.Bilinear;
-                Graphics.Blit(full, grab);
-                Graphics.Blit(grab, eighth);
-                Graphics.Blit(eighth, sixteenth);
-                Graphics.Blit(sixteenth, eighth);
-                Graphics.Blit(eighth, grab);
-                RenderTexture.ReleaseTemporary(full);
-                RenderTexture.ReleaseTemporary(eighth);
-                RenderTexture.ReleaseTemporary(sixteenth);
-                blurImage.texture = grab;
-                // The screen grab comes out upside down where UVs start at the top (D3D, Metal, Vulkan).
-                blurImage.uvRect = SystemInfo.graphicsUVStartsAtTop ? new Rect(0f, 1f, 1f, -1f) : new Rect(0f, 0f, 1f, 1f);
-                blurImage.enabled = true;
-            }
-            catch (Exception e)
-            {
-                Debug.LogWarning("[BusRush] Level Complete blur skipped: " + e.Message); // the dark overlay alone still works
-            }
-            if (canvas != null) canvas.enabled = true;
-        }
-
-        private void ReleaseGrab()
-        {
-            if (grab == null) return;
-            if (blurImage != null && blurImage.texture == grab) blurImage.texture = null;
-            grab.Release();
-            Destroy(grab);
-            grab = null;
         }
 
         // ------------------------------------------------------------------ buttons

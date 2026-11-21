@@ -54,6 +54,7 @@
   <ItemGroup>
     <Compile Include="Assets\BusRush\Scripts\UI\Popups\BoosterPopup.cs" />
     <Compile Include="Assets\BusRush\Scripts\Core\SceneLoader.cs" />
+    <Compile Include="Assets\BusRush\Scripts\UI\Screens\BayLockOverlay.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Screens\DebugPopupPanel.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\SafeAreaFitter.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\VehicleExhaust.cs" />
@@ -75,6 +76,7 @@
     <Compile Include="Assets\BusRush\Scripts\UI\SwitchToggle.cs" />
     <Compile Include="Assets\BusRush\Scripts\Core\GameColor.cs" />
     <Compile Include="Assets\BusRush\Scripts\Gameplay\ScreenRef.cs" />
+    <Compile Include="Assets\BusRush\Scripts\UI\ScreenGrab.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\CssCurve.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\Popups\DailyRewardPopup.cs" />
     <Compile Include="Assets\BusRush\Scripts\UI\UIManager.cs" />

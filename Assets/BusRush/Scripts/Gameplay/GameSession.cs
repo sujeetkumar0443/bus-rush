@@ -288,12 +288,31 @@ namespace BusRush.Gameplay
         /// <summary>3 stars with no wrong taps, 2 with up to 2, otherwise 1.</summary>
         public static int StarsFor(int wrongTaps) => wrongTaps == 0 ? 3 : wrongTaps <= 2 ? 2 : 1;
 
-        /// <summary>Coins for a win: base + 10 per star.</summary>
-        public static int CoinsFor(int stars)
+        /// <summary>Coins for a win: GameTuning.WinCoinsBase + WinCoinsPerStar per star (20 + 5 per star).</summary>
+        public static int CoinsFor(int stars) => GameTuning.WinCoinsBase + GameTuning.WinCoinsPerStar * Mathf.Clamp(stars, 0, 3);
+
+        /// <summary>Passengers of this level in total (for the HUD progress bar).</summary>
+        public int TotalPassengers => LevelData != null && LevelData.queue != null ? LevelData.queue.Count : 0;
+
+        /// <summary>
+        /// Tap on a locked bay (world or HUD): buys the next bay with coins (GameConfig.extraBayCost); without enough
+        /// coins the booster popup opens in "extra bay" mode (watch a video or buy).
+        /// </summary>
+        public void RequestBayUnlock()
         {
-            int baseCoins = GameConfig.Instance != null ? GameConfig.Instance.levelCompleteCoins : 50;
-            return baseCoins + 10 * stars;
+            if (IsCleared) return;
+            int cost = GameConfig.Instance != null ? GameConfig.Instance.extraBayCost : 200;
+            if (CoinWallet.TrySpend(cost))
+            {
+                Haptics.Light();
+                HandleBayPurchased();
+                return;
+            }
+            if (UIManager.Instance != null) UIManager.Instance.Open<BoosterPopup>()?.ShowExtraBay();
         }
+
+        /// <summary>Opens the next locked bay without paying (rewarded video in the booster popup).</summary>
+        public void UnlockBayFree() => HandleBayPurchased();
 
         public const string FinishedAllNote = "You finished all levels! More are coming";
 

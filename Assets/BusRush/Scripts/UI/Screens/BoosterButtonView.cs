@@ -21,6 +21,13 @@ namespace BusRush.UI
         [SerializeField] private TMP_Text lockText;
         [Tooltip("Booster name; hidden while locked (the lock overlay shows the unlock level in its place).")]
         [SerializeField] private GameObject nameLabel;
+        [Header("UI v2 locked look")]
+        [Tooltip("White tile shown while unlocked.")]
+        [SerializeField] private GameObject unlockedTile;
+        [Tooltip("Grey tile shown while locked.")]
+        [SerializeField] private GameObject lockedTile;
+        [SerializeField] private Image icon;
+        [SerializeField] private Color lockedIconTint = new Color(0.55f, 0.6f, 0.68f, 0.55f);
 
         public BoosterType Type => type;
 
@@ -67,7 +74,10 @@ namespace BusRush.UI
 
             lockOverlay.SetActive(locked);
             lockText.text = "LV " + unlock;
-            if (nameLabel != null) nameLabel.SetActive(!locked);
+            if (nameLabel != null) nameLabel.SetActive(!locked || unlockedTile != null);
+            if (unlockedTile != null) unlockedTile.SetActive(!locked);
+            if (lockedTile != null) lockedTile.SetActive(locked);
+            if (icon != null) icon.color = locked ? lockedIconTint : Color.white;
             countBadge.SetActive(!locked && count > 0);
             plusBadge.SetActive(!locked && count == 0);
             countText.text = count.ToString();
@@ -111,7 +121,7 @@ namespace BusRush.UI
         private void Shake()
         {
             Tween.Shake(this, (RectTransform)transform, 8f);
-            Haptics.Short();
+            Haptics.Light();
         }
     }
 }

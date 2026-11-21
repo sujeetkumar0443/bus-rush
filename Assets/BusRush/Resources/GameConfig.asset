@@ -23,7 +23,6 @@ MonoBehaviour:
   busLength: 3
   openBays: 5
   lockedBays: 3
-  levelCompleteCoins: 50
   extraBayCost: 200
   freeCoinsAmount: 50
   maxLives: 5
