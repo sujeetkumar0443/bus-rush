@@ -12,6 +12,12 @@ namespace BusRush
 
         public static bool Enabled => SaveSystem.Data.vibrationOn;
 
+        private const long LightMs = 12;
+        private const int LightAmplitude = 60;
+
+        /// <summary>Lightest tick (booster used, selection).</summary>
+        public static void Light() => Vibrate(LightMs, LightAmplitude);
+
         public static void Short() => Vibrate(ShortMs, ShortAmplitude);
 
         public static void Medium() => Vibrate(MediumMs, MediumAmplitude);

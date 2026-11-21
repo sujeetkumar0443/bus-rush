@@ -23,14 +23,10 @@ MonoBehaviour:
   busLength: 3
   openBays: 5
   lockedBays: 3
-  vipCost: 300
-  arrangeCost: 200
-  shuffleCost: 150
   levelCompleteCoins: 50
   extraBayCost: 200
   freeCoinsAmount: 50
   maxLives: 5
-  shuffleUnlockLevel: 13
   dailyRewards:
   - coins: 50
     boosterPack: 0

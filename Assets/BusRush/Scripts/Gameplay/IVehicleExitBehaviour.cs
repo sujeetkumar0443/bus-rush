@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 namespace BusRush.Gameplay
@@ -17,7 +18,11 @@ namespace BusRush.Gameplay
         void Exit(VehicleView vehicle, Action<VehicleView> onExited);
     }
 
-    /// <summary>Drives the road loop to the first free bay and parks there (Step 4).</summary>
+    /// <summary>
+    /// Drives the road loop to a free bay and parks there. The trajectory is reserved in the bay manager's
+    /// <see cref="TrafficSchedule"/> at tap time; the vehicle waits in its lot cell until its reserved start, then drives
+    /// without ever stopping.
+    /// </summary>
     public sealed class RoadExitBehaviour : IVehicleExitBehaviour
     {
         private readonly BayManager bays;
@@ -27,23 +32,55 @@ namespace BusRush.Gameplay
             this.bays = bays;
         }
 
-        public bool CanExit(VehicleView vehicle) => bays.HasFreeBay;
+        private VehicleView pendingVehicle;
+        private BayState pendingBay;
+        private VehiclePlan pendingPlan;
+
+        /// <summary>
+        /// A free bay whose whole trajectory can be reserved (in preference order: clean turn-in first). A turn-in that
+        /// would clip a parked neighbour can never be reserved, so that bay is skipped; with none left the tap is a
+        /// "no free bay" (the vehicle shakes and stays).
+        /// </summary>
+        public bool CanExit(VehicleView vehicle)
+        {
+            pendingVehicle = null;
+            if (!bays.HasFreeBay) return false;
+            float now = Time.time;
+            foreach (BayState b in bays.FreeBaysFor(vehicle))
+            {
+                VehiclePlan p = TrafficSchedule.ArrivalPlan(vehicle.Id, vehicle.Data, b.Index, now);
+                if (!bays.Traffic.CanSchedule(p, now)) continue;
+                pendingVehicle = vehicle;
+                pendingBay = b;
+                pendingPlan = p;
+                return true;
+            }
+            return false;
+        }
 
         public void Exit(VehicleView vehicle, Action<VehicleView> onExited)
         {
-            BayState bay = bays.ReserveFirstFree(vehicle);
-            if (bay == null)
+            if ((pendingVehicle != vehicle || pendingBay == null || !pendingBay.IsFree) && !CanExit(vehicle))
             {
-                Debug.LogError("[BusRush] RoadExitBehaviour.Exit called without a free bay.");
+                Debug.LogError("[BusRush] RoadExitBehaviour.Exit called without a reservable bay.");
                 return;
             }
-            vehicle.StartCoroutine(Drive(vehicle, bay, onExited));
+            BayState bay = pendingBay;
+            VehiclePlan plan = pendingPlan;
+            pendingVehicle = null;
+            bays.Reserve(bay, vehicle);
+            vehicle.StartCoroutine(Drive(vehicle, bay, plan, onExited));
         }
 
-        private IEnumerator Drive(VehicleView vehicle, BayState bay, Action<VehicleView> onExited)
+        private IEnumerator Drive(VehicleView vehicle, BayState bay, VehiclePlan plan, Action<VehicleView> onExited)
         {
-            var route = RouteBuilder.ToWorld(RouteBuilder.Build(vehicle.Data, bay.Index));
-            yield return vehicle.Motion.Drive(route, false, GameTuning.VehicleDriveSpeed, true, true);
+            float now = Time.time;
+            plan.WaitFrom = now;
+            if (!bays.Traffic.Schedule(plan, now))
+            {
+                Debug.LogWarning($"[Traffic] {vehicle.name}: reservation lost ({bays.Traffic.LastFailure}); starting anyway.");
+            }
+            yield return vehicle.Motion.Run(plan);
             bays.Arrive(bay);
             onExited(vehicle);
         }

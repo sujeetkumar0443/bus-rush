@@ -40,17 +40,11 @@ namespace BusRush
         [Min(1)] public int openBays = 5;
         [Min(0)] public int lockedBays = 3;
 
-        [Header("Booster costs (coins)")]
-        [Min(0)] public int vipCost = 300;
-        [Min(0)] public int arrangeCost = 200;
-        [Min(0)] public int shuffleCost = 150;
-
         [Header("Economy")]
         [Min(0)] public int levelCompleteCoins = 50;
         [Min(0)] public int extraBayCost = 300;
         [Min(0)] public int freeCoinsAmount = 50;
         [Min(1)] public int maxLives = 5;
-        [Min(1)] public int shuffleUnlockLevel = 13;
 
         [Serializable]
         public struct DailyReward
@@ -92,21 +86,11 @@ namespace BusRush
 
         public int TotalBays => openBays + lockedBays;
 
-        public int GetBoosterCost(BoosterType type)
-        {
-            return type switch
-            {
-                BoosterType.Vip => vipCost,
-                BoosterType.Arrange => arrangeCost,
-                BoosterType.Shuffle => shuffleCost,
-                _ => vipCost
-            };
-        }
+        /// <summary>Booster price (coins); see GameTuning / BoosterInventory.</summary>
+        public int GetBoosterCost(BoosterType type) => BoosterInventory.PriceCoins(type);
 
-        public int GetBoosterUnlockLevel(BoosterType type)
-        {
-            return type == BoosterType.Shuffle ? shuffleUnlockLevel : 1;
-        }
+        /// <summary>Booster unlock level; see GameTuning / BoosterInventory.</summary>
+        public int GetBoosterUnlockLevel(BoosterType type) => BoosterInventory.UnlockLevel(type);
 
         /// <summary>Next unlock at or above <paramref name="level"/>, and the previous milestone level (for progress).</summary>
         public bool TryGetNextUnlock(int level, out Unlock next, out int previousLevel)

@@ -5,3 +5,7 @@
 [Ll]ogs/
 UserSettings/
 .vs/
+
+# Unity crash-recovery leftovers
+Assets/_Recovery/
+Assets/_Recovery.meta

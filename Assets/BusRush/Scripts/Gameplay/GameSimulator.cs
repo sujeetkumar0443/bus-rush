@@ -48,19 +48,51 @@ namespace BusRush.Gameplay
             public string failReason;
         }
 
+        /// <summary>A vehicle already parked in a bay (bay order), with the passengers already on board.</summary>
+        public struct ParkedState
+        {
+            public GameColor color;
+            public int capacity;
+            public int filled;
+        }
+
+        /// <summary>Whole level from the start (every vehicle on the board, empty bays, the full queue).</summary>
         public static Result Run(LevelData level, int openBays = 4, int window = GameTuning.FrontWindow)
         {
-            var board = new BoardState(level.columns, level.rows);
+            var all = new List<int>(level.vehicles.Count);
+            for (int i = 0; i < level.vehicles.Count; i++) all.Add(i);
+            return RunFrom(level.columns, level.rows, level.vehicles, all, null, level.queue, openBays, window);
+        }
+
+        /// <summary>
+        /// From a state in the middle of a level (used by the boosters to keep the level winnable): the vehicles still on
+        /// the board (indices into <paramref name="vehicles"/>, whose colours may have been changed), the vehicles parked
+        /// in the bays, the remaining queue in order, and the number of usable bays.
+        /// </summary>
+        public static Result RunFrom(int columns, int rows, IList<VehicleData> vehicles, IEnumerable<int> onBoardIds,
+                                     IEnumerable<ParkedState> parkedNow, IList<GameColor> queue, int openBays,
+                                     int window = GameTuning.FrontWindow)
+        {
+            var board = new BoardState(columns, rows);
             var onBoard = new HashSet<int>();
-            for (int i = 0; i < level.vehicles.Count; i++)
+            foreach (int i in onBoardIds)
             {
-                board.Occupy(i, level.vehicles[i]);
+                board.Occupy(i, vehicles[i]);
                 onBoard.Add(i);
             }
 
-            var remaining = new List<GameColor>(level.queue);
+            var remaining = new List<GameColor>(queue);
             var parked = new List<Parked>(); // kept sorted by bay
             var result = new Result();
+            if (parkedNow != null)
+            {
+                foreach (ParkedState p in parkedNow)
+                {
+                    if (p.filled >= p.capacity) continue; // full: leaving anyway
+                    parked.Add(new Parked { id = -1 - parked.Count, bay = parked.Count, color = p.color, capacity = p.capacity, filled = p.filled });
+                }
+            }
+            int total = remaining.Count;
 
             while (true)
             {
@@ -76,8 +108,8 @@ namespace BusRush.Gameplay
                 int pick = -1;
                 if (freeBays > 0 && remaining.Count > 0)
                 {
-                    pick = PickFree(level, board, onBoard, v => NeededIn(remaining, 0, v.color));
-                    if (pick >= 0 && NeededIn(remaining, 0, level.vehicles[pick].color) >= window && freeBays < 2) pick = -1;
+                    pick = PickFree(vehicles, board, onBoard, v => NeededIn(remaining, 0, v.color));
+                    if (pick >= 0 && NeededIn(remaining, 0, vehicles[pick].color) >= window && freeBays < 2) pick = -1;
                 }
 
                 if (pick < 0)
@@ -85,11 +117,11 @@ namespace BusRush.Gameplay
                     result.failReason = remaining.Count == 0
                         ? $"queue empty but {onBoard.Count} vehicles left"
                         : $"stuck: window=[{string.Join(",", remaining.GetRange(0, System.Math.Min(window, remaining.Count)))}] " +
-                          $"boarded={result.boarded}/{level.queue.Count} parked=[{Describe(parked)}] board={onBoard.Count}";
+                          $"boarded={result.boarded}/{total} parked=[{Describe(parked)}] board={onBoard.Count}";
                     return result;
                 }
 
-                VehicleData pv = level.vehicles[pick];
+                VehicleData pv = vehicles[pick];
                 board.Free(pick, pv);
                 onBoard.Remove(pick);
                 int bay = 0;
@@ -136,12 +168,12 @@ namespace BusRush.Gameplay
         }
 
         /// <summary>Free vehicle with the lowest non-negative score (ties: lowest index).</summary>
-        private static int PickFree(LevelData level, BoardState board, HashSet<int> onBoard, System.Func<VehicleData, int> score)
+        private static int PickFree(IList<VehicleData> vehicles, BoardState board, HashSet<int> onBoard, System.Func<VehicleData, int> score)
         {
             int best = -1, bestScore = int.MaxValue;
             foreach (int id in onBoard)
             {
-                VehicleData v = level.vehicles[id];
+                VehicleData v = vehicles[id];
                 if (!board.IsPathClear(v)) continue;
                 int s = score(v);
                 if (s < 0) continue;

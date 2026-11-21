@@ -37,6 +37,34 @@ namespace BusRush.Gameplay
             modelBaseScale = model != null ? model.localScale : Vector3.one;
         }
 
+        /// <summary>Shuffle booster: a quick spin, recoloured halfway (the data's colour changes at once).</summary>
+        public void SwirlTo(GameColor color, float duration)
+        {
+            Data.color = color;
+            name = $"{Data.type}_{color}_{Id}";
+            StartCoroutine(Swirl(color, duration));
+        }
+
+        private System.Collections.IEnumerator Swirl(GameColor color, float duration)
+        {
+            Quaternion baseRotation = transform.rotation;
+            bool recoloured = false;
+            for (float t = 0f; t < duration; t += Time.deltaTime)
+            {
+                float k = t / duration;
+                float spin = 360f * (k * k * (3f - 2f * k));
+                transform.rotation = baseRotation * Quaternion.Euler(0f, spin, 0f);
+                if (!recoloured && k >= 0.5f)
+                {
+                    GameColors.Recolor(renderers, color);
+                    recoloured = true;
+                }
+                yield return null;
+            }
+            transform.rotation = baseRotation;
+            if (!recoloured) GameColors.Recolor(renderers, color);
+        }
+
         public void Setup(int id, VehicleData data)
         {
             Id = id;

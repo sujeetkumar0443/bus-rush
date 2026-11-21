@@ -18,8 +18,6 @@ namespace BusRush.Gameplay
         [SerializeField] private CrowdView crowd;
         [SerializeField] private GameFx fx;
         [SerializeField] private WorldManager world;
-        [SerializeField] private float boardingInterval = 0.12f;
-        [SerializeField] private float fullDepartDelay = 0.35f;
         [SerializeField] private float confettiToPopupDelay = 0.8f;
         [SerializeField] private float loseDelay = 0.6f;
         [Tooltip("Debug: parked vehicles leave on their own after a delay, full or not.")]
@@ -43,6 +41,7 @@ namespace BusRush.Gameplay
         public BoardView Board => board;
         public BayManager Bays => bays;
         public CrowdView Crowd => crowd;
+        public BoosterController Boosters { get; private set; }
 
         /// <summary>Passengers still to board (in the queue or walking to a seat).</summary>
         public int PassengersLeft => crowd != null ? crowd.PassengersLeft : 0;
@@ -94,6 +93,8 @@ namespace BusRush.Gameplay
             board.Build(LevelData, new RoadExitBehaviour(bays));
             crowd.Build(LevelData.queue);
             OutOfSpacePopup.BayPurchased += HandleBayPurchased;
+            Boosters = gameObject.AddComponent<BoosterController>();
+            Boosters.Init(this);
 
             if (GameManager.Instance != null && GameManager.Instance.State != GameState.Playing)
             {
@@ -106,7 +107,7 @@ namespace BusRush.Gameplay
             if (IsCleared) return;
 
             boardingTimer += Time.deltaTime;
-            if (boardingTimer >= boardingInterval)
+            if (boardingTimer >= GameTuning.BoardingIntervalSeconds)
             {
                 boardingTimer = 0f;
                 TryBoardWindow();
@@ -205,7 +206,7 @@ namespace BusRush.Gameplay
 
         private IEnumerator DepartWhenFull(BayState bay)
         {
-            yield return new WaitForSeconds(fullDepartDelay);
+            yield return new WaitForSeconds(GameTuning.FullDepartDelaySeconds);
             bay.DepartVehicle();
         }
 

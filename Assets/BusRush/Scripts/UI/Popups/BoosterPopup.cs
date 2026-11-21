@@ -30,6 +30,8 @@ namespace BusRush.UI
         [SerializeField] private UIButton buyButton;
         [SerializeField] private TMP_Text buyPrice;
         [SerializeField] private TMP_Text feedbackText;
+        [Tooltip("Optional: rewarded ad for one booster (Ads.Service; a stub that always rewards for now).")]
+        [SerializeField] private UIButton watchAdButton;
 
         [SerializeField] private Color selectedFace = new Color32(0x3A, 0x8D, 0xF5, 0xFF);
         [SerializeField] private Color selectedLip = new Color32(0x1F, 0x5B, 0xB5, 0xFF);
@@ -50,6 +52,7 @@ namespace BusRush.UI
                 tab.button.onClick.AddListener(() => Select(type));
             }
             buyButton.Button.onClick.AddListener(Buy);
+            if (watchAdButton != null) watchAdButton.Button.onClick.AddListener(WatchAd);
         }
 
         protected override void OnOpening()
@@ -68,7 +71,6 @@ namespace BusRush.UI
 
         private void Refresh(bool animateIcon)
         {
-            GameConfig config = GameConfig.Instance;
             foreach (Tab tab in tabs)
             {
                 bool selected = tab.type == current;
@@ -82,12 +84,14 @@ namespace BusRush.UI
                 descriptionText.text = tab.description;
             }
 
-            int owned = SaveSystem.Data.GetBooster(current);
+            int owned = BoosterInventory.Count(current);
             ownedText.text = "Owned: " + owned;
-            buyPrice.text = config != null ? config.GetBoosterCost(current).ToString() : "?";
+            buyPrice.text = BoosterInventory.PriceCoins(current).ToString();
 
-            int unlock = config != null ? config.GetBoosterUnlockLevel(current) : 1;
-            bool locked = SaveSystem.Data.level < unlock;
+            int unlock = BoosterInventory.UnlockLevel(current);
+            Gameplay.GameSession session = Gameplay.GameSession.Current;
+            int level = session != null && session.Level > 0 ? session.Level : SaveSystem.Data.level;
+            bool locked = !BoosterInventory.IsUnlocked(current, level);
             lockText.gameObject.SetActive(locked);
             lockText.text = $"Unlocks at level {unlock}";
 
@@ -97,15 +101,38 @@ namespace BusRush.UI
             }
         }
 
+        private void WatchAd()
+        {
+            BoosterType type = current;
+            Ads.Service.ShowRewarded("booster_" + type, granted =>
+            {
+                if (this == null) return;
+                Tween.Stop(this, ref feedbackAnim);
+                if (granted)
+                {
+                    BoosterInventory.Add(type, 1);
+                    feedbackText.color = new Color32(0x23, 0x86, 0x3D, 0xFF);
+                    feedbackText.text = "+1 added!";
+                    Refresh(true);
+                    Haptics.Light();
+                }
+                else
+                {
+                    feedbackText.color = new Color32(0xEF, 0x3B, 0x3B, 0xFF);
+                    feedbackText.text = "Ad not available.";
+                }
+                feedbackAnim = Tween.Scale(this, feedbackText.transform, Vector3.one * 1.2f, Vector3.one, 0.25f, Ease.OutBack);
+            });
+        }
+
         private void Buy()
         {
-            GameConfig config = GameConfig.Instance;
-            int cost = config != null ? config.GetBoosterCost(current) : int.MaxValue;
+            int cost = BoosterInventory.PriceCoins(current);
             Tween.Stop(this, ref feedbackAnim);
 
-            if (SaveSystem.TrySpendCoins(cost))
+            if (CoinWallet.TrySpend(cost))
             {
-                SaveSystem.AddBooster(current, 1);
+                BoosterInventory.Add(current, 1);
                 feedbackText.color = new Color32(0x23, 0x86, 0x3D, 0xFF);
                 feedbackText.text = "+1 added!";
                 Refresh(true);

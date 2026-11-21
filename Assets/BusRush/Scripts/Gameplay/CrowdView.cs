@@ -40,10 +40,8 @@ namespace BusRush.Gameplay
 
         [SerializeField] private PassengerView passengerPrefab;
         [SerializeField] private int maxVisible = 80;
-        [SerializeField] private float walkSpeedPx = 85f;
-        [SerializeField] private float boardSpeedPx = 420f;
-        [SerializeField] private float minBoardTime = 0.25f;
-        [Tooltip("Level intro: the crowd starts this far back and walks in (85 px = 1 s).")]
+        private const float MinBoardTime = 0.15f;
+        [Tooltip("Level intro: the crowd starts this far back and walks in (at the shuffle speed, ~0.7 s).")]
         [SerializeField] private float introWalkPx = 85f;
         [SerializeField] private float passengerHeight = 0.81f;
         [Tooltip("Model height of the Passenger prefab (for scaling to passengerHeight).")]
@@ -64,6 +62,9 @@ namespace BusRush.Gameplay
             public float target;
             public float lateral;
             public PassengerView view;
+            public Vector2 moveFrom;   // Arrange: animate from here to the slot
+            public float moveTime;     // seconds left of that animation (0 = none)
+            public float moveDuration;
         }
 
         private sealed class Walker
@@ -136,6 +137,65 @@ namespace BusRush.Gameplay
             return sb.ToString();
         }
 
+        /// <summary>Colours of everyone waiting (front first; not those already walking to a vehicle).</summary>
+        public List<GameColor> QueueColors()
+        {
+            var list = new List<GameColor>(queue.Count);
+            foreach (Person p in queue) list.Add(p.color);
+            return list;
+        }
+
+        /// <summary>
+        /// Arrange booster: reorders the waiting passengers to <paramref name="colors"/> (same passengers, new order).
+        /// Slots (row, arm, lane, distance) stay where they are; each passenger takes over the slot of the queue index
+        /// they move to and animates there in <paramref name="duration"/>. Passengers of one colour keep their relative
+        /// order. Nobody already walking to a vehicle is touched.
+        /// </summary>
+        public void Rearrange(IReadOnlyList<GameColor> colors, float duration)
+        {
+            if (colors.Count != queue.Count) return;
+            var byColour = new Dictionary<GameColor, Queue<Person>>();
+            foreach (Person p in queue)
+            {
+                if (!byColour.TryGetValue(p.color, out Queue<Person> q)) byColour[p.color] = q = new Queue<Person>();
+                q.Enqueue(p);
+            }
+            var slots = new List<(int row, int arm, int lane, float s, float lateral, float target)>(queue.Count);
+            foreach (Person p in queue) slots.Add((p.row, p.arm, p.lane, p.s, p.lateral, p.target));
+            var current = new List<Vector2>(queue.Count);
+            foreach (Person p in queue) current.Add(ArmPoint(p.arm, p.s, p.lateral, out _));
+
+            var next = new List<Person>(queue.Count);
+            for (int k = 0; k < colors.Count; k++)
+            {
+                if (!byColour.TryGetValue(colors[k], out Queue<Person> q) || q.Count == 0) return; // not the same multiset
+                next.Add(q.Dequeue());
+            }
+            var from = new Dictionary<Person, Vector2>();
+            for (int k = 0; k < queue.Count; k++) from[queue[k]] = current[k];
+
+            for (int k = 0; k < next.Count; k++)
+            {
+                Person p = next[k];
+                var slot = slots[k];
+                bool moves = p.row != slot.row || p.arm != slot.arm || p.lane != slot.lane;
+                p.row = slot.row;
+                p.arm = slot.arm;
+                p.lane = slot.lane;
+                p.s = slot.s;
+                p.lateral = slot.lateral;
+                p.target = slot.target;
+                if (moves && p.view != null)
+                {
+                    p.moveFrom = from[p];
+                    p.moveTime = duration;
+                    p.moveDuration = duration;
+                }
+            }
+            queue.Clear();
+            queue.AddRange(next);
+        }
+
         /// <summary>Queue index of the next passenger of this colour (int.MaxValue if none).</summary>
         public int DistanceToColor(GameColor color)
         {
@@ -192,14 +252,14 @@ namespace BusRush.Gameplay
             var lengths = new List<float>(path.Count) { 0f };
             for (int i = 1; i < path.Count; i++) lengths.Add(lengths[i - 1] + Vector2.Distance(path[i - 1], path[i]));
             float length = lengths[lengths.Count - 1];
-            float speed = boardSpeedPx * GameTuning.PassengerBoardSpeed;
+            float speed = GameTuning.PassengerRunSpeedPx;
             walkers.Add(new Walker
             {
                 person = p,
                 path = path,
                 lengths = lengths,
                 length = length,
-                duration = Mathf.Max(minBoardTime / GameTuning.PassengerBoardSpeed, length / speed),
+                duration = Mathf.Max(MinBoardTime, length / speed),
                 onArrive = onArrive
             });
             return true;
@@ -208,7 +268,7 @@ namespace BusRush.Gameplay
         private void Update()
         {
             float dt = Time.deltaTime;
-            float walk = walkSpeedPx * GameTuning.QueueShuffleSpeed;
+            float walk = GameTuning.QueueShuffleSpeedPx;
             int window = WindowCount;
 
             for (int c = 0; c < columnAhead.Length; c++) columnAhead[c] = 0;
@@ -225,6 +285,13 @@ namespace BusRush.Gameplay
                 if (p.view == null) continue;
 
                 Vector2 refPos = ArmPoint(p.arm, p.s, p.lateral, out Vector2 tangent);
+                if (p.moveTime > 0f)
+                {
+                    // Arrange: glide from the old spot to the new slot (ease out).
+                    p.moveTime = Mathf.Max(0f, p.moveTime - dt);
+                    float u = 1f - p.moveTime / Mathf.Max(0.0001f, p.moveDuration);
+                    refPos = Vector2.Lerp(p.moveFrom, refPos, 1f - (1f - u) * (1f - u));
+                }
                 float moved = p.s - before;
                 // Face the way they walk; standing people face the gate (down the arm).
                 Vector2 facing = Mathf.Abs(moved) > 0.0001f ? tangent * Mathf.Sign(moved) : -tangent;
@@ -245,7 +312,7 @@ namespace BusRush.Gameplay
                 float k = Mathf.Clamp01(w.time / w.duration);
                 Vector2 pos = PolylinePoint(w.path, k * w.length, out Vector2 dir, w.lengths);
                 Place(w.person.view, pos, dir, dt);
-                w.person.view.Pose(dt, boardSpeedPx * GameTuning.PassengerBoardSpeed, true);
+                w.person.view.Pose(dt, GameTuning.PassengerRunSpeedPx, true);
                 if (k >= 1f)
                 {
                     walkers.RemoveAt(i);

@@ -42,6 +42,13 @@ namespace BusRush.Gameplay
         public void SetPill(int filled, int capacity) => pillText.text = $"{filled}/{capacity}";
 
         /// <summary>Tap on a locked bay. The purchase flow arrives in a later step.</summary>
+        /// <summary>VIP booster: a short glow pulse on the crown and label.</summary>
+        public void PlayVipOpen()
+        {
+            if (vipGroup == null) return;
+            BusRush.UI.Tween.Scale(this, vipGroup.transform, Vector3.one * 1.45f, Vector3.one, 0.5f, BusRush.UI.Ease.OutBack);
+        }
+
         public void RequestUnlock()
         {
             Debug.Log($"[BusRush] Unlock bay requested (bay {Index}).");

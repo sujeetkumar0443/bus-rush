@@ -10,16 +10,16 @@ namespace BusRush
         public int version = 1;
 
         public int level = 1;
-        public int coins = 100;
+        public int coins = Gameplay.GameTuning.StartingCoins;
         public int lives = 5;
 
         public bool soundOn = true;
         public bool musicOn = true;
         public bool vibrationOn = true;
 
-        public int boosterVip = 2;
-        public int boosterArrange = 2;
-        public int boosterShuffle = 2;
+        public int boosterVip = Gameplay.GameTuning.StartingBoosters;
+        public int boosterArrange = Gameplay.GameTuning.StartingBoosters;
+        public int boosterShuffle = Gameplay.GameTuning.StartingBoosters;
 
         /// <summary>UTC date of the last daily reward claim, ISO 8601 ("o"); empty if never claimed.</summary>
         public string lastDailyClaim = string.Empty;

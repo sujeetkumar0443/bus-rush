@@ -31,7 +31,13 @@ namespace BusRush.Gameplay
         /// <summary>Every seat filled; the vehicle is about to leave.</summary>
         public bool Full { get; internal set; }
 
-        public bool IsFree => Kind == BayKind.Open && Vehicle == null && !Reserved && !Departing;
+        /// <summary>Set by the VIP booster: the VIP bay is usable for the rest of the level.</summary>
+        public bool VipOpen { get; internal set; }
+
+        /// <summary>The player can park here: an open bay, or the VIP bay once the VIP booster opened it.</summary>
+        public bool Usable => Kind == BayKind.Open || (Kind == BayKind.Vip && VipOpen);
+
+        public bool IsFree => Usable && Vehicle == null && !Reserved && !Departing;
         public bool IsParked => Vehicle != null && !Reserved && !Departing;
         public int Capacity => Vehicle != null && Vehicle.Data != null ? Vehicle.Data.Capacity : 0;
 

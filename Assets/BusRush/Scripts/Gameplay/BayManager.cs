@@ -17,7 +17,6 @@ namespace BusRush.Gameplay
         [SerializeField] private Material floatMaterial;
         [Tooltip("Reference px from BAY_Y down to the centre of the painted slot.")]
         [SerializeField] private float slotCenterOffsetPx = 30f;
-        [SerializeField] private float departSpeedMultiplier = 1.4f;
 
         private readonly List<BayState> bays = new List<BayState>();
         private int movers;
@@ -26,6 +25,37 @@ namespace BusRush.Gameplay
 
         /// <summary>Vehicles driving to a bay or away from one.</summary>
         public int Movers => movers;
+
+        private readonly BoosterLogic.VipLatch vip = new BoosterLogic.VipLatch();
+
+        /// <summary>The VIP bay (bay 0) is open for this level (VIP booster used).</summary>
+        public bool VipOpen => vip.Open;
+
+        /// <summary>Number of bays the player can park in right now.</summary>
+        public int UsableCount
+        {
+            get
+            {
+                int n = 0;
+                foreach (BayState b in bays) if (b.Usable) n++;
+                return n;
+            }
+        }
+
+        /// <summary>Opens the VIP bay for the rest of this level; false if it is already open (nothing to spend).</summary>
+        public bool OpenVipBay()
+        {
+            BayState bay = bays.Find(b => b.Kind == BayKind.Vip);
+            if (bay == null || !vip.TryOpen()) return false;
+            bay.VipOpen = true;
+            if (bay.View != null) bay.View.PlayVipOpen();
+            return true;
+        }
+
+        /// <summary>Space-time reservations of every vehicle trajectory (arrivals and departures).</summary>
+        /// <remarks>Created on first use: it reads GameConfig (Resources.Load), which is not allowed in a field initializer.</remarks>
+        public TrafficSchedule Traffic => traffic ??= TrafficSchedule.CreateForGame();
+        private TrafficSchedule traffic;
 
         public event Action<BayState> OnVehicleParked;
         public event Action<BayState> OnVehicleDeparted;
@@ -75,7 +105,7 @@ namespace BusRush.Gameplay
                 bool any = false;
                 foreach (BayState b in bays)
                 {
-                    if (b.Kind != BayKind.Open) continue;
+                    if (!b.Usable) continue;
                     any = true;
                     if (!b.IsParked) return false;
                 }
@@ -99,6 +129,31 @@ namespace BusRush.Gameplay
         /// along the arrival lane is at least the vehicle's length (a bus coming round the left corner cannot swing into
         /// bay 1 without sweeping over the lot's top-left cells); otherwise the first free bay.
         /// </summary>
+        /// <summary>Free bays in preference order: those the vehicle can turn into cleanly first, then the rest.</summary>
+        public List<BayState> FreeBaysFor(VehicleView vehicle)
+        {
+            var clean = new List<BayState>();
+            var rest = new List<BayState>();
+            foreach (BayState b in bays)
+            {
+                if (!b.IsFree) continue;
+                bool ok = vehicle == null || vehicle.Data == null || RouteBuilder.TurnInRoomOk(vehicle.Data, b.Index);
+                (ok ? clean : rest).Add(b);
+            }
+            clean.AddRange(rest);
+            return clean;
+        }
+
+        /// <summary>Reserves this (free) bay for the vehicle on its way.</summary>
+        public void Reserve(BayState b, VehicleView vehicle)
+        {
+            b.Vehicle = vehicle;
+            b.Reserved = true;
+            b.ResetFilled();
+            b.View.ShowPill(false);
+            movers++;
+        }
+
         public BayState ReserveFirstFree(VehicleView vehicle)
         {
             BayState pick = null;
@@ -157,15 +212,22 @@ namespace BusRush.Gameplay
             float tailPx = ScreenRef.VehicleLengthPx(v.Data.type) * 0.5f;
             const float slotTop = ScreenRef.SlotTopY; // painted slot (City v2)
 
-            // Wait in the slot until nobody on the strip will pass in front of it.
-            float bayX = ScreenRef.BayX(bay.Index);
-            while (VehicleMotion.DepartStripBusy(bayX, motion)) yield return null;
-            motion.SetDeparting(true);
-
-            // Forward out of the top of the slot onto the departure strip, then off to the right. The bay is freed as
-            // soon as the whole vehicle has left the slot.
-            yield return motion.Drive(RouteBuilder.ToWorld(RouteBuilder.BuildDeparture(v.Data.type, bay.Index)),
-                                      false, departSpeedMultiplier * GameTuning.VehicleDepartSpeed, false, true, clampToScreen: false, onProgress: () =>
+            // Departure window: the parked plan holds the slot until now; the departure trajectory (forward out of the
+            // slot onto the strip above the bays, then off to the right) is reserved like an arrival, and the vehicle
+            // leaves at its reserved time, never earlier. The bay is freed as soon as the whole vehicle has left the slot.
+            // If the departure cannot be reserved yet (a neighbour's parked position is in the way for good), the vehicle
+            // stays parked and tries again a moment later.
+            float now = Time.time;
+            VehiclePlan plan = TrafficSchedule.DeparturePlan(v.Id, v.Data.type, bay.Index, now);
+            while (!Traffic.CanSchedule(plan, now))
+            {
+                yield return new WaitForSeconds(0.25f);
+                now = Time.time;
+                plan = TrafficSchedule.DeparturePlan(v.Id, v.Data.type, bay.Index, now);
+            }
+            if (motion.Plan != null) motion.Plan.HoldUntil = now;
+            Traffic.Schedule(plan, now);
+            yield return motion.Run(plan, onProgress: () =>
                                       {
                                           if (freed || v == null) return;
                                           if (ScreenRef.WorldToRef(v.transform.position).y + tailPx > slotTop) return;

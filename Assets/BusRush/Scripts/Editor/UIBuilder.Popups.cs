@@ -259,7 +259,7 @@ namespace BusRush.EditorTools
 
         private static GameObject BuildBoosters()
         {
-            const float w = 350f, h = 516f;
+            const float w = 350f, h = 572f;
             Shell s = PopupShell<BoosterPopup>("BoosterPopup", w, h, "BOOSTERS", Blue, BlueLip);
 
             var types = new[] { BoosterType.Vip, BoosterType.Arrange, BoosterType.Shuffle };
@@ -319,6 +319,12 @@ namespace BusRush.EditorTools
             TextMeshProUGUI feedback = Label(s.Face, "Feedback", "", 17f, TextStyle.BodyPlain, Red);
             Top(feedback.rectTransform, 474f, w - 40f, 22f);
 
+            // Rewarded ad for one booster (IAdService; a stub for now).
+            Chunk watchAd = Chunky(s.Face, "WatchAdButton", Blue, BlueLip, 230f, 52f, 16f, 6f, true);
+            Top(watchAd.Root, 498f, 230f, 52f);
+            TextMeshProUGUI adLabel = Label(watchAd.Face, "Label", "WATCH AD  +1", 22f, TextStyle.Heading);
+            Stretch(adLabel.rectTransform, 10f, 0f, 10f, 0f);
+
             BoosterPopup popup = s.Root.GetComponent<BoosterPopup>();
             Wire(popup, ("tabs", new object[3]));
             for (int i = 0; i < 3; i++)
@@ -330,7 +336,7 @@ namespace BusRush.EditorTools
             }
             Wire(popup, ("icon", icon2D), ("iconRoot", iconRoot), ("nameText", name), ("descriptionText", description),
                 ("ownedText", ownedText), ("lockText", lockText), ("buyButton", buy.UIButton), ("buyPrice", price),
-                ("feedbackText", feedback),
+                ("feedbackText", feedback), ("watchAdButton", watchAd.UIButton),
                 ("selectedFace", Blue), ("selectedLip", BlueLip), ("idleFace", PanelSoft), ("idleLip", Grey),
                 ("selectedText", Color.white), ("idleText", TextGrey));
             return s.Root;
