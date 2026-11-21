@@ -34,7 +34,8 @@ namespace BusRush.EditorTools
                 SavePopup(BuildDaily()),
                 SavePopup(BuildBoosters()),
                 SavePopup(BuildLevelComplete()),
-                SavePopup(BuildOutOfSpace())
+                SavePopup(BuildOutOfSpace()),
+                SavePopup(BuildFreeCoins())
             };
 
             PopupCatalog catalog = AssetDatabase.LoadAssetAtPath<PopupCatalog>(CatalogPath);
@@ -89,170 +90,6 @@ namespace BusRush.EditorTools
             Wire(manager, ("catalog", catalog), ("popupRoot", go.transform));
             return go;
         }
-
-        // ------------------------------------------------------------------ Home
-
-        private static GameObject BuildHome()
-        {
-            var go = new GameObject("HomeScreen");
-            RootCanvas(go, 0);
-            Transform root = go.transform;
-
-            Image sky = Img(root, "Sky", Sky, Color.white);
-            Stretch(sky.rectTransform);
-            AddCloud(root, 0.08f, 0.86f, 150f, 0.85f);
-            AddCloud(root, 0.86f, 0.74f, 120f, 0.7f);
-            AddCloud(root, 0.18f, 0.5f, 110f, 0.55f);
-            AddCloud(root, 0.9f, 0.36f, 140f, 0.6f);
-
-            RectTransform safe = SafeArea(root);
-
-            // --- top bar
-            RectTransform top = Rect(safe, "TopBar");
-            Place(top, 0.5f, 1f, 0f, -10f, 0f, 56f, 0.5f, 1f);
-            top.anchorMin = new Vector2(0f, 1f);
-            top.anchorMax = new Vector2(1f, 1f);
-            top.offsetMin = new Vector2(14f, top.offsetMin.y);
-            top.offsetMax = new Vector2(-14f, top.offsetMax.y);
-
-            // Lives pill
-            Chunk lives = Chunky(top, "LivesPill", Navy, NavyLip, 100f, 44f, -1f, 5f, false, true, false);
-            Place(lives.Root, 0f, 0.5f, 24f, 0f, 100f, 44f, 0f, 0.5f);
-            Image heart = IconImg(lives.Root, "Heart", "heart", 54f);
-            Place(heart.rectTransform, 0f, 0.5f, -26f, 2f, 54f, 54f, 0f, 0.5f);
-            TextMeshProUGUI livesCount = Label(heart.transform, "Count", "5", 22f, TextStyle.Heading);
-            Stretch(livesCount.rectTransform, 0f, 4f, 0f, 0f);
-            TextMeshProUGUI livesTimer = Label(lives.Face, "Timer", "FULL", 17f, TextStyle.Body);
-            Stretch(livesTimer.rectTransform, 30f, 0f, 8f, 0f);
-            LivesText livesText = livesCount.gameObject.AddComponent<LivesText>();
-            Wire(livesText, ("timerText", livesTimer));
-
-            // Coins pill (coins come from rewards only)
-            Chunk coins = Chunky(top, "CoinsPill", Navy, NavyLip, 132f, 44f, -1f, 5f, false, true, false);
-            // Anchored to the gear so it never collides with the lives pill on narrow screens.
-            Place(coins.Root, 1f, 0.5f, -74f, 0f, 132f, 44f, 1f, 0.5f);
-            Image coinIcon = IconImg(coins.Root, "Coin", "coin", 48f);
-            Place(coinIcon.rectTransform, 0f, 0.5f, -24f, 2f, 48f, 48f, 0f, 0.5f);
-            TextMeshProUGUI coinCount = Label(coins.Face, "Count", "100", 22f, TextStyle.Heading);
-            Stretch(coinCount.rectTransform, 26f, 0f, 12f, 0f);
-            Wire(coinCount.gameObject.AddComponent<CoinText>(), ("punchTarget", coinIcon.transform));
-
-            // Settings gear
-            Chunk gear = IconButton(top, "SettingsButton", "gear", Blue, BlueLip, 50f, 54f, 34f, 16f);
-            Place(gear.Root, 1f, 0.5f, 0f, 0f, 50f, 54f, 1f, 0.5f);
-
-            // --- side buttons
-            Chunk SideButton(string name, string icon, string label, float ax, float y)
-            {
-                Chunk b = Chunky(safe, name, Color.white, PanelLip, 66f, 70f, 20f, 6f, true);
-                Place(b.Root, ax, 1f, ax < 0.5f ? 14f : -14f, -y, 66f, 70f, ax, 1f);
-                Image i = IconImg(b.Face, "Icon", icon, 46f);
-                Place(i.rectTransform, 0.5f, 0.5f, 0f, 2f, 46f, 46f);
-                TextMeshProUGUI t = Label(b.Root, "Label", label, 17f, TextStyle.Heading);
-                Place(t.rectTransform, 0.5f, 0f, 0f, -16f, 90f, 22f, 0.5f, 0.5f);
-                return b;
-            }
-
-            Chunk daily = SideButton("DailyButton", "gift", "DAILY", 0f, 84f);
-            Chunk boosts = SideButton("BoostsButton", "crown", "BOOSTS", 1f, 84f);
-
-            Image badge = Badge(daily.Root, "Badge", Red, 26f, out RectTransform badgeContent);
-            Place(badge.rectTransform, 1f, 1f, 6f, 6f, 26f, 26f, 0.5f, 0.5f);
-            TextMeshProUGUI excl = Label(badgeContent, "Text", "!", 18f, TextStyle.Heading);
-            Stretch(excl.rectTransform, 0f, 1f, 0f, 0f);
-
-            // --- level path (between the top area and the bottom group)
-            RectTransform path = Rect(safe, "LevelPath");
-            Stretch(path, 90f, 252f, 90f, 86f);
-            Image pathGlow = Img(path, "Glow", Glow, new Color(1f, 1f, 1f, 0.35f));
-            Stretch(pathGlow.rectTransform, -60f, -20f, -60f, -20f);
-            BuildPathTemplates(path, out RectTransform nodeTemplate, out RectTransform dotTemplate);
-            LevelPathView pathView = path.gameObject.AddComponent<LevelPathView>();
-            Wire(pathView, ("nodeTemplate", nodeTemplate), ("dotTemplate", dotTemplate));
-
-            // --- bottom group: banner slot, PLAY, next unlock
-            RectTransform banner = Rect(safe, "BannerSlot");
-            Bottom(banner, 0f, 320f, 50f);
-
-            Chunk play = Chunky(safe, "PlayButton", Green, GreenLipDark, 250f, 92f, 26f, 9f, true);
-            Bottom(play.Root, 64f, 250f, 92f);
-            TextMeshProUGUI playLabel = Label(play.Face, "Label", "PLAY", 46f, TextStyle.Heading);
-            Stretch(playLabel.rectTransform, 10f, 22f, 10f, 2f);
-            TextMeshProUGUI playLevel = Label(play.Face, "Level", "Level 1", 18f, TextStyle.Body);
-            Stretch(playLevel.rectTransform, 10f, 6f, 10f, 52f);
-
-            Chunk unlock = Chunky(safe, "NextUnlock", Color.white, PanelLip, 300f, 64f, 18f, 6f, false, true, false);
-            Bottom(unlock.Root, 172f, 300f, 64f);
-            TextMeshProUGUI unlockText = Label(unlock.Face, "Title", "Next: Shuffle booster", 16f, TextStyle.BodyPlain, DarkNavy, TextAlignmentOptions.Left);
-            Stretch(unlockText.rectTransform, 16f, 28f, 16f, 6f);
-            Image track = Img(unlock.Face, "Track", Circle, PanelSoft);
-            MakePill(track, 18f);
-            Place(track.rectTransform, 0f, 0f, 16f, 10f, 214f, 18f, 0f, 0f);
-            Image fill = Img(track.transform, "Fill", Circle, Gold);
-            MakePill(fill, 14f);
-            RectTransform fillRt = fill.rectTransform;
-            fillRt.anchorMin = new Vector2(0f, 0f);
-            fillRt.anchorMax = new Vector2(0.4f, 1f);
-            fillRt.offsetMin = new Vector2(2f, 2f);
-            fillRt.offsetMax = new Vector2(-2f, -2f);
-            TextMeshProUGUI unlockProgress = Label(unlock.Face, "Progress", "1/13", 16f, TextStyle.BodyPlain, TextGrey, TextAlignmentOptions.Right);
-            Stretch(unlockProgress.rectTransform, 230f, 4f, 16f, 30f);
-
-            HomeScreen screen = go.AddComponent<HomeScreen>();
-            Wire(screen, ("playButton", play.Button), ("playPulseTarget", play.Root), ("playLevelText", playLevel),
-                ("settingsButton", gear.Button),
-                ("dailyButton", daily.Button), ("dailyBadge", badge.gameObject),
-                ("boostsButton", boosts.Button), ("unlockFill", fillRt), ("unlockText", unlockText),
-                ("unlockProgressText", unlockProgress));
-            return go;
-        }
-
-        private static void AddCloud(Transform root, float ax, float ay, float width, float alpha)
-        {
-            Image c = Img(root, "Cloud", Cloud, new Color(1f, 1f, 1f, alpha));
-            c.preserveAspect = true;
-            Place(c.rectTransform, ax, ay, 0f, 0f, width, width * 0.5f);
-        }
-
-        private static void BuildPathTemplates(RectTransform path, out RectTransform node, out RectTransform dot)
-        {
-            Image d = Img(path, "DotTemplate", Circle, new Color(1f, 1f, 1f, 0.9f));
-            d.type = Image.Type.Simple;
-            d.preserveAspect = true;
-            Place(d.rectTransform, 0.5f, 0.5f, 0f, 0f, 12f, 12f);
-            d.gameObject.SetActive(false);
-            dot = d.rectTransform;
-
-            node = Rect(path, "NodeTemplate");
-            Place(node, 0.5f, 0.5f, 0f, 0f, 60f, 66f);
-            Image ring = Img(node, "Ring", Glow, new Color(1f, 0.86f, 0.3f, 1f));
-            Stretch(ring.rectTransform, -30f, -30f, -30f, -30f);
-            Image lip = Img(node, "Lip", Circle, Grey);
-            lip.preserveAspect = true;
-            Place(lip.rectTransform, 0.5f, 0f, 0f, 0f, 60f, 60f, 0.5f, 0f);
-            Image face = Img(node, "Face", Circle, PanelSoft);
-            face.preserveAspect = true;
-            Place(face.rectTransform, 0.5f, 1f, 0f, 0f, 60f, 60f, 0.5f, 1f);
-            Image shine = Img(face.transform, "Shine", Circle, new Color(1f, 1f, 1f, 0.25f));
-            shine.preserveAspect = true;
-            Place(shine.rectTransform, 0.5f, 1f, 0f, -5f, 38f, 22f, 0.5f, 1f);
-            shine.type = Image.Type.Sliced;
-            MakePill(shine, 22f);
-            Image nodeLock = IconImg(node, "Lock", "lock", 22f);
-            Place(nodeLock.rectTransform, 1f, 0f, 2f, 2f, 22f, 22f, 1f, 0f);
-            RectTransform starRow = Rect(node, "Stars");
-            Place(starRow, 0.5f, 0f, 0f, -16f, 60f, 18f, 0.5f, 0.5f);
-            for (int k = 0; k < 3; k++)
-            {
-                Image st = IconImg(starRow, "Star" + (k + 1), "star", 18f);
-                Place(st.rectTransform, 0.5f, 0.5f, (k - 1) * 18f, k == 1 ? 3f : 0f, 18f, 18f);
-            }
-            TextMeshProUGUI number = Label(node, "Number", "1", 28f, TextStyle.Heading);
-            Place(number.rectTransform, 0.5f, 1f, 0f, -2f, 60f, 58f, 0.5f, 1f);
-            node.gameObject.SetActive(false);
-        }
-
-        // ------------------------------------------------------------------ Game HUD
 
         private static GameObject BuildHud()
         {
@@ -424,13 +261,7 @@ namespace BusRush.EditorTools
         {
             WireBoot(splash);
 
-            // Home
-            Scene homeScene = EditorSceneManager.OpenScene($"{ScenesDir}/Home.unity", OpenSceneMode.Single);
-            RemoveRoots(homeScene, "Canvas", "HomeScreen", "UIManager");
-            PrefabUtility.InstantiatePrefab(home, homeScene);
-            PrefabUtility.InstantiatePrefab(uiManager, homeScene);
-            FindRoot(homeScene, "Main Camera").GetComponent<Camera>().backgroundColor = UIArtGenerator.Hex(0x8FD3F4);
-            EditorSceneManager.SaveScene(homeScene);
+            WireHome(home, uiManager);
 
             // Game
             Scene game = EditorSceneManager.OpenScene($"{ScenesDir}/Game.unity", OpenSceneMode.Single);

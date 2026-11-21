@@ -54,12 +54,14 @@
   <ItemGroup>
     <Compile Include="Assets\BusRush\Scripts\Editor\GameplayBuilder.Step6.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\UIBuilder.Splash.cs" />
+    <Compile Include="Assets\BusRush\Scripts\Editor\HomeScreenshotTool.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\GameplayBuilder.Step5b.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\UIBuilder.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\AndroidBuild.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\BusRushSetup.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\UIScreenshotTool.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\GameplayBuilder.cs" />
+    <Compile Include="Assets\BusRush\Scripts\Editor\UIBuilder.Home.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\SplashScreenshotTool.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\UIKit.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\UIBuilder.Popups.cs" />

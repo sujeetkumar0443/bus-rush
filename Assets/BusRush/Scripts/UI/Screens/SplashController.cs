@@ -38,8 +38,8 @@ namespace BusRush.UI
         [Header("Timing")]
         [SerializeField, Min(0f)] private float minDuration = 2.6f;
         [SerializeField, Min(0f)] private float fadeDuration = 0.3f;
-        [Tooltip("Bar fill speed limit (full bars per second), so instant loads still read as a fill.")]
-        [SerializeField, Min(0.1f)] private float maxFillSpeed = 2f;
+        [Tooltip("The bar can show at most eased(elapsed / this), so it fills across the minimum time (full just before the switch).")]
+        [SerializeField, Min(0.1f)] private float fillDuration = 2.4f;
 
         /// <summary>Seconds since the splash started (scaled time, so a screenshot tool can freeze it).</summary>
         public float Elapsed { get; private set; }
@@ -92,7 +92,8 @@ namespace BusRush.UI
             while (true)
             {
                 float real = Mathf.Clamp01(op.progress / 0.9f); // stops at 0.9 until activation
-                shownProgress = Mathf.MoveTowards(shownProgress, real, maxFillSpeed * Time.deltaTime);
+                float timeCap = CssCurve.Bezier(CssCurve.EaseInOut, Elapsed / fillDuration);
+                shownProgress = Mathf.Max(shownProgress, Mathf.Min(real, timeCap)); // never goes back
                 SetFill(shownProgress);
                 if (Elapsed >= minDuration && real >= 1f && shownProgress >= 1f) break;
                 yield return null;

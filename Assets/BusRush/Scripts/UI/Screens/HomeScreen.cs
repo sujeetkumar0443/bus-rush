@@ -4,76 +4,54 @@ using UnityEngine.UI;
 
 namespace BusRush.UI
 {
-    /// <summary>Home: top bar, side buttons, level path, PLAY, next-unlock progress and the banner slot.</summary>
+    /// <summary>
+    /// Home (UI v2, Docs/UI_v2_Design/Home.dc.html): coin pill with "+" (free coins), settings, Daily / Road Map /
+    /// Lucky Spin side buttons and the big "Level N" button. Animations live in <see cref="HomeAmbience"/>.
+    /// </summary>
     public sealed class HomeScreen : MonoBehaviour
     {
-        [SerializeField] private Button playButton;
-        [SerializeField] private Transform playPulseTarget;
-        [SerializeField] private TMP_Text playLevelText;
+        /// <summary>Coin icon of the pill on screen (target of the coin fly), or null.</summary>
+        public static RectTransform CoinTarget { get; private set; }
+
+        [SerializeField] private Button levelButton;
+        [SerializeField] private TMP_Text levelText;
+        [SerializeField] private Button addCoinsButton;
+        [SerializeField] private RectTransform coinIcon;
         [SerializeField] private Button settingsButton;
         [SerializeField] private Button dailyButton;
-        [SerializeField] private GameObject dailyBadge;
-        [SerializeField] private Button boostsButton;
-        [SerializeField] private RectTransform unlockFill;
-        [SerializeField] private TMP_Text unlockText;
-        [SerializeField] private TMP_Text unlockProgressText;
-
-        private Coroutine playPulse;
-        private Coroutine badgePulse;
+        [SerializeField] private GameObject dailyDot;
+        [SerializeField] private Button roadMapButton;
+        [SerializeField] private Button luckySpinButton;
 
         private void Awake()
         {
-            playButton.onClick.AddListener(SceneLoader.LoadGame);
-            dailyButton.onClick.AddListener(() => Open<DailyRewardPopup>());
-            boostsButton.onClick.AddListener(() =>
-            {
-                BoosterPopup popup = Open<BoosterPopup>();
-                if (popup != null) popup.Select(BoosterType.Vip);
-            });
+            levelButton.onClick.AddListener(SceneLoader.LoadGame);
+            addCoinsButton.onClick.AddListener(() => Open<FreeCoinsPopup>());
             settingsButton.onClick.AddListener(() => Open<SettingsPopup>());
+            dailyButton.onClick.AddListener(() => Open<DailyRewardPopup>());
+            roadMapButton.onClick.AddListener(() => Toast.Show("Coming soon"));
+            luckySpinButton.onClick.AddListener(() => Toast.Show("Coming soon"));
         }
 
         private void OnEnable()
         {
+            CoinTarget = coinIcon;
             SaveSystem.Changed += Refresh;
-            dailyBadge.transform.localScale = Vector3.one;
             Refresh();
-            playPulseTarget.localScale = Vector3.one;
-            playPulse = Tween.Pulse(this, playPulseTarget, 0.04f, 1.4f);
         }
 
         private void OnDisable()
         {
             SaveSystem.Changed -= Refresh;
-            playPulse = null;
-            badgePulse = null;
+            if (CoinTarget == coinIcon) CoinTarget = null;
         }
 
-        private static T Open<T>() where T : Popup
-        {
-            return UIManager.Instance != null ? UIManager.Instance.Open<T>() : null;
-        }
+        private static T Open<T>() where T : Popup => UIManager.Instance != null ? UIManager.Instance.Open<T>() : null;
 
         private void Refresh()
         {
-            SaveData data = SaveSystem.Data;
-            playLevelText.text = "Level " + data.level;
-
-            bool canClaim = DailyRewards.CanClaim;
-            if (dailyBadge.activeSelf != canClaim || (canClaim && badgePulse == null))
-            {
-                dailyBadge.SetActive(canClaim);
-                Tween.Stop(this, ref badgePulse);
-                if (canClaim) badgePulse = Tween.Pulse(this, dailyBadge.transform, 0.15f, 0.8f);
-            }
-
-            // Progress toward the next 10th-level milestone (a Boss level).
-            int milestone = ((data.level - 1) / 10 + 1) * 10;
-            int previous = milestone - 10;
-            float k = Mathf.Clamp01((data.level - 1 - previous) / 10f);
-            unlockFill.anchorMax = new Vector2(Mathf.Lerp(0.08f, 1f, k), unlockFill.anchorMax.y);
-            unlockText.text = $"Next: Boss level {milestone}";
-            unlockProgressText.text = $"{data.level}/{milestone}";
+            levelText.text = "Level " + SaveSystem.Data.level;
+            dailyDot.SetActive(DailyRewards.CanClaim);
         }
     }
 }

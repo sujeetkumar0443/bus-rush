@@ -18,6 +18,8 @@ namespace BusRush.UI
         [SerializeField] private Transform target;
         [SerializeField, Range(0.8f, 1f)] private float pressedScale = 0.94f;
         [SerializeField] private bool haptic = true;
+        [Tooltip("Light tick instead of the short buzz (UI v2 buttons).")]
+        [SerializeField] private bool lightHaptic;
         [Tooltip("Optional: dimmed when the button is not interactable.")]
         [SerializeField] private CanvasGroup disabledGroup;
 
@@ -58,7 +60,10 @@ namespace BusRush.UI
         private void OnClick()
         {
             Clicked?.Invoke();
-            if (haptic) Haptics.Short();
+            Sfx.Play("click");
+            if (!haptic) return;
+            if (lightHaptic) Haptics.Light();
+            else Haptics.Short();
         }
 
         private void ScaleTo(float scale, float duration, Ease ease)
