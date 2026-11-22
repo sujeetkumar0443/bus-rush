@@ -16,7 +16,7 @@ namespace BusRush.EditorTools
     {
         private static void BuildStep6Assets()
         {
-            CreatePassengerV2TeamMaterials(); // Step P1: Team / TeamDark per colour
+            CreatePassengerVCMaterials(); // Step P1b: one PassengerVC material per colour
 
             Texture2D soft = AssetDatabase.LoadAssetAtPath<Texture2D>($"{TexturesDir}/soft_circle.png");
             Material headOn = AssetDatabase.LoadAssetAtPath<Material>($"{MaterialsDir}/HeadGlow.mat");

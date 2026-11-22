@@ -16,7 +16,7 @@ namespace BusRush.EditorTools
     [InitializeOnLoad]
     public static class PassengerScreenshotTool
     {
-        public const string OutputDir = "C:/UnityBuilds/BusRush_Source/unity_shots/P1";
+        public const string OutputDir = "C:/UnityBuilds/BusRush_Source/unity_shots/P1b";
         private const string SaveKey = "BusRush.Save";
         private const string Flag = "BusRush.PassengerShots.Active";
         private const string ExitFlag = "BusRush.PassengerShots.Exit";
@@ -65,6 +65,16 @@ namespace BusRush.EditorTools
                     yield return new WaitForSecondsRealtime(3.5f);
                     if (level == 1) Measure();
                     Stats($"level {level}");
+                    // Same frame without the passengers: the difference is what the crowd costs.
+                    var renderers = FindObjectsByType<PassengerView>(FindObjectsInactive.Exclude)
+                        .SelectMany(v => v.GetComponentsInChildren<Renderer>()).Where(r => r.enabled).ToList();
+                    foreach (Renderer r in renderers) r.enabled = false;
+                    yield return null;
+                    yield return null;
+                    Stats($"level {level} WITHOUT passengers");
+                    foreach (Renderer r in renderers) r.enabled = true;
+                    yield return null;
+                    yield return null;
                     yield return RenderCapture.Capture(OutputDir, $"crowd_level{level}_390x844", 390, 844);
                 }
 
@@ -74,15 +84,12 @@ namespace BusRush.EditorTools
                 {
                     InputController input = FindAnyObjectByType<InputController>();
                     Camera cam = Camera.main;
-                    for (float w = 0f; s.Crowd.WalkerCount == 0 && w < 12f; w += 0.35f)
+                    // Try a different car each time (blocked ones just bump) until someone runs to a parked vehicle.
+                    for (int attempt = 0; s.Crowd.WalkerCount == 0 && attempt < 40; attempt++)
                     {
-                        foreach (VehicleView v in s.Board.Vehicles.ToList())
-                        {
-                            if (v == null || v.IsExiting) continue;
-                            input.HandleTap(cam.WorldToScreenPoint(v.transform.position));
-                            break;
-                        }
-                        yield return new WaitForSecondsRealtime(0.35f);
+                        var cars = s.Board.Vehicles.Where(v => v != null && !v.IsExiting).ToList();
+                        if (cars.Count > 0) input.HandleTap(cam.WorldToScreenPoint(cars[attempt % cars.Count].transform.position));
+                        yield return new WaitForSecondsRealtime(0.4f);
                     }
                     for (float w = 0f; s.Crowd.WalkerCount < 2 && w < 4f; w += Time.unscaledDeltaTime) yield return null;
                     Time.timeScale = 0f;
@@ -113,17 +120,18 @@ namespace BusRush.EditorTools
                 p.transform.SetPositionAndRotation(ScreenRef.RefToWorld(CrowdView.EllipseCenter + new Vector2(0f, CrowdView.EllipseRy)),
                     Quaternion.LookRotation(Vector3.back, Vector3.up));
                 p.transform.localScale = CrowdView.PassengerScale(p);
-                Bounds b = p.GetComponentsInChildren<MeshRenderer>().Where(r => r.name != "Shadow").Select(r => r.bounds)
-                    .Aggregate((x, y) => { x.Encapsulate(y); return x; });
-                Object.DestroyImmediate(p.gameObject);
+                // The skinned mesh's own (rest pose) bounds, through its transform.
+                var smr = p.GetComponentInChildren<SkinnedMeshRenderer>();
+                Bounds b = smr.sharedMesh.bounds;
                 float minX = float.MaxValue, maxX = float.MinValue, minY = float.MaxValue, maxY = float.MinValue;
                 for (int i = 0; i < 8; i++)
                 {
                     Vector3 c = b.center + Vector3.Scale(b.extents, new Vector3((i & 1) == 0 ? -1 : 1, (i & 2) == 0 ? -1 : 1, (i & 4) == 0 ? -1 : 1));
-                    Vector3 sp = cam.WorldToViewportPoint(c);
+                    Vector3 sp = cam.WorldToViewportPoint(smr.transform.TransformPoint(c));
                     minX = Mathf.Min(minX, sp.x); maxX = Mathf.Max(maxX, sp.x);
                     minY = Mathf.Min(minY, sp.y); maxY = Mathf.Max(maxY, sp.y);
                 }
+                Object.DestroyImmediate(p.gameObject);
                 // Viewport -> reference px (the camera fits the 390x844 layout).
                 // Calibrate with the layout itself: two plaza ground points 34 ref px apart, horizontally and vertically.
                 Vector2 at = CrowdView.EllipseCenter + new Vector2(0f, CrowdView.EllipseRy);
@@ -137,8 +145,11 @@ namespace BusRush.EditorTools
             private static void Stats(string label)
             {
                 int active = FindObjectsByType<PassengerView>(FindObjectsInactive.Exclude).Count(v => v.isActiveAndEnabled);
-                Debug.Log($"[PassengerShots] {label}: {active} passengers; drawCalls {UnityStats.drawCalls}, " +
-                          $"setPass {UnityStats.setPassCalls}, tris {UnityStats.triangles}");
+                // Every int counter UnityStats has in this version (drawCalls, batches, setPassCalls, instancedBatches...).
+                var parts = typeof(UnityStats).GetProperties(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static)
+                    .Where(pr => pr.PropertyType == typeof(int) && (pr.Name.Contains("atch") || pr.Name.Contains("all")))
+                    .Select(pr => $"{pr.Name} {pr.GetValue(null)}");
+                Debug.Log($"[PassengerShots] {label}: {active} passengers; " + string.Join(", ", parts));
             }
         }
     }

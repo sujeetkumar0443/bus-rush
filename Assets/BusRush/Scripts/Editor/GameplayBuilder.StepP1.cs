@@ -10,49 +10,65 @@ using Object = UnityEngine.Object;
 namespace BusRush.EditorTools
 {
     /// <summary>
-    /// Step P1: the pilot-helmet passenger v2 (Passenger2_Crowd.fbx) replaces the old rig in Prefabs/Characters/Passenger
-    /// (same path + GUID, so the crowd keeps its reference). Shared materials for Skin / Brown / GoggleFrame / Lens / Eye /
-    /// EyeShine / Cheek, and one Team + TeamDark material per game colour (stored in the GameConfig palette as
-    /// passengerBody / passengerCap), so all passengers of a colour share materials (SRP Batcher friendly).
+    /// Steps P1 / P1b: the pilot-helmet passenger v2 as ONE skinned mesh with 6 bones (Torso, Head [+ Cap], ArmL, ArmR,
+    /// LegL, LegR; 1 bone per vertex) and vertex colours (rgb = part colour in sRGB, a = team mask), drawn with one
+    /// "BusRush/PassengerVC" material per game colour, plus an instanced blob shadow. The mesh is baked here from the
+    /// 7 parts of Passenger2_Crowd.fbx (facing +Z) and saved as Art/Models/Passenger2/Passenger2_Skinned.asset;
+    /// Prefabs/Characters/Passenger keeps its path + GUID, so the crowd keeps its reference.
     /// </summary>
     public static partial class GameplayBuilder
     {
         private const string P2SourceDir = "C:/UnityBuilds/BusRush_Source/Passenger2/Passenger2";
         private const string P2Dir = "Assets/BusRush/Art/Models/Passenger2";
         private const string P2CrowdPath = P2Dir + "/Passenger2_Crowd.fbx";
+        private const string P2SkinnedMeshPath = P2Dir + "/Passenger2_Skinned.asset";
         private const string P2MaterialsDir = "Assets/BusRush/Art/Materials/Passenger2";
+        private const string BlobMaterialPath = P2MaterialsDir + "/PassengerBlob.mat";
 
-        /// <summary>README colours per game colour (Team, TeamDark); orange has no game colour.</summary>
-        private static readonly Dictionary<GameColor, (uint team, uint dark)> P2Colours = new Dictionary<GameColor, (uint, uint)>
+        /// <summary>README Team colours per game colour (orange has no game colour).</summary>
+        private static readonly Dictionary<GameColor, uint> P2TeamColours = new Dictionary<GameColor, uint>
         {
-            { GameColor.Red, (0xE8262B, 0xB8151B) },
-            { GameColor.Blue, (0x2F6BFF, 0x1D45B8) },
-            { GameColor.Yellow, (0xFFC81E, 0xD49A0C) },
-            { GameColor.Green, (0x3DBE3A, 0x24862A) },
-            { GameColor.Purple, (0x9A4DFF, 0x6A2CC2) },
-            { GameColor.Pink, (0xFF4FA8, 0xC92F7C) },
-            { GameColor.Cyan, (0x1EC3D6, 0x128E9C) }
+            { GameColor.Red, 0xE8262B }, { GameColor.Blue, 0x2F6BFF }, { GameColor.Yellow, 0xFFC81E }, { GameColor.Green, 0x3DBE3A },
+            { GameColor.Purple, 0x9A4DFF }, { GameColor.Pink, 0xFF4FA8 }, { GameColor.Cyan, 0x1EC3D6 }
         };
 
-        [MenuItem("Tools/Bus Rush/Build Passenger v2 (P1)")]
+        /// <summary>Part colours (sRGB) for the shared slots; Team = white x team colour, TeamDark = darker x team colour.</summary>
+        private static readonly Dictionary<string, Color32> P2SlotColours = new Dictionary<string, Color32>
+        {
+            { "Skin", new Color32(0xFF, 0xD2, 0xB0, 0) },
+            { "Brown", new Color32(0x7A, 0x45, 0x26, 0) },
+            { "GoggleFrame", new Color32(0xC9, 0xD0, 0xDA, 0) },
+            { "Lens", new Color32(0x9C, 0xDC, 0xFF, 0) },
+            { "Eye", new Color32(0x1E, 0x1A, 0x2E, 0) },
+            { "EyeShine", new Color32(0xFF, 0xFF, 0xFF, 0) },
+            { "Cheek", new Color32(0xFF, 0x9A, 0xAE, 0) },
+            { "Team", new Color32(0xFF, 0xFF, 0xFF, 0xFF) },
+            // README TeamDark is ~0.6 of Team in linear terms; 0xCC (sRGB) ~= 0.6 linear.
+            { "TeamDark", new Color32(0xCC, 0xCC, 0xCC, 0xFF) }
+        };
+
+        private static readonly string[] P2Bones = { "Torso", "Head", "ArmL", "ArmR", "LegL", "LegR" };
+
+        [MenuItem("Tools/Bus Rush/Build Passenger v2 (P1b skinned)")]
         public static void BuildPassengerV2()
         {
-            ImportPassengerV2();
-            Dictionary<string, Material> shared = PassengerV2SharedMaterials();
-            CreatePassengerV2TeamMaterials();
-            BuildPassengerV2Prefab(shared);
+            BuildSkinnedPassenger();
             AssetDatabase.SaveAssets();
-            Debug.Log("[GameplayBuilder] Passenger v2 built.");
+            Debug.Log("[GameplayBuilder] Passenger v2 (skinned) built.");
         }
 
         public static void BuildPassengerV2Batch() => RunGuarded(BuildPassengerV2);
 
-        /// <summary>For the full gameplay build (Step 5): import the FBX and make every material the prefab needs.</summary>
-        private static Dictionary<string, Material> PassengerV2SharedMaterialsAfterImport()
+        /// <summary>Import, bake the skinned mesh, materials, quality (1 bone), prefab. Also used by the full gameplay build.</summary>
+        private static void BuildSkinnedPassenger()
         {
             ImportPassengerV2();
-            CreatePassengerV2TeamMaterials();
-            return PassengerV2SharedMaterials();
+            CreatePassengerVCMaterials();
+            Material blob = PassengerBlobMaterial();
+            Mesh mesh = BakeSkinnedMesh(out Dictionary<string, Matrix4x4> bonePoses);
+            SetOneBoneSkinning();
+            BuildSkinnedPassengerPrefab(mesh, bonePoses, blob);
+            DeleteP1PartMaterials();
         }
 
         private static void ImportPassengerV2()
@@ -61,8 +77,8 @@ namespace BusRush.EditorTools
             foreach (string f in new[] { "Passenger2_Crowd.fbx", "Passenger2_Rig.fbx" })
             {
                 string dst = $"{P2Dir}/{f}";
-                File.Copy($"{P2SourceDir}/{f}", dst, true);
-                AssetDatabase.ImportAsset(dst, ImportAssetOptions.ForceUpdate);
+                if (!File.Exists(dst)) File.Copy($"{P2SourceDir}/{f}", dst, true);
+                AssetDatabase.ImportAsset(dst);
                 var mi = (ModelImporter)AssetImporter.GetAtPath(dst);
                 mi.globalScale = 1f;
                 mi.useFileScale = true;
@@ -72,155 +88,242 @@ namespace BusRush.EditorTools
                 mi.importBlendShapes = false;
                 mi.importCameras = false;
                 mi.importLights = false;
-                mi.isReadable = false;
+                mi.isReadable = f.Contains("Crowd"); // the bake reads its vertices
                 mi.materialImportMode = ModelImporterMaterialImportMode.ImportViaMaterialDescription;
                 mi.SaveAndReimport();
             }
         }
 
-        private static Material P2Material(string name, Color color, float smoothness, float metallic = 0f, bool emissive = false)
+        // ------------------------------------------------------------------ materials
+
+        /// <summary>One PassengerVC material per game colour (only _TeamColor differs), in the GameConfig palette.</summary>
+        private static void CreatePassengerVCMaterials()
         {
             Directory.CreateDirectory(P2MaterialsDir);
-            string path = $"{P2MaterialsDir}/{name}.mat";
-            var m = AssetDatabase.LoadAssetAtPath<Material>(path);
-            if (m == null)
-            {
-                m = new Material(Shader.Find("Universal Render Pipeline/Lit")) { name = name };
-                AssetDatabase.CreateAsset(m, path);
-            }
-            m.SetColor("_BaseColor", color);
-            m.SetFloat("_Smoothness", smoothness);
-            m.SetFloat("_Metallic", metallic);
-            if (emissive)
-            {
-                m.EnableKeyword("_EMISSION");
-                m.SetColor("_EmissionColor", color * 0.6f);
-                m.globalIlluminationFlags = MaterialGlobalIlluminationFlags.None;
-            }
-            m.enableInstancing = true;
-            EditorUtility.SetDirty(m);
-            return m;
-        }
-
-        private static Dictionary<string, Material> PassengerV2SharedMaterials()
-        {
-            return new Dictionary<string, Material>
-            {
-                { "Skin", P2Material("P2_Skin", GameColors.Hex(0xFFD2B0), 0.35f) },
-                { "Brown", P2Material("P2_Brown", GameColors.Hex(0x7A4526), 0.3f) },
-                { "GoggleFrame", P2Material("P2_GoggleFrame", GameColors.Hex(0xC9D0DA), 0.7f, 0.3f) },
-                { "Lens", P2Material("P2_Lens", GameColors.Hex(0x8FD6FF), 0.9f, 0f, true) },
-                { "Eye", P2Material("P2_Eye", GameColors.Hex(0x1E1A2E), 0.6f) },
-                { "EyeShine", P2Material("P2_EyeShine", Color.white, 0.2f, 0f, true) },
-                { "Cheek", P2Material("P2_Cheek", GameColors.Hex(0xFF9AAE), 0.3f) }
-            };
-        }
-
-        /// <summary>Team / TeamDark per game colour, referenced from the GameConfig palette (passengerBody / passengerCap).</summary>
-        private static void CreatePassengerV2TeamMaterials()
-        {
+            Shader shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/BusRush/Art/Shaders/PassengerVC.shader");
             var cfg = AssetDatabase.LoadAssetAtPath<GameConfig>("Assets/BusRush/Resources/GameConfig.asset");
             var palette = cfg.palette;
             for (int i = 0; i < palette.Length; i++)
             {
                 GameColor c = palette[i].id;
-                if (!P2Colours.TryGetValue(c, out var col)) continue;
-                palette[i].passengerBody = P2Material($"P2_Team_{c}", GameColors.Hex(col.team), 0.55f);
-                palette[i].passengerCap = P2Material($"P2_TeamDark_{c}", GameColors.Hex(col.dark), 0.45f);
+                if (!P2TeamColours.TryGetValue(c, out uint rgb)) continue;
+                string path = $"{P2MaterialsDir}/PassengerVC_{c}.mat";
+                var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+                if (m == null)
+                {
+                    m = new Material(shader) { name = $"PassengerVC_{c}" };
+                    AssetDatabase.CreateAsset(m, path);
+                }
+                m.shader = shader;
+                m.SetColor("_TeamColor", GameColors.Hex(rgb));
+                m.enableInstancing = false; // SRP Batcher handles these
+                EditorUtility.SetDirty(m);
+                palette[i].passengerBody = m;
+                palette[i].passengerCap = m;
             }
             cfg.palette = palette;
             EditorUtility.SetDirty(cfg);
         }
 
-        private static void BuildPassengerV2Prefab(Dictionary<string, Material> shared)
+        private static Material PassengerBlobMaterial()
         {
-            var report = new StringBuilder("[GameplayBuilder] Passenger v2:");
+            Shader shader = AssetDatabase.LoadAssetAtPath<Shader>("Assets/BusRush/Art/Shaders/BlobShadow.shader");
+            var m = AssetDatabase.LoadAssetAtPath<Material>(BlobMaterialPath);
+            if (m == null)
+            {
+                m = new Material(shader) { name = "PassengerBlob" };
+                AssetDatabase.CreateAsset(m, BlobMaterialPath);
+            }
+            m.shader = shader;
+            m.SetTexture("_MainTex", AssetDatabase.LoadAssetAtPath<Texture2D>($"{TexturesDir}/contact_shadow.png"));
+            m.SetColor("_Color", new Color(0.08f, 0.1f, 0.18f, 0.45f));
+            m.enableInstancing = true;
+            m.renderQueue = 2950;
+            EditorUtility.SetDirty(m);
+            return m;
+        }
+
+        private static void DeleteP1PartMaterials()
+        {
+            foreach (string guid in AssetDatabase.FindAssets("t:Material P2_", new[] { P2MaterialsDir }))
+            {
+                string path = AssetDatabase.GUIDToAssetPath(guid);
+                if (Path.GetFileName(path).StartsWith("P2_")) AssetDatabase.DeleteAsset(path);
+            }
+        }
+
+        private static void SetOneBoneSkinning()
+        {
+            int current = QualitySettings.GetQualityLevel();
+            for (int i = 0; i < QualitySettings.names.Length; i++)
+            {
+                QualitySettings.SetQualityLevel(i, false);
+                QualitySettings.skinWeights = SkinWeights.OneBone;
+            }
+            QualitySettings.SetQualityLevel(current, false);
+        }
+
+        // ------------------------------------------------------------------ bake
+
+        /// <summary>
+        /// One mesh from the 7 parts: vertices in model space turned 180 degrees about Y (the parts face -Z after import;
+        /// the baked mesh faces the game's +Z), vertex colours from the material slot, each vertex weighted 1.0 to its
+        /// part's bone (Cap -> Head). Bone rest poses = the part pivots (also turned).
+        /// </summary>
+        private static Mesh BakeSkinnedMesh(out Dictionary<string, Matrix4x4> bonePoses)
+        {
+            var report = new StringBuilder("[GameplayBuilder] Passenger v2 skinned bake:");
+            GameObject inst = Object.Instantiate(AssetDatabase.LoadAssetAtPath<GameObject>(P2CrowdPath));
+            bonePoses = new Dictionary<string, Matrix4x4>();
+            try
+            {
+                inst.transform.SetPositionAndRotation(Vector3.zero, Quaternion.identity);
+                Matrix4x4 turn = Matrix4x4.Rotate(Quaternion.Euler(0f, 180f, 0f));
+                Transform Find(string n) => inst.GetComponentsInChildren<Transform>(true).First(t => t.name == n);
+
+                foreach (string bone in P2Bones)
+                {
+                    Transform t = Find(bone);
+                    bonePoses[bone] = Matrix4x4.TRS(turn.MultiplyPoint3x4(t.position), Quaternion.identity, Vector3.one);
+                }
+
+                var verts = new List<Vector3>();
+                var normals = new List<Vector3>();
+                var colours = new List<Color32>();
+                var weights = new List<BoneWeight>();
+                var tris = new List<int>();
+                foreach (string part in new[] { "Torso", "Head", "Cap", "ArmL", "ArmR", "LegL", "LegR" })
+                {
+                    Transform t = Find(part);
+                    var mf = t.GetComponent<MeshFilter>();
+                    var mr = t.GetComponent<MeshRenderer>();
+                    Mesh src = mf.sharedMesh;
+                    int bone = System.Array.IndexOf(P2Bones, part == "Cap" ? "Head" : part);
+                    Matrix4x4 toModel = turn * t.localToWorldMatrix;
+                    Vector3[] sv = src.vertices;
+                    Vector3[] sn = src.normals;
+                    int baseIndex = verts.Count;
+                    for (int v = 0; v < sv.Length; v++)
+                    {
+                        verts.Add(toModel.MultiplyPoint3x4(sv[v]));
+                        normals.Add(toModel.MultiplyVector(sn[v]).normalized);
+                        colours.Add(new Color32(255, 0, 255, 0)); // overwritten per submesh below
+                        weights.Add(new BoneWeight { boneIndex0 = bone, weight0 = 1f });
+                    }
+                    for (int sub = 0; sub < src.subMeshCount; sub++)
+                    {
+                        string slot = mr.sharedMaterials[sub] != null ? mr.sharedMaterials[sub].name.Split('.')[0] : "";
+                        if (!P2SlotColours.TryGetValue(slot, out Color32 col))
+                        {
+                            report.Append($"\n  unknown slot '{slot}' on {part} (used Skin)");
+                            col = P2SlotColours["Skin"];
+                        }
+                        int[] st = src.GetTriangles(sub);
+                        foreach (int idx in st) colours[baseIndex + idx] = col;
+                        foreach (int idx in st) tris.Add(baseIndex + idx);
+                    }
+                    report.Append($"\n  {part}: {sv.Length} verts, {src.subMeshCount} slots -> bone {P2Bones[bone]}");
+                }
+
+                var mesh = new Mesh { name = "Passenger2_Skinned" };
+                if (verts.Count > 65535) mesh.indexFormat = UnityEngine.Rendering.IndexFormat.UInt32;
+                mesh.SetVertices(verts);
+                mesh.SetNormals(normals);
+                mesh.SetColors(colours);
+                mesh.SetTriangles(tris, 0);
+                mesh.boneWeights = weights.ToArray();
+                // Bind poses: bone rest pose relative to the mesh root (no rotation in the rest pose).
+                var bind = new Matrix4x4[P2Bones.Length];
+                for (int i = 0; i < P2Bones.Length; i++) bind[i] = bonePoses[P2Bones[i]].inverse;
+                mesh.bindposes = bind;
+                mesh.RecalculateBounds();
+                mesh.UploadMeshData(false);
+
+                var existing = AssetDatabase.LoadAssetAtPath<Mesh>(P2SkinnedMeshPath);
+                if (existing != null)
+                {
+                    existing.Clear();
+                    EditorUtility.CopySerialized(mesh, existing);
+                    Object.DestroyImmediate(mesh);
+                    mesh = existing;
+                }
+                else AssetDatabase.CreateAsset(mesh, P2SkinnedMeshPath);
+                EditorUtility.SetDirty(mesh);
+                report.Append($"\n  total {verts.Count} verts, {tris.Count / 3} tris, 1 submesh, bounds {mesh.bounds.size:F3}");
+                Debug.Log(report.ToString());
+                return mesh;
+            }
+            finally
+            {
+                Object.DestroyImmediate(inst);
+            }
+        }
+
+        // ------------------------------------------------------------------ prefab
+
+        private static void BuildSkinnedPassengerPrefab(Mesh mesh, Dictionary<string, Matrix4x4> poses, Material blob)
+        {
             var root = new GameObject("Passenger");
             try
             {
-                var model = (GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(P2CrowdPath), root.transform);
-                PrefabUtility.UnpackPrefabInstance(model, PrefabUnpackMode.Completely, InteractionMode.AutomatedAction);
-                model.name = "Model";
-                // The model's face (goggles, eyes) is at -Z after import: turn it to the game's +Z forward.
-                model.transform.SetLocalPositionAndRotation(Vector3.zero, Quaternion.Euler(0f, 180f, 0f));
-                Transform rig = model.transform.Find("Passenger") ?? model.transform;
-
-                Transform Part(string n) => rig.Find(n) ?? model.transform.GetComponentsInChildren<Transform>(true).FirstOrDefault(t => t.name == n)
-                                            ?? throw new System.InvalidOperationException("Passenger2 part missing: " + n);
-                Transform torso = Part("Torso"), head = Part("Head"), cap = Part("Cap");
-                Transform armL = Part("ArmL"), armR = Part("ArmR"), legL = Part("LegL"), legR = Part("LegR");
-                // Helmet follows the head; head and arms follow the torso (lean, breathing).
-                cap.SetParent(head, true);
-                head.SetParent(torso, true);
-                armL.SetParent(torso, true);
-                armR.SetParent(torso, true);
-
-                // Shared materials by slot name; Team / TeamDark slots are recorded for per-colour swaps.
-                var colourRenderers = new List<Object>();
-                var colourSlots = new List<int>();
-                var colourDark = new List<bool>();
-                Material placeholderTeam = AssetDatabase.LoadAssetAtPath<Material>($"{P2MaterialsDir}/P2_Team_Red.mat");
-                Material placeholderDark = AssetDatabase.LoadAssetAtPath<Material>($"{P2MaterialsDir}/P2_TeamDark_Red.mat");
-                foreach (Renderer r in model.GetComponentsInChildren<Renderer>(true))
+                Transform Bone(string name, Transform parent)
                 {
-                    Material[] mats = r.sharedMaterials;
-                    for (int i = 0; i < mats.Length; i++)
-                    {
-                        string slot = mats[i] != null ? mats[i].name.Replace(" (Instance)", "") : "";
-                        string key = shared.Keys.FirstOrDefault(k => slot == k || slot.StartsWith(k + "."));
-                        if (slot == "TeamDark" || slot.StartsWith("TeamDark."))
-                        {
-                            mats[i] = placeholderDark;
-                            colourRenderers.Add(r);
-                            colourSlots.Add(i);
-                            colourDark.Add(true);
-                        }
-                        else if (slot == "Team" || slot.StartsWith("Team."))
-                        {
-                            mats[i] = placeholderTeam;
-                            colourRenderers.Add(r);
-                            colourSlots.Add(i);
-                            colourDark.Add(false);
-                        }
-                        else if (key != null) mats[i] = shared[key];
-                        else report.Append($"\n  unknown material slot '{slot}' on {r.name}");
-                    }
-                    r.sharedMaterials = mats;
-                    r.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off; // blob shadow (mobile)
-                    r.receiveShadows = false;
-                    r.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
-                    r.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
-                    var mf = r.GetComponent<MeshFilter>();
-                    report.Append($"\n  {r.name}: {mats.Length} mats [{string.Join(",", mats.Select(m => m != null ? m.name : "null"))}]" +
-                                  (mf != null && mf.sharedMesh != null ? $" {mf.sharedMesh.triangles.Length / 3} tris" : ""));
+                    var t = new GameObject(name).transform;
+                    t.SetParent(parent, false);
+                    Vector3 world = poses[name].GetColumn(3);
+                    t.position = world; // root is at the origin with no rotation while building
+                    return t;
                 }
 
-                Bounds b = model.GetComponentsInChildren<Renderer>().Select(r => r.bounds).Aggregate((x, y) => { x.Encapsulate(y); return x; });
-                report.Append($"\n  model bounds centre {b.center:F3} size {b.size:F3}; hip (LegL) y {legL.position.y:F3}; head y {head.position.y:F3}");
-                Vector3 goggle = cap.GetComponent<Renderer>() != null ? cap.GetComponent<Renderer>().bounds.center : cap.position;
-                report.Append($"\n  cap centre {goggle:F3} (face side = {(goggle.z > 0f ? "+Z" : "-Z")})");
+                var rig = new GameObject("Rig").transform;
+                rig.SetParent(root.transform, false);
+                Transform torso = Bone("Torso", rig);
+                Transform head = Bone("Head", torso);
+                Transform armL = Bone("ArmL", torso);
+                Transform armR = Bone("ArmR", torso);
+                Transform legL = Bone("LegL", rig);
+                Transform legR = Bone("LegR", rig);
+                var bones = new[] { torso, head, armL, armR, legL, legR };
+
+                var body = new GameObject("Body");
+                body.transform.SetParent(root.transform, false);
+                var smr = body.AddComponent<SkinnedMeshRenderer>();
+                smr.sharedMesh = mesh;
+                smr.bones = bones;
+                smr.rootBone = rig;
+                smr.quality = SkinQuality.Bone1;
+                smr.updateWhenOffscreen = false;
+                smr.skinnedMotionVectors = false;
+                smr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
+                smr.receiveShadows = false;
+                smr.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
+                smr.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
+                smr.sharedMaterial = AssetDatabase.LoadAssetAtPath<Material>($"{P2MaterialsDir}/PassengerVC_Red.mat");
+                Bounds b = mesh.bounds;
+                // Room for the swings, bob and hop (bounds are relative to the root bone).
+                smr.localBounds = new Bounds(b.center, b.size * 1.6f);
 
                 var shadow = new GameObject("Shadow");
                 shadow.transform.SetParent(root.transform, false);
                 shadow.transform.SetLocalPositionAndRotation(new Vector3(0f, 0.015f, 0f), Quaternion.Euler(90f, 0f, 0f));
-                shadow.transform.localScale = new Vector3(b.size.x * 0.95f, b.size.z * 0.95f, 1f);
+                shadow.transform.localScale = new Vector3(b.size.x * 1.05f, b.size.z * 1.05f, 1f);
                 shadow.AddComponent<MeshFilter>().sharedMesh = Resources.GetBuiltinResource<Mesh>("Quad.fbx");
                 var sr = shadow.AddComponent<MeshRenderer>();
-                sr.sharedMaterial = AssetDatabase.LoadAssetAtPath<Material>($"{MaterialsDir}/ContactShadow.mat");
+                sr.sharedMaterial = blob;
                 sr.shadowCastingMode = UnityEngine.Rendering.ShadowCastingMode.Off;
                 sr.receiveShadows = false;
+                sr.lightProbeUsage = UnityEngine.Rendering.LightProbeUsage.Off;
+                sr.reflectionProbeUsage = UnityEngine.Rendering.ReflectionProbeUsage.Off;
 
                 var view = root.AddComponent<PassengerView>();
                 UIKit.Wire(view, ("torso", torso), ("head", head), ("armL", armL), ("armR", armR), ("legL", legL), ("legR", legR),
-                    ("colourRenderers", colourRenderers.ToArray()), ("colourSlots", colourSlots.Cast<object>().ToArray()),
-                    ("colourDark", colourDark.Cast<object>().ToArray()), ("modelHeight", b.size.y), ("modelWidth", b.size.x));
+                    ("body", smr), ("modelHeight", b.size.y), ("modelWidth", b.size.x));
                 PrefabUtility.SaveAsPrefabAsset(root, PassengerPrefabPath);
             }
             finally
             {
                 Object.DestroyImmediate(root);
             }
-            Debug.Log(report.ToString());
         }
     }
 }

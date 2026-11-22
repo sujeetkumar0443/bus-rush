@@ -3,9 +3,9 @@ using UnityEngine;
 namespace BusRush.Gameplay
 {
     /// <summary>
-    /// One passenger v2 (pilot helmet; parts Torso / Head / Cap / ArmL / ArmR / LegL / LegR with pivots at the joints;
-    /// Cap under Head, Head and arms under Torso). Colours: the Team / TeamDark material slots are swapped to the shared
-    /// per-colour materials (no per-instance copies; SRP Batcher friendly). The pose is driven by <see cref="CrowdView"/>
+    /// One passenger v2: a single skinned mesh (one draw call) with 6 bones Torso / Head (helmet included) / ArmL / ArmR /
+    /// LegL / LegR, pivots at the joints, Head and arms under Torso. Colour: one shared BusRush/PassengerVC material per
+    /// game colour (vertex colours + team tint; no per-instance copies, SRP Batcher friendly). The pose is driven by <see cref="CrowdView"/>
     /// from its single update loop through <see cref="Pose"/>; no Update per person and no per-frame allocations.
     /// Walk / run step rate follows the ground speed and the leg length, so the feet do not slide.
     /// </summary>
@@ -17,10 +17,8 @@ namespace BusRush.Gameplay
         [SerializeField] private Transform armR;
         [SerializeField] private Transform legL;
         [SerializeField] private Transform legR;
-        [Tooltip("Renderers whose material slot colourSlots[i] is Team (colourDark false) or TeamDark (true).")]
-        [SerializeField] private Renderer[] colourRenderers = new Renderer[0];
-        [SerializeField] private int[] colourSlots = new int[0];
-        [SerializeField] private bool[] colourDark = new bool[0];
+        [Tooltip("The single skinned mesh (one material per game colour).")]
+        [SerializeField] private Renderer body;
         [Tooltip("Model size (units) at scale 1, measured by the builder.")]
         [SerializeField] private float modelHeight = 1f;
         [SerializeField] private float modelWidth = 0.8f;
@@ -46,7 +44,6 @@ namespace BusRush.Gameplay
         private float idleTime;
         private float blend;
         private float headYaw, headYawTarget, nextHeadTurn;
-        private Material[][] slots;  // per colour renderer: its shared material array (reused, no allocation per colour)
 
         public GameColor Color { get; private set; }
         public float ModelHeight => modelHeight;
@@ -67,32 +64,12 @@ namespace BusRush.Gameplay
             idleTime = Random.value * 10f;
             nextHeadTurn = Random.Range(1f, 5f);
 
-            slots = new Material[colourRenderers.Length][];
-            for (int i = 0; i < colourRenderers.Length; i++) slots[i] = colourRenderers[i].sharedMaterials;
         }
 
         public void SetColor(GameColor color)
         {
             Color = color;
-            if (!GameColors.TryGetPassengerMaterials(color, out Material team, out Material dark)) return;
-            for (int i = 0; i < colourRenderers.Length; i++)
-            {
-                // Entries for the same renderer share one array: write every slot, then assign.
-                Material[] mats = SlotsOf(colourRenderers[i]);
-                mats[colourSlots[i]] = colourDark[i] ? dark : team;
-            }
-            for (int i = 0; i < colourRenderers.Length; i++)
-            {
-                if (IndexOfRenderer(colourRenderers[i]) == i) colourRenderers[i].sharedMaterials = slots[i];
-            }
-        }
-
-        private Material[] SlotsOf(Renderer r) => slots[IndexOfRenderer(r)];
-
-        private int IndexOfRenderer(Renderer r)
-        {
-            for (int i = 0; i < colourRenderers.Length; i++) if (colourRenderers[i] == r) return i;
-            return 0;
+            if (GameColors.TryGetPassengerMaterials(color, out Material team, out _)) body.sharedMaterial = team;
         }
 
         /// <summary>
