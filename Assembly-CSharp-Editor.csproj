@@ -55,6 +55,7 @@
     <Compile Include="Assets\BusRush\Scripts\Editor\GameplayBuilder.Step6.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\SettingsScreenshotTool.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\UIBuilder.Splash.cs" />
+    <Compile Include="Assets\BusRush\Scripts\Editor\PassengerScreenshotTool.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\RoadMapScreenshotTool.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\HomeScreenshotTool.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\LevelFailedScreenshotTool.cs" />
@@ -65,6 +66,7 @@
     <Compile Include="Assets\BusRush\Scripts\Editor\UIBuilder.LevelFailed.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\BusRushSetup.cs" />
     <Compile Include="Assets\BusRush\Tests\Editor\DailyAndSpinTests.cs" />
+    <Compile Include="Assets\BusRush\Scripts\Editor\GameplayBuilder.StepP1.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\UIScreenshotTool.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\UIBuilder.Daily.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\GameplayBuilder.cs" />

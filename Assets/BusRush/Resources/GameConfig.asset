@@ -26,21 +26,6 @@ MonoBehaviour:
   extraBayCost: 200
   freeCoinsAmount: 50
   maxLives: 5
-  dailyRewards:
-  - coins: 50
-    boosterPack: 0
-  - coins: 75
-    boosterPack: 0
-  - coins: 100
-    boosterPack: 0
-  - coins: 150
-    boosterPack: 0
-  - coins: 200
-    boosterPack: 0
-  - coins: 300
-    boosterPack: 0
-  - coins: 0
-    boosterPack: 1
   unlocks:
   - level: 13
     name: Shuffle booster
@@ -52,35 +37,35 @@ MonoBehaviour:
   - id: 0
     color: {r: 0.9098039, g: 0.26274508, b: 0.24705878, a: 1}
     material: {fileID: 2100000, guid: 7f5111e65e7f2f3489b972ecfcacb7ae, type: 2}
-    passengerBody: {fileID: 2100000, guid: c520364ccce87424d87436fc03e367d1, type: 2}
-    passengerCap: {fileID: 2100000, guid: 2f0b7da770ea5af40835c4d038bbe96c, type: 2}
+    passengerBody: {fileID: 2100000, guid: 7c8925cbac4170541aa035ab2b066e5d, type: 2}
+    passengerCap: {fileID: 2100000, guid: 562233d2482e843419b1bb07f33013ef, type: 2}
   - id: 1
     color: {r: 0.2313725, g: 0.4823529, b: 0.9098039, a: 1}
     material: {fileID: 2100000, guid: 761a6ca96a68dbe46a4bda46957392d0, type: 2}
-    passengerBody: {fileID: 2100000, guid: e82c7e0fb6867b64fb01779e88ba5d32, type: 2}
-    passengerCap: {fileID: 2100000, guid: 6631c95a6be8d9b49bb7e626b171a41d, type: 2}
+    passengerBody: {fileID: 2100000, guid: b035bec7f1b50684fa21a453a531d20b, type: 2}
+    passengerCap: {fileID: 2100000, guid: 1a36a29f551a8324ba1c6dd0688bdeb4, type: 2}
   - id: 2
     color: {r: 0.96078426, g: 0.77254903, b: 0.094117604, a: 1}
     material: {fileID: 2100000, guid: d0d164f2670de194f8685ee6992cfc19, type: 2}
-    passengerBody: {fileID: 2100000, guid: 40c1796f0e7c10a4aac0a462ae4e88b4, type: 2}
-    passengerCap: {fileID: 2100000, guid: 4503505a561dbcd42940eb4ea599d018, type: 2}
+    passengerBody: {fileID: 2100000, guid: bbcf4eca7a6343442b8535d0cc1f61e8, type: 2}
+    passengerCap: {fileID: 2100000, guid: b2862fdb1ef10ea429601a748a4f25b8, type: 2}
   - id: 3
     color: {r: 0.23921564, g: 0.74509805, b: 0.35294116, a: 1}
     material: {fileID: 2100000, guid: 12ce3ee0fcaabac4bbf0460b1a36588c, type: 2}
-    passengerBody: {fileID: 2100000, guid: 12c279eb079eee4498da965760f051b8, type: 2}
-    passengerCap: {fileID: 2100000, guid: f4c5d63cae72fd54094efe93f7241862, type: 2}
+    passengerBody: {fileID: 2100000, guid: 72dfe97d3655a1546b16e6f2686df2fe, type: 2}
+    passengerCap: {fileID: 2100000, guid: 036d78305b2b40947895affec7a6a909, type: 2}
   - id: 4
     color: {r: 0.5568628, g: 0.35294116, b: 0.84705883, a: 1}
     material: {fileID: 2100000, guid: 786059c4de736bf4e84af5f2cd50f57b, type: 2}
-    passengerBody: {fileID: 2100000, guid: e567dc9ea9d77234c853a4d68ea3ef8d, type: 2}
-    passengerCap: {fileID: 2100000, guid: 4c7762e53cbb8b445ad87858f8329287, type: 2}
+    passengerBody: {fileID: 2100000, guid: b20fcc4554a2f6d48b7387b6343e821b, type: 2}
+    passengerCap: {fileID: 2100000, guid: 03ad37d27d9fb8f4c9f4437ca9f4d208, type: 2}
   - id: 5
     color: {r: 0.9490196, g: 0.41960782, b: 0.68235296, a: 1}
     material: {fileID: 2100000, guid: cccab1a676c8d884c95c3721ee5cf24a, type: 2}
-    passengerBody: {fileID: 2100000, guid: 98d656f219dc62642b5fa8442cfba12b, type: 2}
-    passengerCap: {fileID: 2100000, guid: 06339bfba440ed8469830ccb585aa659, type: 2}
+    passengerBody: {fileID: 2100000, guid: 307bfb39f0036944c8ee3e5ec8a39ef8, type: 2}
+    passengerCap: {fileID: 2100000, guid: 6e8013f2d2fbe66419e4d56a0ca86d17, type: 2}
   - id: 6
     color: {r: 0.18431368, g: 0.76862746, b: 0.84705883, a: 1}
     material: {fileID: 2100000, guid: 695094c5ea1d74e43b4ea3a6ffc00f87, type: 2}
-    passengerBody: {fileID: 2100000, guid: 52f0e6cdfcd40174fba6dff32741bb63, type: 2}
-    passengerCap: {fileID: 2100000, guid: c19ded3873335db4f968224de3b7fd60, type: 2}
+    passengerBody: {fileID: 2100000, guid: 7cfdaa97de9239442bf6e53bb25c03b8, type: 2}
+    passengerCap: {fileID: 2100000, guid: 21c096e06d071cc45acb5821893c6bcc, type: 2}

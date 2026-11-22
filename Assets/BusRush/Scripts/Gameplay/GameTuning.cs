@@ -34,6 +34,29 @@ namespace BusRush.Gameplay
         /// <summary>Boarding run (queue to gate to vehicle), reference px per second.</summary>
         public const float PassengerRunSpeedPx = 520f;
 
+        // ------------------------------------------------------------------ passengers (v2) on the plaza
+
+        /// <summary>Standing passenger on a 390x844 screen: width (exact, from the model width) and target height.</summary>
+        public const float PassengerWidthPx = 34f;
+        public const float PassengerHeightPx = 44f;
+        /// <summary>
+        /// Height / depth of the model relative to its width scale, so a standing passenger shows PassengerHeightPx tall
+        /// at the camera pitch (both its height and its depth show on screen; measured 34 x 52.7 px at 1 / 1, ~34 x 44 now).
+        /// </summary>
+        public const float PassengerHeightScale = 0.82f;
+        public const float PassengerDepthScale = 0.79f;
+        /// <summary>Plaza queue: three lanes per arm this far apart, rows this far apart along the arm.</summary>
+        public const float CrowdLaneSpacingPx = 30f;
+        public const float CrowdRowSpacingPx = 32f;
+        /// <summary>Arms start this far (along the track) from the bottom centre, so the two arms never touch at the gate.</summary>
+        public const float CrowdArmStartPx = 18f;
+        /// <summary>Boarding runners use the outer edge of their arm, outside the outer lane.</summary>
+        public const float CrowdOuterEdgePx = 54f;
+        /// <summary>At most this many passengers exist as objects (the rest wait off screen up the alleys).</summary>
+        public const int CrowdMaxVisible = 60;
+        /// <summary>Boarding: squash and hop into the vehicle.</summary>
+        public const float BoardHopSeconds = 0.15f;
+
         /// <summary>Queue shuffle-forward walk (also the level intro walk-in and newcomers down the alleys), px/s.</summary>
         public const float QueueShuffleSpeedPx = 128f;
 

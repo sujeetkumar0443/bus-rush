@@ -26,31 +26,23 @@ namespace BusRush.Gameplay
         public const float EllipseRy = 82f;
         public const float ArmTopY = -420f;
         /// <summary>Arms start this far (along the track) from the bottom centre so they never overlap at the gate.</summary>
-        public const float ArmStart = 14f;
-        public const float RowSpacing = 22f;
+        public const float ArmStart = GameTuning.CrowdArmStartPx;
+        public const float RowSpacing = GameTuning.CrowdRowSpacingPx;
         public const int LanesPerArm = 3;
-        private static readonly float[] Lanes = { -21f, 0f, 21f };
+        private static readonly float[] Lanes = { -GameTuning.CrowdLaneSpacingPx, 0f, GameTuning.CrowdLaneSpacingPx };
         /// <summary>An eligible person may board once within this distance of their slot (not while still walking in).</summary>
         public const float ReadySlackPx = 24f;
-        /// <summary>Boarding runners use the outer edge of their arm, outside lane +21.</summary>
-        public const float OuterEdgePx = 40f;
+        /// <summary>Boarding runners use the outer edge of their arm, outside the outer lane.</summary>
+        public const float OuterEdgePx = GameTuning.CrowdOuterEdgePx;
         /// <summary>Eligible people hop this high (world units) at this rate.</summary>
         private const float HopHeight = 0.07f;
         private const float HopHz = 1.6f;
 
         [SerializeField] private PassengerView passengerPrefab;
-        [SerializeField] private int maxVisible = 80;
+        private const int maxVisible = GameTuning.CrowdMaxVisible;
         private const float MinBoardTime = 0.15f;
         [Tooltip("Level intro: the crowd starts this far back and walks in (at the shuffle speed, ~0.7 s).")]
         [SerializeField] private float introWalkPx = 85f;
-        [SerializeField] private float passengerHeight = 0.81f;
-        [Tooltip("Model height of the Passenger prefab (for scaling to passengerHeight).")]
-        [SerializeField] private float modelHeight = 0.779f;
-        [Tooltip("Extra width (X/Z) so a standing person reads ~24 x 30 px on a 390x844 screen (the rig alone measures 17.8 x 29.4).")]
-        [SerializeField] private float widthFactor = 1.35f;
-        [Tooltip("Depth and height factors keep the projected height at ~30 px (depth shows at the 58 degree pitch).")]
-        [SerializeField] private float depthFactor = 1.35f;
-        [SerializeField] private float heightFactor = 0.8f;
 
         private sealed class Person
         {
@@ -80,6 +72,17 @@ namespace BusRush.Gameplay
 
         private readonly List<Person> queue = new List<Person>();
         private readonly List<Walker> walkers = new List<Walker>();
+
+        /// <summary>Boarded passengers finishing their squash-and-hop into the vehicle before going back to the pool.</summary>
+        private struct Hopper
+        {
+            public PassengerView view;
+            public float time;
+            public Vector3 basePos;
+            public Vector3 baseScale;
+        }
+
+        private readonly List<Hopper> hoppers = new List<Hopper>(16);
         private readonly Stack<PassengerView> pool = new Stack<PassengerView>();
         private readonly List<Vector2>[] arms = new List<Vector2>[2];
         private readonly List<float>[] armLengths = new List<float>[2];
@@ -215,8 +218,10 @@ namespace BusRush.Gameplay
         {
             foreach (Person p in queue) Release(p);
             foreach (Walker w in walkers) Release(w.person);
+            foreach (Hopper h in hoppers) ReleaseView(h.view);
             queue.Clear();
             walkers.Clear();
+            hoppers.Clear();
 
             for (int n = 0; n < colors.Count; n++)
             {
@@ -316,9 +321,41 @@ namespace BusRush.Gameplay
                 if (k >= 1f)
                 {
                     walkers.RemoveAt(i);
-                    Release(w.person);
+                    // Seated now (gameplay timing unchanged); the view squashes and hops into the vehicle, then pools.
+                    PassengerView view = w.person.view;
+                    w.person.view = null;
+                    hoppers.Add(new Hopper { view = view, time = 0f, basePos = view.transform.position, baseScale = view.transform.localScale });
                     w.onArrive?.Invoke();
                 }
+            }
+
+            // Squash (first 35%), then hop up and shrink into the vehicle.
+            for (int i = hoppers.Count - 1; i >= 0; i--)
+            {
+                Hopper h = hoppers[i];
+                h.time += dt;
+                float k = Mathf.Clamp01(h.time / GameTuning.BoardHopSeconds);
+                Vector3 s = h.baseScale;
+                if (k < 0.35f)
+                {
+                    float q = k / 0.35f;
+                    h.view.transform.localScale = new Vector3(s.x * (1f + 0.18f * q), s.y * (1f - 0.3f * q), s.z * (1f + 0.18f * q));
+                    h.view.transform.position = h.basePos;
+                }
+                else
+                {
+                    float q = (k - 0.35f) / 0.65f;
+                    float shrink = 1f - q;
+                    h.view.transform.localScale = new Vector3(s.x * shrink, s.y * (0.7f + 0.5f * Mathf.Sin(q * Mathf.PI)) * shrink, s.z * shrink);
+                    h.view.transform.position = h.basePos + Vector3.up * (0.45f * Mathf.Sin(q * Mathf.PI));
+                }
+                if (k >= 1f)
+                {
+                    hoppers.RemoveAt(i);
+                    ReleaseView(h.view);
+                    continue;
+                }
+                hoppers[i] = h;
             }
         }
 
@@ -423,8 +460,7 @@ namespace BusRush.Gameplay
         {
             PassengerView v = pool.Count > 0 ? pool.Pop() : Instantiate(passengerPrefab, transform);
             v.gameObject.SetActive(true);
-            float k = passengerHeight / modelHeight;
-            v.transform.localScale = new Vector3(k * widthFactor, k * heightFactor, k * depthFactor);
+            v.transform.localScale = PassengerScale(v);
             v.SetColor(p.color);
             v.ResetPose();
             if (walkIn) p.s = Mathf.Max(p.s, spawnS); // appear above the top edge and walk in, never pop in view
@@ -434,12 +470,24 @@ namespace BusRush.Gameplay
                 Quaternion.LookRotation(ScreenRef.RefToWorld(refPos - t) - ScreenRef.RefToWorld(refPos), Vector3.up));
         }
 
+        /// <summary>Uniform scale that makes the model GameTuning.PassengerWidthPx wide, stretched to the target height.</summary>
+        public static Vector3 PassengerScale(PassengerView v)
+        {
+            float k = GameTuning.PassengerWidthPx * ScreenRef.UnitsPerPx / Mathf.Max(0.01f, v.ModelWidth);
+            return new Vector3(k, k * GameTuning.PassengerHeightScale, k * GameTuning.PassengerDepthScale);
+        }
+
         private void Release(Person p)
         {
             if (p.view == null) return;
-            p.view.gameObject.SetActive(false);
-            pool.Push(p.view);
+            ReleaseView(p.view);
             p.view = null;
+        }
+
+        private void ReleaseView(PassengerView v)
+        {
+            v.gameObject.SetActive(false);
+            pool.Push(v);
         }
 
         private void OnDrawGizmos()

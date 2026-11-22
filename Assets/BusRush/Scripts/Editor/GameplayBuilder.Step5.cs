@@ -16,8 +16,8 @@ namespace BusRush.EditorTools
         {
             Material confetti = CreateParticleMaterial("Confetti", null, Color.white, 0);
             Material sparkle = CreateParticleMaterial("Sparkle", AssetDatabase.LoadAssetAtPath<Texture2D>($"{TexturesDir}/soft_circle.png"), Color.white, 2);
-            ImportAndInspectRig();          // Step 5b: rigged passenger with separate limbs
-            BuildRiggedPassengerPrefab();
+            // Passenger: v2 (Step P1) replaces the Step 5b rig.
+            BuildPassengerV2Prefab(PassengerV2SharedMaterialsAfterImport());
             BuildFxPrefab(confetti, sparkle);
             AssetDatabase.SaveAssets();
         }
