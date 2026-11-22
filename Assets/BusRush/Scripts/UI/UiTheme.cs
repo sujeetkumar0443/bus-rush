@@ -41,6 +41,8 @@ namespace BusRush.UI
         public GradientColors orangeButton = new GradientColors(Hex(0xFFD36B), Hex(0xFFA22E), Hex(0xF07F12), Hex(0x8A3E05));
         public GradientColors blueButton = new GradientColors(Hex(0x7FD3FF), Hex(0x3A9BF5), Hex(0x1F74D6), Hex(0x103E86));
         public GradientColors redButton = new GradientColors(Hex(0xFF8A8A), Hex(0xE85A5E), Hex(0xD12A33), Hex(0x7A1016));
+        public GradientColors purpleButton = new GradientColors(Hex(0xD7A6FF), Hex(0xB266FF), Hex(0x8A3FE0), Hex(0x4A1690));
+        public GradientColors whiteButton = new GradientColors(Hex(0xFFFFFF), Hex(0xEEF6FF), Hex(0xDDF1FF), Hex(0x1B4FA0));
 
         [Header("Panels")]
         public Color panelTop = Hex(0xFFFFFF);

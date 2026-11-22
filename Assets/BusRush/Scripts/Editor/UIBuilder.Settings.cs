@@ -293,7 +293,7 @@ namespace BusRush.EditorTools
             Stretch(ribbonBox);
             V2Text(ribbonBox, "Title", title, titleSize, true, Color.white, LilitaOutline(ribbonMaterial, H(ribbonEdge)));
 
-            RectTransform close = V2Box(panel, "CloseButton", 23f, H(0xFF8A8A), H(0xD12A33), null, 3f, H(0x7A1016), 4f);
+            RectTransform close = V2Box(panel, "CloseButton", 23f, H(0xFF8A8A), H(0xD12A33), null, 3f, H(0x7A1016), 4f, true);
             Box(close, closeLeft, closeY, 46f, 46f);
             for (int i = 0; i < 2; i++)
             {
@@ -355,16 +355,9 @@ namespace BusRush.EditorTools
             SettingsRowAt(s.Panel, SettingsRow.Setting.Vibration, b + 22f, b + 198f, 290f, 20f);
             SettingsRowAt(s.Panel, SettingsRow.Setting.Language, b + 22f, b + 266f, 290f, 20f);
 
-            Button Link(string name, string text, float left)
-            {
-                Image border = RoundImg(s.Panel, name, 16f, H(0x8FA8CF));
-                Box(border.rectTransform, left, b + 348f, 140f, 44f);
-                Image face = RoundImg(border.transform, "Face", 14f, Color.white);
-                Stretch(face.rectTransform, 2f, 2f, 2f, 2f);
-                TextMeshProUGUI t = V2Text(border.transform, "Label", text, 14f, false, H(0x1B4FA0));
-                t.fontStyle = FontStyles.Bold;
-                return V2Button(border.rectTransform);
-            }
+            // Privacy Policy / Terms of Use: small blue chunky buttons (the shared button style).
+            Button Link(string name, string text, float left) =>
+                ChunkyButton(s.Panel, name, text, left, b + 348f, 140f, 44f, 16f, 16f, 0x7FD3FF, 0x3A9BF5, 0x1F74D6, 0x103E86, "Blue");
 
             Button privacy = Link("PrivacyButton", "Privacy Policy", b + 22f);
             Button terms = Link("TermsButton", "Terms of Use", b + 172f);

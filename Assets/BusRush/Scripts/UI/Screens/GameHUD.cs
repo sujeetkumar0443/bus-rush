@@ -88,6 +88,7 @@ namespace BusRush.UI
 
         private static void OpenPause()
         {
+            if (DebugOnly.Swallowing) return; // the long-press that toggles the debug panel ends on this button
             if (UIManager.Instance != null && !UIManager.Instance.IsOpen<PausePopup>()) UIManager.Instance.Open<PausePopup>();
         }
     }

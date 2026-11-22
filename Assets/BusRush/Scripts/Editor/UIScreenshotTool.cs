@@ -118,8 +118,7 @@ namespace BusRush.EditorTools
                 yield return Capture("07_game_360x800", 360, 800);
                 yield return Capture("07_game_412x915", 412, 915);
 
-                Transform debug = GameObject.Find("DebugPanel (TEMP)").transform;
-                ClickButton(debug, "SettingsButton");
+                UIManager.Instance.Open<PausePopup>();
                 yield return new WaitForSecondsRealtime(0.5f);
                 Debug.Log($"[UIScreenshotTool] Pause: state={GameManager.Instance.State}, timeScale={Time.timeScale}");
                 yield return Capture("08_pause", 390, 844);
@@ -127,16 +126,17 @@ namespace BusRush.EditorTools
                 yield return new WaitForSecondsRealtime(0.3f);
                 Debug.Log($"[UIScreenshotTool] Resume: state={GameManager.Instance.State}, timeScale={Time.timeScale}");
 
-                ClickButton(debug, "LevelCompleteButton");
+                LevelCompleteScreen.Find().Show(SaveSystem.Data.level, 3, Gameplay.GameSession.CoinsFor(3));
                 yield return new WaitForSecondsRealtime(1.8f);
                 yield return Capture("09_level_complete", 390, 844);
                 UIManager.Instance.CloseAll();
                 yield return new WaitForSecondsRealtime(0.3f);
 
-                ClickButton(debug, "OutOfSpaceButton");
+                LevelCompleteScreen.Find().gameObject.SetActive(false);
+                LevelFailedScreen.Find().Show(true);
                 yield return new WaitForSecondsRealtime(0.6f);
                 yield return Capture("10_out_of_space", 390, 844);
-                UIManager.Instance.CloseAll();
+                LevelFailedScreen.Find().Hide();
 
                 Debug.Log($"[UIScreenshotTool] Done. Errors logged during run: {errors}. Save: level={SaveSystem.Data.level} coins={SaveSystem.Data.coins} streak={SaveSystem.Data.dailyStreak}");
                 Finish(errors == 0);

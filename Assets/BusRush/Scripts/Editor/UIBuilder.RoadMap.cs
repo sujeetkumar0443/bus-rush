@@ -223,7 +223,7 @@ namespace BusRush.EditorTools
             Gradient(band, new Color(20f / 255f, 60f / 255f, 140f / 255f, 0.55f), new Color(20f / 255f, 60f / 255f, 140f / 255f, 0f));
 
             RectTransform safe = SafeArea(root.transform);
-            RectTransform homeRt = V2Box(safe, "HomeButton", 20f, Color.white, H(0xDDF1FF), null, 3f, navyEdge, 4f);
+            RectTransform homeRt = V2Box(safe, "HomeButton", 20f, Color.white, H(0xDDF1FF), null, 3f, navyEdge, 4f, true);
             Place(homeRt, 0f, 1f, 12f, -14f, 56f, 56f, 0f, 1f);
             Image homeIcon = Img(homeRt, "Icon", UiV2Sprite("Icons/home.png"), Color.white);
             Place(homeIcon.rectTransform, 0.5f, 0.5f, 0f, 0f, 40f, 42f);
@@ -348,7 +348,7 @@ namespace BusRush.EditorTools
             Image pointer = Img(playHop, "Pointer", White, greenEdge);
             Place(pointer.rectTransform, 0.5f, 0f, 0f, -3f, 13f, 13f);
             pointer.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 45f);
-            RectTransform bubble = V2Box(playHop, "Bubble", 14f, H(0xA4F560), H(0x45C02A), null, 3f, greenEdge, 4f);
+            RectTransform bubble = V2Box(playHop, "Bubble", 14f, H(0xA4F560), H(0x45C02A), null, 3f, greenEdge, 4f, true);
             Stretch(bubble);
             V2Text(bubble, "Label", "PLAY", 20f, true, Color.white, greenText);
             Button playButton = V2Button(play, playHop);

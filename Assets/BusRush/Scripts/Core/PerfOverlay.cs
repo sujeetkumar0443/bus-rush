@@ -7,7 +7,7 @@ namespace BusRush
     /// <summary>
     /// Hidden performance counter for phone testing, present in every build (release included). Five quick taps in the
     /// top-left corner (left 25% of the width, top 15% of the height, not on a button: in the game, the plaza just
-    /// below the Restart button) within 1.5 s toggle it: FPS, frame time (ms, average and worst over the last half
+    /// below the Pause button) within 1.5 s toggle it: FPS, frame time (ms, average and worst over the last half
     /// second) and SetPass / draw calls. Render counters a player build does not provide show as "n/a".
     /// Also pins the frame rate (60 fps, vSync off) before the first scene loads.
     /// </summary>

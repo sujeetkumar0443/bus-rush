@@ -77,6 +77,7 @@
     <Compile Include="Assets\BusRush\Tests\Editor\TrafficScheduleTests.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\DailyScreenshotTool.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\UIBuilder.Settings.cs" />
+    <Compile Include="Assets\BusRush\Scripts\Editor\AspectScreenshotTool.cs" />
     <Compile Include="Assets\BusRush\Tests\Editor\ExtraBayOfferTests.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\Step6PlayTest.cs" />
     <Compile Include="Assets\BusRush\Tests\Editor\MapRewardsTests.cs" />
@@ -91,6 +92,7 @@
     <Compile Include="Assets\BusRush\Scripts\Editor\AllocProbe.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\RenderCapture.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\RewardsScreenshotTool.cs" />
+    <Compile Include="Assets\BusRush\Scripts\Editor\UITextCheck.cs" />
     <Compile Include="Assets\TutorialInfo\Editor\ReadmeEditor.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\UIArtGenerator.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\GameplayBuilder.Step4.cs" />

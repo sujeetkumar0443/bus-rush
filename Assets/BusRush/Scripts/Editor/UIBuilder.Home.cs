@@ -130,6 +130,14 @@ namespace BusRush.EditorTools
                                            float border, Color edge, float lip, bool insets = false)
         {
             RectTransform root = Rect(parent, name);
+            if (insets && lip > 0f)
+            {
+                // Soft drop shadow (CSS 0 12px 18px rgba(10,20,50,.3)) under the 3D bottom edge.
+                Image sh = Img(root, "DropShadow", UIKit.Shadow, new Color(10f / 255f, 20f / 255f, 50f / 255f, 0.3f));
+                sh.type = Image.Type.Sliced;
+                sh.pixelsPerUnitMultiplier = 4f;
+                Stretch(sh.rectTransform, -7f, -(lip + 9f), -7f, 1f);
+            }
             if (lip > 0f)
             {
                 Image l = RoundImg(root, "Lip", radius, edge);
@@ -147,6 +155,12 @@ namespace BusRush.EditorTools
                 Image face = RoundImg(root, "Face", r, Color.white);
                 Stretch(face.rectTransform, border, border + 7f, border, border + 4f);
                 Gradient(face, Color.Lerp(top, middle ?? top, 0.12f), bottom, middle);
+                // White inner highlight on the top half.
+                Image gloss = RoundImg(root, "Gloss", r, new Color(1f, 1f, 1f, 0.18f));
+                gloss.rectTransform.anchorMin = new Vector2(0f, 0.5f);
+                gloss.rectTransform.anchorMax = new Vector2(1f, 1f);
+                gloss.rectTransform.offsetMin = new Vector2(border + 3f, 0f);
+                gloss.rectTransform.offsetMax = new Vector2(-(border + 3f), -(border + 4f));
             }
             else
             {
@@ -229,7 +243,11 @@ namespace BusRush.EditorTools
             button.transition = Selectable.Transition.None;
             button.targetGraphic = hit;
             UIButton feel = rt.gameObject.AddComponent<UIButton>();
-            Wire(feel, ("target", squash != null ? squash : rt), ("pressedScale", 0.92f), ("lightHaptic", true));
+            Transform target = squash != null ? squash : rt;
+            // Chunky buttons (with a 3D bottom edge) also sink onto that edge while pressed.
+            Transform lip = target.Find("Lip");
+            float depth = lip != null ? Mathf.Min(4f, -((RectTransform)lip).offsetMin.y) : 0f;
+            Wire(feel, ("target", target), ("pressedScale", 0.92f), ("lightHaptic", true), ("pushDepth", depth));
             return button;
         }
 
@@ -270,7 +288,10 @@ namespace BusRush.EditorTools
             RectTransform safe = SafeArea(root);
 
             // --- Bus box: left 64, top 508, 270x236.
-            RectTransform busBox = Box(Rect(frame, "BusBox"), 64f, 508f, 270f, 236f);
+            // R11: on the road right in front of the station: top 440, 280 wide (the 270 px design box scaled up).
+            const float busScale = 280f / 270f;
+            RectTransform busBox = Box(Rect(frame, "BusBox"), 199f - 135f, 440f, 270f, 236f, 0.5f, 1f);
+            busBox.localScale = Vector3.one * busScale;
             Image shadow = Img(busBox, "Shadow", UiV2Sprite("Splash/bus_shadow.png"), new Color(1f, 1f, 1f, 0.86f));
             Box(shadow.rectTransform, 16f, 196f, 240f, 34f);
             var exhaust = new Image[3];
@@ -293,7 +314,7 @@ namespace BusRush.EditorTools
             Image coin = ShadowedImg(topLeft, "Coin", UiV2Sprite("Icons/coin.png"), 3f, 0.25f);
             Box((RectTransform)coin.transform.parent, 14f, 17.5f, 44f, 47f);
             Wire(coinText.GetComponent<CoinText>(), ("punchTarget", coin.transform.parent));
-            RectTransform plusRt = V2Box(pill, "AddCoinsButton", 12f, green0, H(0x45C02A), null, 3f, greenEdge, 3f);
+            RectTransform plusRt = V2Box(pill, "AddCoinsButton", 12f, green0, H(0x45C02A), null, 3f, greenEdge, 3f, true);
             Place(plusRt, 1f, 0.5f, -4f, 0f, 34f, 34f, 1f, 0.5f);
             V2Text(plusRt, "Label", "+", 24f, true, Color.white, greenText);
             Button plus = V2Button(plusRt);
@@ -310,7 +331,7 @@ namespace BusRush.EditorTools
             {
                 RectTransform wrap = Place(Rect(safe, name), right ? 1f : 0f, 1f, right ? -12f : 12f, -top, 78f, 106f,
                                            right ? 1f : 0f, 1f);
-                RectTransform box = V2Box(wrap, "Frame", 26f, Color.white, H(0xDDF1FF), null, 3f, navyEdge, 5f);
+                RectTransform box = V2Box(wrap, "Frame", 26f, Color.white, H(0xDDF1FF), null, 3f, navyEdge, 5f, true);
                 Place(box, 0.5f, 1f, 0f, 0f, 76f, 76f, 0.5f, 1f);
                 Image ic = Img(box, "Icon", UiV2Sprite(icon), Color.white);
                 Place(ic.rectTransform, 0.5f, 0.5f, 0f, 0f, iconSize.x, iconSize.y);
@@ -331,8 +352,10 @@ namespace BusRush.EditorTools
             Place(video.rectTransform, 1f, 0f, 10f, -8f, 30f, 25f, 1f, 0f);
 
             // --- Level button: left 50, top 752, 290x74, radius 26, pulsing; bottom-anchored in the safe area.
-            RectTransform pulse = Place(Rect(safe, "LevelPulse"), 0.5f, 0f, 0f, RefHeight - 752f - 74f, 290f, 74f, 0.5f, 0.5f);
-            pulse.anchoredPosition = new Vector2(0f, RefHeight - 752f - 37f);
+            // R11: top 700 of 844 = 70 above the bottom of the safe area (always >= 28 px clear of it).
+            const float levelTop = 700f, minAboveSafeBottom = 28f;
+            float levelBottom = Mathf.Max(minAboveSafeBottom, RefHeight - levelTop - 74f);
+            RectTransform pulse = Place(Rect(safe, "LevelPulse"), 0.5f, 0f, 0f, levelBottom + 37f, 290f, 74f, 0.5f, 0.5f);
             RectTransform levelRt = V2Box(pulse, "LevelButton", 26f, green0, green2, green1, 3f, greenEdge, 6f, true);
             Stretch(levelRt);
             TextMeshProUGUI levelText = V2Text(levelRt, "Label", "Level 1", 36f, true, Color.white, greenText);
@@ -393,7 +416,7 @@ namespace BusRush.EditorTools
             V2Text(ribbon, "Title", "FREE COINS", 28f, true, Color.white, LilitaOutline("Blue", H(0x103E86)));
 
             // Close X: 44 circle at right -14, top -14 of the padding box.
-            RectTransform close = V2Box(panel, "CloseButton", 22f, H(0xFF8A8A), H(0xD12A33), null, 3f, H(0x7A1016), 4f);
+            RectTransform close = V2Box(panel, "CloseButton", 22f, H(0xFF8A8A), H(0xD12A33), null, 3f, H(0x7A1016), 4f, true);
             Box(close, w - 4f + 14f - 44f, -10f, 44f, 44f);
             V2Text(close, "X", "X", 22f, true, Color.white);
             Button closeButton = V2Button(close);

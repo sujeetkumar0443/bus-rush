@@ -776,7 +776,7 @@ MonoBehaviour:
   minFillWidth: 20
   minDuration: 2.6
   fadeDuration: 0.3
-  maxFillSpeed: 2
+  fillDuration: 2.4
 --- !u!1 &4921801797792858824
 GameObject:
   m_ObjectHideFlags: 0

@@ -105,7 +105,7 @@ namespace BusRush.EditorTools
             RectTransform safe = SafeArea(go.transform);
 
             // Pause (12,14) 56x56: blue, two white bars.
-            RectTransform pauseRt = V2Box(safe, "PauseButton", 20f, blueTop, blueBottom, null, 3f, blueEdge, 4f);
+            RectTransform pauseRt = V2Box(safe, "PauseButton", 20f, blueTop, blueBottom, null, 3f, blueEdge, 4f, true);
             Place(pauseRt, 0f, 1f, 12f, -14f, 56f, 56f, 0f, 1f);
             for (int i = 0; i < 2; i++)
             {
@@ -188,9 +188,9 @@ namespace BusRush.EditorTools
                                         Color navyEdge)
         {
             RectTransform tile = Place(Rect(row, label + "Booster"), 0.5f, 0f, x, 0f, 96f, 84f, 0.5f, 0f);
-            RectTransform unlocked = V2Box(tile, "Tile", 24f, Color.white, H(0xDDF1FF), null, 3f, navyEdge, 5f);
+            RectTransform unlocked = V2Box(tile, "Tile", 24f, Color.white, H(0xDDF1FF), null, 3f, navyEdge, 5f, true);
             Stretch(unlocked);
-            RectTransform locked = V2Box(tile, "LockedTile", 24f, H(0xEEF1F6), H(0xC9D1DD), null, 3f, H(0x8F9AB2), 5f);
+            RectTransform locked = V2Box(tile, "LockedTile", 24f, H(0xEEF1F6), H(0xC9D1DD), null, 3f, H(0x8F9AB2), 5f, true);
             Stretch(locked);
             Image icon = Img(tile, "Icon", UiV2Sprite(iconPath), Color.white);
             icon.preserveAspect = true;
@@ -309,7 +309,7 @@ namespace BusRush.EditorTools
             TextMeshProUGUI title = V2Text(ribbonBox, "Title", "SHUFFLE", 30f, true, Color.white, LilitaOutline("Purple", H(0x4A1690)));
 
             // Close X (308,-18) 46.
-            RectTransform close = V2Box(panel, "CloseButton", 23f, H(0xFF8A8A), H(0xD12A33), null, 3f, H(0x7A1016), 4f);
+            RectTransform close = V2Box(panel, "CloseButton", 23f, H(0xFF8A8A), H(0xD12A33), null, 3f, H(0x7A1016), 4f, true);
             Box(close, 308f, -18f, 46f, 46f);
             for (int i = 0; i < 2; i++)
             {

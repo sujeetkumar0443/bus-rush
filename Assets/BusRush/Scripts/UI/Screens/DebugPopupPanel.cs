@@ -1,64 +1,75 @@
 using BusRush.Gameplay;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
 namespace BusRush.UI
 {
-    /// <summary>TEMPORARY: popup previews and level shortcuts in the Game scene. Sits on a <see cref="DebugOnly"/> object.</summary>
+    /// <summary>
+    /// Hidden test panel in the Game HUD (on a <see cref="DebugOnly"/> object: hidden by default, three-finger tap or a
+    /// 1.2 s long-press top-left). Go to level N, +1000 coins, +5 of each booster, Win level, Fail level, Reset save.
+    /// </summary>
     public sealed class DebugPopupPanel : MonoBehaviour
     {
-        [SerializeField] private Button settingsButton;
-        [SerializeField] private Button levelCompleteButton;
-        [SerializeField] private Button outOfSpaceButton;
-        [SerializeField] private Button nextLevelButton;
-        [SerializeField] private Button clearBoardButton;
-        [SerializeField] private Button autoDepartButton;
-        [SerializeField] private TMPro.TMP_Text autoDepartLabel;
+        [SerializeField] private Button minusButton;
+        [SerializeField] private Button plusButton;
+        [SerializeField] private Button plusTenButton;
+        [SerializeField] private Button goButton;
+        [SerializeField] private TMP_Text goLabel;
+        [SerializeField] private Button coinsButton;
+        [SerializeField] private Button boostersButton;
+        [SerializeField] private Button winButton;
+        [SerializeField] private Button failButton;
+        [SerializeField] private Button resetButton;
 
-        private void Start()
-        {
-            RefreshAutoDepart();
-        }
-
-        private void RefreshAutoDepart()
-        {
-            bool on = GameSession.Current != null && GameSession.Current.DebugAutoDepart;
-            autoDepartLabel.text = on ? "Auto depart: ON" : "Auto depart: OFF";
-        }
+        private int target = 1;
 
         private void Awake()
         {
-            autoDepartButton.onClick.AddListener(() =>
+            minusButton.onClick.AddListener(() => SetTarget(target - 1));
+            plusButton.onClick.AddListener(() => SetTarget(target + 1));
+            plusTenButton.onClick.AddListener(() => SetTarget(target + 10));
+            goButton.onClick.AddListener(() =>
             {
-                if (GameSession.Current == null) return;
-                GameSession.Current.DebugAutoDepart = !GameSession.Current.DebugAutoDepart;
-                RefreshAutoDepart();
+                SaveSystem.Data.level = target;
+                SaveSystem.Commit();
+                SceneLoader.LoadGame();
             });
-            settingsButton.onClick.AddListener(Open<PausePopup>); // in-game settings = the pause screen
-            levelCompleteButton.onClick.AddListener(() =>
+            coinsButton.onClick.AddListener(() =>
             {
-                LevelCompleteScreen screen = LevelCompleteScreen.Find();
-                int level = GameSession.Current != null ? GameSession.Current.Level : SaveSystem.Data.level;
-                if (screen != null) screen.Show(level, 3, GameSession.CoinsFor(3));
+                CoinWallet.Add(1000);
+                Toast.Show("+1000 coins");
             });
-            outOfSpaceButton.onClick.AddListener(() =>
+            boostersButton.onClick.AddListener(() =>
             {
-                LevelFailedScreen screen = LevelFailedScreen.Find();
-                if (screen != null) screen.Show(GameSession.Current != null && GameSession.Current.ExtraBayOffered);
+                foreach (BoosterType type in new[] { BoosterType.Vip, BoosterType.Arrange, BoosterType.Shuffle }) BoosterInventory.Add(type, 5);
+                Toast.Show("+5 of each booster");
             });
-            nextLevelButton.onClick.AddListener(() =>
-            {
-                if (GameSession.Current != null) GameSession.Current.DebugNextLevel();
-            });
-            clearBoardButton.onClick.AddListener(() =>
+            winButton.onClick.AddListener(() =>
             {
                 if (GameSession.Current != null) GameSession.Current.DebugClearBoard();
             });
+            failButton.onClick.AddListener(() =>
+            {
+                if (GameSession.Current != null) GameSession.Current.DebugFail();
+            });
+            resetButton.onClick.AddListener(() =>
+            {
+                SaveSystem.ResetToDefaults();
+                SceneLoader.LoadHome();
+            });
         }
 
-        private static void Open<T>() where T : Popup
+        private void Start()
         {
-            if (UIManager.Instance != null) UIManager.Instance.Open<T>();
+            GameSession session = GameSession.Current;
+            SetTarget(session != null && session.Level > 0 ? session.Level : SaveSystem.Data.level);
+        }
+
+        private void SetTarget(int level)
+        {
+            target = Mathf.Clamp(level, 1, LevelPlan.PlannedLevels);
+            goLabel.text = "Go to level " + target;
         }
     }
 }

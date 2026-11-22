@@ -17,6 +17,8 @@ namespace BusRush.UI
         [Tooltip("Visual that is squashed on press. Defaults to this transform.")]
         [SerializeField] private Transform target;
         [SerializeField, Range(0.8f, 1f)] private float pressedScale = 0.94f;
+        [Tooltip("Chunky buttons: while pressed everything but the bottom edge (Lip) and shadow sinks by this many units.")]
+        [SerializeField] private float pushDepth;
         [SerializeField] private bool haptic = true;
         [Tooltip("Light tick instead of the short buzz (UI v2 buttons).")]
         [SerializeField] private bool lightHaptic;
@@ -37,6 +39,7 @@ namespace BusRush.UI
         private void OnDisable()
         {
             anim = null;
+            Push(false);
             if (target != null) target.localScale = Vector3.one;
         }
 
@@ -50,11 +53,41 @@ namespace BusRush.UI
         {
             if (!Button.IsInteractable()) return;
             ScaleTo(pressedScale, 0.07f, Ease.OutQuad);
+            Push(true);
         }
 
         public void OnPointerUp(PointerEventData eventData)
         {
             ScaleTo(1f, 0.2f, Ease.OutBack);
+            Push(false);
+        }
+
+        private RectTransform[] pushed;
+        private Vector2[] pushedHome;
+        private bool isPushed;
+
+        /// <summary>The face (everything except the bottom edge and shadow) sinks onto the bottom edge while held.</summary>
+        private void Push(bool down)
+        {
+            if (pushDepth <= 0f || target == null || isPushed == down) return;
+            if (pushed == null)
+            {
+                var list = new System.Collections.Generic.List<RectTransform>();
+                foreach (Transform child in target)
+                {
+                    if (child.name == "Lip" || child.name == "DropShadow" || !(child is RectTransform rt)) continue;
+                    list.Add(rt);
+                }
+                pushed = list.ToArray();
+                pushedHome = new Vector2[pushed.Length];
+            }
+            isPushed = down;
+            for (int i = 0; i < pushed.Length; i++)
+            {
+                if (pushed[i] == null) continue;
+                if (down) pushedHome[i] = pushed[i].anchoredPosition;
+                pushed[i].anchoredPosition = down ? pushedHome[i] - new Vector2(0f, pushDepth) : pushedHome[i];
+            }
         }
 
         private void OnClick()

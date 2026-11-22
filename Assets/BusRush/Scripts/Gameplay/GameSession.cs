@@ -365,6 +365,18 @@ namespace BusRush.Gameplay
         }
 
         /// <summary>Debug: empties the board and the queue and sends parked vehicles away, which wins the level.</summary>
+        /// <summary>Debug: lose the level now (Level Failed screen with the usual Extra bay offer).</summary>
+        public void DebugFail()
+        {
+            if (IsCleared || IsLost) return;
+            outOfSpaceShown = true;
+            IsLost = true;
+            OnLevelLost?.Invoke();
+            if (UIManager.Instance != null) UIManager.Instance.CloseAll();
+            LevelFailedScreen screen = LevelFailedScreen.Find();
+            if (screen != null) screen.Show(ExtraBayOffered);
+        }
+
         public void DebugClearBoard()
         {
             crowd.Build(Array.Empty<GameColor>());

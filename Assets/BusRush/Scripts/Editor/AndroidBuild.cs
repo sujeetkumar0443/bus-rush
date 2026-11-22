@@ -111,7 +111,9 @@ namespace BusRush.EditorTools
                 locationPathName = OutputPath,
                 target = BuildTarget.Android,
                 targetGroup = BuildTargetGroup.Android,
-                options = BuildOptions.None
+                options = BuildOptions.None,
+                // Test APK: keep the hidden debug panel (DebugOnly) in a non-development (fast) build.
+                extraScriptingDefines = new[] { "BUSRUSH_TEST_TOOLS" }
             };
             BuildReport report = BuildPipeline.BuildPlayer(options);
             BuildSummary s = report.summary;

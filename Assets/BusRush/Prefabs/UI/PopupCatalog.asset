@@ -14,8 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::BusRush.UI.PopupCatalog
   popups:
   - {fileID: 3009296960788159997, guid: e57f2e4b981773e49abd59dd4e08f503, type: 3}
-  - {fileID: 1927241328895114849, guid: 30c1a0d4aaf1a49469dd4c81a0bad5b0, type: 3}
-  - {fileID: 6758890863433674338, guid: 56207e74436cf8746a0875e9bf81ec84, type: 3}
   - {fileID: 3974020106279458221, guid: fd6cf81f6caa0c342afa0b94c6ebe014, type: 3}
   - {fileID: 3754715334338084477, guid: 31713869c9bddb847a64f6244280df93, type: 3}
   - {fileID: 8039044022892892223, guid: 623e0281490fe6948b501c248d8666d2, type: 3}
+  - {fileID: 1927241328895114849, guid: 30c1a0d4aaf1a49469dd4c81a0bad5b0, type: 3}
+  - {fileID: 6758890863433674338, guid: 56207e74436cf8746a0875e9bf81ec84, type: 3}

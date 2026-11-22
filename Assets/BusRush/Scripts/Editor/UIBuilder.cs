@@ -147,33 +147,37 @@ namespace BusRush.EditorTools
 
         private static void BuildDebugPanel(RectTransform safe)
         {
-            Image panel = Img(safe, "DebugPanel (TEMP)", Round, new Color(0.12f, 0.16f, 0.27f, 0.75f), 12f);
+            // Under the Pause button / level badge, above the bays; hidden by default (DebugOnly).
+            Image panel = Img(safe, "DebugPanel (TEMP)", Round, new Color(0.12f, 0.16f, 0.27f, 0.85f), 12f);
             panel.raycastTarget = true;
-            Place(panel.rectTransform, 0f, 1f, 14f, -78f, 104f, 202f, 0f, 1f); // ends above the bays
+            Place(panel.rectTransform, 0f, 1f, 10f, -84f, 172f, 232f, 0f, 1f);
             TextMeshProUGUI title = Label(panel.transform, "Title", "DEBUG", 12f, TextStyle.BodyPlain, new Color(1f, 1f, 1f, 0.8f));
-            Top(title.rectTransform, 4f, 96f, 16f);
+            Top(title.rectTransform, 4f, 160f, 16f);
 
-            Button Small(string name, string text, float y)
+            Button Small(string name, string text, float x, float y, float w, Color face, Color lip)
             {
-                Chunk b = Chunky(panel.transform, name, Grey, GreyLip, 92f, 26f, 8f, 3f, true, false, false);
-                Top(b.Root, y, 92f, 26f);
+                Chunk b = Chunky(panel.transform, name, face, lip, w, 26f, 8f, 3f, true, false, false);
+                Place(b.Root, 0f, 1f, x, -y, w, 26f, 0f, 1f);
                 TextMeshProUGUI t = Label(b.Face, "Label", text, 13f, TextStyle.BodyPlain, DarkNavy);
                 Stretch(t.rectTransform, 4f, 0f, 4f, 0f);
                 return b.Button;
             }
 
-            Button settings = Small("SettingsButton", "Settings", 20f);
-            Button win = Small("LevelCompleteButton", "Level Complete", 50f);
-            Button space = Small("OutOfSpaceButton", "Out of Space", 80f);
-            Button next = Small("NextLevelButton", "Next level", 110f);
-            Button clear = Small("ClearBoardButton", "Clear board", 140f);
-            Button autoDepart = Small("AutoDepartButton", "Auto depart: ON", 170f);
+            Button minus = Small("LevelMinus", "-1", 6f, 22f, 50f, Grey, GreyLip);
+            Button plus = Small("LevelPlus", "+1", 61f, 22f, 50f, Grey, GreyLip);
+            Button plusTen = Small("LevelPlus10", "+10", 116f, 22f, 50f, Grey, GreyLip);
+            Button go = Small("GoToLevel", "Go to level 1", 6f, 52f, 160f, Gold, GoldLip);
+            Button coins = Small("AddCoins", "+1000 coins", 6f, 82f, 160f, Grey, GreyLip);
+            Button boosters = Small("AddBoosters", "+5 of each booster", 6f, 112f, 160f, Grey, GreyLip);
+            Button win = Small("WinLevel", "Win level", 6f, 142f, 78f, Green, GreenLip);
+            Button fail = Small("FailLevel", "Fail level", 88f, 142f, 78f, Red, RedLip);
+            Button reset = Small("ResetSave", "Reset save", 6f, 196f, 160f, Red, RedLip);
 
             panel.gameObject.AddComponent<DebugOnly>();
             DebugPopupPanel debug = panel.gameObject.AddComponent<DebugPopupPanel>();
-            Wire(debug, ("settingsButton", settings), ("levelCompleteButton", win), ("outOfSpaceButton", space),
-                ("nextLevelButton", next), ("clearBoardButton", clear), ("autoDepartButton", autoDepart),
-                ("autoDepartLabel", autoDepart.transform.Find("Body/Face/Label").GetComponent<TextMeshProUGUI>()));
+            Wire(debug, ("minusButton", minus), ("plusButton", plus), ("plusTenButton", plusTen), ("goButton", go),
+                ("goLabel", go.transform.Find("Body/Face/Label").GetComponent<TextMeshProUGUI>()), ("coinsButton", coins),
+                ("boostersButton", boosters), ("winButton", win), ("failButton", fail), ("resetButton", reset));
         }
 
         // ------------------------------------------------------------------ scenes
