@@ -405,12 +405,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 16
-  m_fontSizeBase: 16
+  m_fontSize: 17.5
+  m_fontSizeBase: 17.5
   m_fontWeight: 400
   m_enableAutoSizing: 0
-  m_fontSizeMin: 18
-  m_fontSizeMax: 72
+  m_fontSizeMin: 19.5
+  m_fontSizeMax: 78
   m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
@@ -1324,7 +1324,7 @@ RectTransform:
   - {fileID: 6198349205399037219}
   - {fileID: 1551621956958429112}
   - {fileID: 5251381718305287472}
-  - {fileID: 6337507565136206637}
+  - {fileID: 5232532234233003658}
   - {fileID: 3323675484340851696}
   - {fileID: 7654399900164717816}
   - {fileID: 4447000850052652398}
@@ -2292,7 +2292,7 @@ MonoBehaviour:
   m_text: SETTINGS
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 677f471c82cddc64dae36d3709ded6c7, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: bedad41f71000d749b01fa5224305584, type: 2}
+  m_sharedMaterial: {fileID: 2100000, guid: 4f5bffb51ea53684b9896bb19e672b9d, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -2316,12 +2316,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 30
-  m_fontSizeBase: 30
+  m_fontSize: 32.5
+  m_fontSizeBase: 32.5
   m_fontWeight: 400
   m_enableAutoSizing: 0
-  m_fontSizeMin: 18
-  m_fontSizeMax: 72
+  m_fontSizeMin: 19.5
+  m_fontSizeMax: 78
   m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
@@ -3088,12 +3088,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 16
-  m_fontSizeBase: 16
+  m_fontSize: 17.5
+  m_fontSizeBase: 17.5
   m_fontWeight: 400
   m_enableAutoSizing: 0
-  m_fontSizeMin: 18
-  m_fontSizeMax: 72
+  m_fontSizeMin: 19.5
+  m_fontSizeMax: 78
   m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
@@ -4311,7 +4311,7 @@ PrefabInstance:
     m_AddedGameObjects: []
     m_AddedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: de72ada86308dab49af47bf89e3c9ab1, type: 3}
---- !u!224 &6337507565136206637 stripped
+--- !u!224 &5232532234233003658 stripped
 RectTransform:
   m_CorrespondingSourceObject: {fileID: 2265004765873595814, guid: de72ada86308dab49af47bf89e3c9ab1, type: 3}
   m_PrefabInstance: {fileID: 6337507565136206636}

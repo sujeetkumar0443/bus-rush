@@ -136,6 +136,7 @@ namespace BusRush.EditorTools
 
         private const string Ascii = " !\"#$%&'()*+,-./0123456789:;<=>?@ABCDEFGHIJKLMNOPQRSTUVWXYZ[\\]^_`abcdefghijklmnopqrstuvwxyz{|}~";
 
+        /// <summary>Outlined label material (HUD / world labels): the UiTheme title style (thin navy outline, small shadow).</summary>
         private static Material MakeOutlineMaterial(TMP_FontAsset font, float outline, float dropY)
         {
             string path = $"{FontsDir}/{font.name} Outline.mat";
@@ -147,14 +148,8 @@ namespace BusRush.EditorTools
             }
             m.shader = font.material.shader;
             m.SetTexture(ShaderUtilities.ID_MainTex, font.atlasTexture);
-            m.SetFloat(ShaderUtilities.ID_OutlineWidth, outline);
-            m.SetColor(ShaderUtilities.ID_OutlineColor, Navy);
-            m.EnableKeyword(ShaderUtilities.Keyword_Underlay);
-            m.SetColor(ShaderUtilities.ID_UnderlayColor, new Color(DarkNavy.r, DarkNavy.g, DarkNavy.b, 0.85f));
-            m.SetFloat(ShaderUtilities.ID_UnderlayOffsetX, 0f);
-            m.SetFloat(ShaderUtilities.ID_UnderlayOffsetY, dropY);
-            m.SetFloat(ShaderUtilities.ID_UnderlayDilate, outline);
-            m.SetFloat(ShaderUtilities.ID_UnderlaySoftness, 0f);
+            var theme = AssetDatabase.LoadAssetAtPath<UiTheme>("Assets/BusRush/Art/UI_v2/UiTheme.asset");
+            if (theme != null) theme.ApplyTitleText(m, UiTheme.ShadeOf(theme.blueButton));
             EditorUtility.SetDirty(m);
             return m;
         }

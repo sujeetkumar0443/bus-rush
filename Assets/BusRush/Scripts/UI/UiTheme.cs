@@ -61,6 +61,82 @@ namespace BusRush.UI
         [Tooltip("Fredoka: body text.")]
         public TMP_FontAsset bodyFont;
 
+        // ------------------------------------------------------------------ text style (one place for every screen)
+
+        [Header("Text style: BUTTON text (white face, no outline, soft drop shadow in a darker shade of the button)")]
+        public float buttonUnderlayOffsetX = 0f;
+        public float buttonUnderlayOffsetY = -0.6f;
+        [Range(0f, 1f)] public float buttonUnderlaySoftness = 0.1f;
+        [Range(-1f, 1f)] public float buttonUnderlayDilate = 0f;
+        [Range(0f, 1f)] public float buttonUnderlayAlpha = 0.65f;
+
+        [Header("Text style: TITLE text (white face, thin outline + small shadow in a darker shade of the header)")]
+        [Range(0f, 1f)] public float titleOutlineWidth = 0.12f;
+        public float titleUnderlayOffsetY = -0.5f;
+        [Range(0f, 1f)] public float titleUnderlaySoftness = 0.1f;
+        [Range(-1f, 1f)] public float titleUnderlayDilate = 0f;
+        [Range(0f, 1f)] public float titleUnderlayAlpha = 0.5f;
+
+        [Header("Text style: size (button + title text)")]
+        [Tooltip("Button and title text is this much larger than before (auto-size still shrinks it to fit its rect).")]
+        public float textSizeScale = 1.08f;
+        [Tooltip("The scale already baked into the prefabs/scenes by Tools > Bus Rush > Apply UI Text Style. Do not edit.")]
+        public float textSizeScaleApplied = 1f;
+
+        /// <summary>The darker shade used for the text shadow/outline of a button of this colour: its bottom lip.</summary>
+        public static Color ShadeOf(GradientColors button) => new Color(button.edge.r, button.edge.g, button.edge.b, 1f);
+
+        /// <summary>Button label: white face, outline off, underlay (drop shadow) at buttonUnderlay* in <paramref name="shade"/>.</summary>
+        public void ApplyButtonText(Material m, Color shade)
+        {
+            SetCommon(m);
+            SetOutline(m, 0f, shade);
+            SetUnderlay(m, true, buttonUnderlayOffsetX, buttonUnderlayOffsetY, buttonUnderlaySoftness, buttonUnderlayDilate,
+                        new Color(shade.r, shade.g, shade.b, buttonUnderlayAlpha));
+        }
+
+        /// <summary>Popup/ribbon title: white face, thin outline in <paramref name="shade"/> (never black) plus a small shadow.</summary>
+        public void ApplyTitleText(Material m, Color shade)
+        {
+            SetCommon(m);
+            SetOutline(m, titleOutlineWidth, shade);
+            SetUnderlay(m, true, 0f, titleUnderlayOffsetY, titleUnderlaySoftness, titleUnderlayDilate,
+                        new Color(shade.r, shade.g, shade.b, titleUnderlayAlpha));
+        }
+
+        /// <summary>Dark text on light panels: no outline, no underlay. The (unused) outline/underlay colours are navy, never black.</summary>
+        public void ApplyPlainText(Material m)
+        {
+            SetCommon(m);
+            SetOutline(m, 0f, navy);
+            SetUnderlay(m, false, 0f, 0f, 0f, 0f, new Color(navy.r, navy.g, navy.b, 0f));
+        }
+
+        private void SetCommon(Material m)
+        {
+            if (m.HasProperty(ShaderUtilities.ID_FaceColor)) m.SetColor(ShaderUtilities.ID_FaceColor, white);
+            if (m.HasProperty(ShaderUtilities.ID_OutlineSoftness)) m.SetFloat(ShaderUtilities.ID_OutlineSoftness, 0f);
+        }
+
+        private static void SetOutline(Material m, float width, Color color)
+        {
+            if (width > 0f) m.EnableKeyword(ShaderUtilities.Keyword_Outline);
+            else m.DisableKeyword(ShaderUtilities.Keyword_Outline);
+            m.SetFloat(ShaderUtilities.ID_OutlineWidth, width);
+            m.SetColor(ShaderUtilities.ID_OutlineColor, new Color(color.r, color.g, color.b, 1f));
+        }
+
+        private static void SetUnderlay(Material m, bool on, float x, float y, float softness, float dilate, Color color)
+        {
+            if (on) m.EnableKeyword(ShaderUtilities.Keyword_Underlay);
+            else m.DisableKeyword(ShaderUtilities.Keyword_Underlay);
+            m.SetColor(ShaderUtilities.ID_UnderlayColor, color);
+            m.SetFloat(ShaderUtilities.ID_UnderlayOffsetX, x);
+            m.SetFloat(ShaderUtilities.ID_UnderlayOffsetY, y);
+            m.SetFloat(ShaderUtilities.ID_UnderlaySoftness, softness);
+            m.SetFloat(ShaderUtilities.ID_UnderlayDilate, dilate);
+        }
+
         public static Color Hex(int rgb) =>
             new Color(((rgb >> 16) & 0xFF) / 255f, ((rgb >> 8) & 0xFF) / 255f, (rgb & 0xFF) / 255f, 1f);
     }

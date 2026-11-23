@@ -14,6 +14,9 @@ namespace BusRush.EditorTools
     {
         public static IEnumerator Capture(string directory, string name, int width, int height)
         {
+            // BUSRUSH_SHOTDIR redirects every screenshot tool to one folder (e.g. unity_shots/text_fix).
+            string redirect = System.Environment.GetEnvironmentVariable("BUSRUSH_SHOTDIR");
+            if (!string.IsNullOrEmpty(redirect)) directory = redirect;
             Directory.CreateDirectory(directory);
             Camera cam = Camera.main;
             var rt = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32) { antiAliasing = 4 };

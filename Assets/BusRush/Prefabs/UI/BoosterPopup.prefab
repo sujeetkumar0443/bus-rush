@@ -1822,7 +1822,7 @@ MonoBehaviour:
   m_text: SHUFFLE
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 677f471c82cddc64dae36d3709ded6c7, type: 2}
-  m_sharedMaterial: {fileID: 2100000, guid: 7413503948f76cb42b32e11a33c72d14, type: 2}
+  m_sharedMaterial: {fileID: 2100000, guid: 8ab51f1ba7cbf7b47b9cd2d1fbfb36b1, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -1846,12 +1846,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 30
-  m_fontSizeBase: 30
+  m_fontSize: 32.5
+  m_fontSizeBase: 32.5
   m_fontWeight: 400
   m_enableAutoSizing: 0
-  m_fontSizeMin: 18
-  m_fontSizeMax: 72
+  m_fontSizeMin: 19.5
+  m_fontSizeMax: 78
   m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
@@ -2838,12 +2838,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 24
-  m_fontSizeBase: 24
+  m_fontSize: 26
+  m_fontSizeBase: 26
   m_fontWeight: 400
   m_enableAutoSizing: 0
-  m_fontSizeMin: 18
-  m_fontSizeMax: 72
+  m_fontSizeMin: 19.5
+  m_fontSizeMax: 78
   m_fontStyle: 0
   m_HorizontalAlignment: 1
   m_VerticalAlignment: 512
@@ -3281,12 +3281,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 24
-  m_fontSizeBase: 24
+  m_fontSize: 26
+  m_fontSizeBase: 26
   m_fontWeight: 400
   m_enableAutoSizing: 0
-  m_fontSizeMin: 18
-  m_fontSizeMax: 72
+  m_fontSizeMin: 19.5
+  m_fontSizeMax: 78
   m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512
@@ -3410,21 +3410,21 @@ MonoBehaviour:
     top: {r: 0.49803922, g: 0.827451, b: 1, a: 1}
     bottom: {r: 0.18431373, g: 0.5254902, b: 0.9098039, a: 1}
     edge: {r: 0.0627451, g: 0.24313726, b: 0.5254902, a: 1}
-    titleMaterial: {fileID: 2100000, guid: bedad41f71000d749b01fa5224305584, type: 2}
+    titleMaterial: {fileID: 2100000, guid: 4f5bffb51ea53684b9896bb19e672b9d, type: 2}
   - title: SHUFFLE
     description: Mixes the colours of the cars still in the parking lot.
     icon: {fileID: 21300000, guid: 1430ca5a634f3f3418d1874dfd927e64, type: 3}
     top: {r: 0.84313726, g: 0.6509804, b: 1, a: 1}
     bottom: {r: 0.5411765, g: 0.24705882, b: 0.8784314, a: 1}
     edge: {r: 0.2901961, g: 0.08627451, b: 0.5647059, a: 1}
-    titleMaterial: {fileID: 2100000, guid: 7413503948f76cb42b32e11a33c72d14, type: 2}
+    titleMaterial: {fileID: 2100000, guid: 8ab51f1ba7cbf7b47b9cd2d1fbfb36b1, type: 2}
   - title: EXTRA BAY
     description: Opens one more parking bay for this level.
     icon: {fileID: 21300000, guid: 6f6a81d24e3d7cf41a2b9d78a0cf3df6, type: 3}
     top: {r: 1, g: 0.827451, b: 0.41960785, a: 1}
     bottom: {r: 0.9411765, g: 0.49803922, b: 0.07058824, a: 1}
     edge: {r: 0.5411765, g: 0.24313726, b: 0.019607844, a: 1}
-    titleMaterial: {fileID: 2100000, guid: 6eb390d42a1552046ab975f1d924042c, type: 2}
+    titleMaterial: {fileID: 2100000, guid: af3e9ef8f670d0442963e6b4f03cbb45, type: 2}
   blur: {fileID: 3842823720574751092}
   ribbon: {fileID: 7373189068809100977}
   ribbonGroup: {fileID: 6289903222909419390}
@@ -4211,12 +4211,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 26
-  m_fontSizeBase: 26
+  m_fontSize: 28
+  m_fontSizeBase: 28
   m_fontWeight: 400
   m_enableAutoSizing: 0
-  m_fontSizeMin: 18
-  m_fontSizeMax: 72
+  m_fontSizeMin: 19.5
+  m_fontSizeMax: 78
   m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512

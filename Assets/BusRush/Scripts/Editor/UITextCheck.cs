@@ -64,6 +64,16 @@ namespace BusRush.EditorTools
                     Color mf = m.GetColor(ShaderUtilities.ID_FaceColor);
                     if (mf.maxColorComponent < 0.08f) issues.Add($"{path}: material '{m.name}' has a black _FaceColor");
                 }
+                if (m.IsKeywordEnabled(ShaderUtilities.Keyword_Outline) && m.HasProperty(ShaderUtilities.ID_OutlineColor) &&
+                    m.GetColor(ShaderUtilities.ID_OutlineColor).maxColorComponent < 0.08f && m.GetFloat(ShaderUtilities.ID_OutlineWidth) > 0f)
+                {
+                    issues.Add($"{path}: material '{m.name}' has a black outline");
+                }
+                if (m.IsKeywordEnabled(ShaderUtilities.Keyword_Underlay) && m.HasProperty(ShaderUtilities.ID_UnderlayColor) &&
+                    m.GetColor(ShaderUtilities.ID_UnderlayColor).maxColorComponent < 0.08f)
+                {
+                    issues.Add($"{path}: material '{m.name}' has a black underlay (shadow)");
+                }
                 if (m.shader == null || !m.shader.isSupported) issues.Add($"{path}: material '{m.name}' shader missing/unsupported");
                 else if (!included.Contains(m.shader) && !m.shader.name.StartsWith("TextMeshPro/"))
                 {

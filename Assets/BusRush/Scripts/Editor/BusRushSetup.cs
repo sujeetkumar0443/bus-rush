@@ -877,8 +877,6 @@ namespace BusRush.EditorTools
             tmp.fontSize = 64f;
             tmp.alignment = TextAlignmentOptions.Center;
             tmp.color = Color.white;
-            tmp.outlineWidth = 0.2f;
-            tmp.outlineColor = new Color32(30, 40, 60, 255);
             tmp.raycastTarget = false;
 
             return go.transform;

@@ -185,7 +185,7 @@ namespace BusRush.EditorTools
             return fa;
         }
 
-        /// <summary>Material preset for Lilita One: dark outline 0.25 and a drop shadow (underlay offset 0,-1).</summary>
+        /// <summary>Material preset for Lilita One: UiTheme title style (thin dark-blue outline, small shadow).</summary>
         private static Material MakeHeadingOutline(TMP_FontAsset font)
         {
             var m = AssetDatabase.LoadAssetAtPath<Material>(HeadingOutlinePath);
@@ -198,16 +198,9 @@ namespace BusRush.EditorTools
             m.shader = font.material.shader;
             m.CopyPropertiesFromMaterial(font.material);
             m.SetTexture(ShaderUtilities.ID_MainTex, font.atlasTexture);
-            Color navy = UiTheme.Hex(0x1B2A6B);
-            m.EnableKeyword(ShaderUtilities.Keyword_Outline);
-            m.SetFloat(ShaderUtilities.ID_OutlineWidth, 0.25f);
-            m.SetColor(ShaderUtilities.ID_OutlineColor, navy);
-            m.EnableKeyword(ShaderUtilities.Keyword_Underlay);
-            m.SetColor(ShaderUtilities.ID_UnderlayColor, new Color(navy.r, navy.g, navy.b, 0.9f));
-            m.SetFloat(ShaderUtilities.ID_UnderlayOffsetX, 0f);
-            m.SetFloat(ShaderUtilities.ID_UnderlayOffsetY, -1f);
-            m.SetFloat(ShaderUtilities.ID_UnderlayDilate, 0.25f);
-            m.SetFloat(ShaderUtilities.ID_UnderlaySoftness, 0f);
+            var theme = AssetDatabase.LoadAssetAtPath<UiTheme>(ThemePath);
+            if (theme == null) theme = ScriptableObject.CreateInstance<UiTheme>();
+            theme.ApplyTitleText(m, UiTheme.ShadeOf(theme.blueButton)); // title style: thin dark-blue outline + small shadow
             EditorUtility.SetDirty(m);
             return m;
         }
