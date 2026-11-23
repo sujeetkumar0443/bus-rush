@@ -13,3 +13,9 @@ unity_check.log
 smoke.log
 Tools/Localization/build/
 Tools/Audio/Source/
+.utmp/
+*.csproj
+*.slnx
+smoke_*.log
+test.apk
+unity_shots/
