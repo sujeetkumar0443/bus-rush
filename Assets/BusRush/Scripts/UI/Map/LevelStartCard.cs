@@ -72,6 +72,22 @@ namespace BusRush.UI
             dimButton.onClick.AddListener(RequestClose);
             closeButton.onClick.AddListener(RequestClose);
             playButton.onClick.AddListener(RequestPlay);
+            // NOT gameObject.SetActive(false) here: Awake runs on the first Show()'s SetActive(true), and hiding the card inside it
+            // left the phase at "Opening" forever, so IsOpen stayed true and every node tap was ignored. The builder saves it inactive.
+        }
+
+        private void OnDisable()
+        {
+            // Whatever hides the card (map closed, reopened, scene change), it can never stay "open" while it is not on screen.
+            phase = Phase.Closed;
+            onPlay = null;
+        }
+
+        /// <summary>Hides the card at once and resets its state (map reopened / closed / sequence ended).</summary>
+        public void HideImmediate()
+        {
+            phase = Phase.Closed;
+            onPlay = null;
             gameObject.SetActive(false);
         }
 

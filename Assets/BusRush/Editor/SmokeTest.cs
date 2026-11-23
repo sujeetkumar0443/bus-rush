@@ -89,7 +89,7 @@ namespace BusRush.EditorTools
                 bool allPass = true;
                 var summary = new StringBuilder();
 
-                if (mode == "normal" || mode == "fixes")
+                if (mode == "normal" || mode == "fixes" || mode == "mapplay")
                 {
                     // Real startup path: Boot scene -> BootLoader -> SplashController -> Home.
                     int before = entries.Count;
@@ -110,6 +110,13 @@ namespace BusRush.EditorTools
                 else
                 {
                     SaveSystem.Load();
+                }
+
+                if (mode == "mapplay")
+                {
+                    yield return MapPlay(summary, ok => allPass &= ok);
+                    Finish(allPass, summary);
+                    yield break;
                 }
 
                 if (mode == "fixes")
@@ -480,6 +487,183 @@ namespace BusRush.EditorTools
                     dOk &= AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/BusRush/Art/UI_v2/Map/map_bus_32dir.png") == null;
                 }
                 Result("D road map v3", dOk && entries.Count == before, dNote);
+
+                done(all);
+            }
+
+            // ------------------------------------------------------------------ map Play after unlock (BUSRUSH_SMOKE_MODE=mapplay)
+
+            /// <summary>Exactly what LevelCompleteScreen.Finish does after a win: save level+1, remember the unlock, go to Home.</summary>
+            private static void RealWin(int level)
+            {
+                SaveData d = SaveSystem.Data;
+                for (int l = 1; l <= level; l++) d.SetBestStars(l, 3);
+                d.level = Mathf.Max(d.level, level + 1);
+                d.mapUnlockShown = level - 1;
+                SaveSystem.Commit();
+                BusRush.UI.RoadMapScreen.PendingUnlockLevel = level;
+                SceneLoader.LoadHome();
+            }
+
+            private IEnumerator HomeMap(System.Action<BusRush.UI.RoadMapScreen> result)
+            {
+                yield return Frames(2);
+                yield return WaitFor(() => SceneManager.GetActiveScene().name == SceneLoader.HomeScene && !SceneLoader.IsLoading, 30f, ok => { });
+                yield return Frames(5);
+                BusRush.UI.RoadMapScreen map = null;
+                for (float w = 0f; map == null && w < 10f; w += Time.unscaledDeltaTime)
+                {
+                    map = FindAnyObjectByType<BusRush.UI.RoadMapScreen>(FindObjectsInactive.Include);
+                    yield return null;
+                }
+                result(map);
+            }
+
+            /// <summary>If the gift chest of the level just won opens (levels 5, 15 ...), collects it like a player would.</summary>
+            private IEnumerator CollectChestIfShown(BusRush.UI.RoadMapScreen map)
+            {
+                var chest = Field<BusRush.UI.GiftChestScreen>(map, "giftChest");
+                float t0 = Time.unscaledTime;
+                while (chest != null && !chest.gameObject.activeSelf && Time.unscaledTime - t0 < 4f) yield return null;
+                if (chest == null || !chest.gameObject.activeSelf) yield break;
+                float t1 = Time.unscaledTime;
+                while (chest.Elapsed < 2.6f && Time.unscaledTime - t1 < 10f) yield return null;
+                Field<UnityEngine.UI.Button>(chest, "collectButton").onClick.Invoke();
+                yield return new WaitForSecondsRealtime(2.2f);
+            }
+
+            private static string ClickBlocker(UnityEngine.UI.Button btn)
+            {
+                Vector2 sp = RectTransformUtility.WorldToScreenPoint(null, ((RectTransform)btn.transform).position);
+                var ped = new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current) { position = sp };
+                var hits = new List<UnityEngine.EventSystems.RaycastResult>();
+                UnityEngine.EventSystems.EventSystem.current.RaycastAll(ped, hits);
+                if (hits.Count == 0) return $"n/a (no raycast hits at {sp}, screen {Screen.width}x{Screen.height})";
+                GameObject top = hits[0].gameObject;
+                return top.transform.IsChildOf(btn.transform) ? "ok" : "BLOCKED by " + top.name;
+            }
+
+            /// <summary>Taps a node, checks the card is really on screen and clickable, presses Play and waits for the Game scene.</summary>
+            private IEnumerator TapAndPlay(BusRush.UI.RoadMapScreen map, int level, string label, System.Action<bool, string> report)
+            {
+                var card = map.Card;
+                bool tapped = map.TapLevel(level);
+                yield return Frames(5);
+                bool shown = card.IsOpen && card.gameObject.activeInHierarchy && card.Level == level;
+                float t0 = Time.unscaledTime;
+                while (card.OpenProgress < 1f && Time.unscaledTime - t0 < 3f) yield return null;
+                var play = Field<UnityEngine.UI.Button>(card, "playButton");
+                bool clickable = play != null && play.IsActive() && play.interactable && card.gameObject.activeInHierarchy;
+                string blocker = clickable ? ClickBlocker(play) : "n/a";
+                bool notBlocked = !blocker.StartsWith("BLOCKED");
+                if (clickable) UnityEngine.EventSystems.ExecuteEvents.Execute(play.gameObject,
+                    new UnityEngine.EventSystems.PointerEventData(UnityEngine.EventSystems.EventSystem.current), UnityEngine.EventSystems.ExecuteEvents.pointerClickHandler);
+                float t1 = Time.unscaledTime;
+                while (!(SceneManager.GetActiveScene().name == SceneLoader.GameScene && !SceneLoader.IsLoading) && Time.unscaledTime - t1 < 25f) yield return null;
+                yield return Frames(20);
+                int played = GameSession.Current != null ? GameSession.Current.Level : -1;
+                bool ok = tapped && shown && clickable && notBlocked && played == level;
+                report(ok, $"{label}: tap={tapped} card on screen={shown} play clickable={clickable} raycast={blocker} -> Game level {played}");
+            }
+
+            private IEnumerator MapPlay(StringBuilder summary, System.Action<bool> done)
+            {
+                bool all = true;
+                void Result(string name, bool ok, string note)
+                {
+                    all &= ok;
+                    Debug.Log($"[SmokeTest] mapplay {name}: {(ok ? "PASS" : "FAIL")} {note}");
+                    summary.AppendLine($"  {name}: {(ok ? "PASS" : "FAIL")} {note}");
+                }
+                BusRush.UI.RoadMapScreen map = null;
+                SaveData d = SaveSystem.Data;
+                d.worldIntroShown = 1;
+
+                // E1: level 5 completed the way a real win does it; the sequence plays out by itself, then node 6 must work.
+                int before = entries.Count;
+                d.level = 5;
+                d.giftChestsClaimed.Remove(5);
+                RealWin(5);
+                yield return HomeMap(m => map = m);
+                string note = "";
+                bool ok = map != null;
+                if (ok)
+                {
+                    float t0 = Time.unscaledTime;
+                    while (!map.SequenceActive && Time.unscaledTime - t0 < 8f) yield return null;
+                    bool started = map.SequenceActive;
+                    float s0 = Time.unscaledTime;
+                    while (map.SequenceActive && Time.unscaledTime - s0 < 10f) yield return null;
+                    bool ended = !map.SequenceActive;
+                    yield return CollectChestIfShown(map);
+                    var catcher = Field<UnityEngine.UI.Button>(map, "skipCatcher");
+                    bool catcherOff = !catcher.gameObject.activeSelf;
+                    note += $"sequence started={started} ended={ended} skip catcher off={catcherOff}; ";
+                    bool played = false; string r = "";
+                    yield return TapAndPlay(map, 6, "node 6", (o, n) => { played = o; r = n; });
+                    ok = started && ended && catcherOff && played;
+                    note += r;
+                }
+                else note = "no map in Home";
+                Result("E1 sequence ends by itself", ok && entries.Count == before, note);
+
+                // E2: level 6 completed, the sequence is skipped by a tap.
+                before = entries.Count;
+                note = "";
+                d.level = 6;
+                RealWin(6);
+                map = null;
+                yield return HomeMap(m => map = m);
+                ok = map != null;
+                if (ok)
+                {
+                    float t0 = Time.unscaledTime;
+                    while (!map.SequenceActive && Time.unscaledTime - t0 < 8f) yield return null;
+                    bool started = map.SequenceActive;
+                    yield return new WaitForSecondsRealtime(0.4f);
+                    var catcher = Field<UnityEngine.UI.Button>(map, "skipCatcher");
+                    bool catcherOn = catcher.gameObject.activeSelf;
+                    catcher.onClick.Invoke(); // the tap
+                    yield return Frames(4);
+                    bool stopped = !map.SequenceActive;
+                    bool catcherOff = !catcher.gameObject.activeSelf;
+                    note += $"started={started} catcher on during={catcherOn} stopped by tap={stopped} catcher off after={catcherOff}; ";
+                    bool played = false; string r = "";
+                    yield return TapAndPlay(map, 7, "node 7", (o, n) => { played = o; r = n; });
+                    ok = started && catcherOn && stopped && catcherOff && played;
+                    note += r;
+                }
+                else note = "no map in Home";
+                Result("E2 sequence skipped by a tap", ok && entries.Count == before, note);
+
+                // E3: the map opened a second time (and re-opened while a card is open): the Play node still works.
+                before = entries.Count;
+                note = "";
+                SceneLoader.LoadHome();
+                map = null;
+                yield return HomeMap(m => map = m);
+                ok = map != null;
+                if (ok)
+                {
+                    int cur = SaveSystem.Data.level;
+                    map.Open();
+                    yield return Frames(15);
+                    map.Open(); // second open
+                    yield return Frames(15);
+                    bool firstTap = map.TapLevel(cur);
+                    yield return Frames(5);
+                    bool cardUp = map.Card.IsOpen && map.Card.gameObject.activeInHierarchy;
+                    map.Open(); // re-opened while the card is up: it must reset, not stay "open" and block taps
+                    yield return Frames(10);
+                    bool reset = !map.Card.IsOpen && !map.Card.gameObject.activeSelf;
+                    yield return Frames(10);
+                    bool played = false; string r = "";
+                    yield return TapAndPlay(map, cur, $"node {cur}", (o, n) => { played = o; r = n; });
+                    ok = firstTap && cardUp && reset && played;
+                    note += $"tap={firstTap} card up={cardUp} reset by reopen={reset}; {r}";
+                }
+                else note = "no map in Home";
+                Result("E3 map opened again", ok && entries.Count == before, note);
 
                 done(all);
             }

@@ -135,6 +135,23 @@ namespace BusRush.UI
         {
             Localizer.Changed -= OnLanguageChanged;
             if (Instance == this) Instance = null;
+            ResetInteraction(); // closed or interrupted (scene / screen change): nothing may stay half-way
+        }
+
+        /// <summary>
+        /// Always leaves the map interactive: no sequence running, tap-to-skip catcher and sequence fx off, card closed and reset.
+        /// Called when the map opens, closes, is disabled and when a sequence ends, so the Play node works even after an interruption.
+        /// </summary>
+        private void ResetInteraction()
+        {
+            seqLevel = 0;
+            seqA = seqB = null;
+            if (skipCatcher != null) skipCatcher.gameObject.SetActive(false);
+            if (greyPath != null) greyPath.gameObject.SetActive(false);
+            if (goldGlow != null) goldGlow.gameObject.SetActive(false);
+            if (goldPath != null) goldPath.gameObject.SetActive(false);
+            if (dot != null) dot.gameObject.SetActive(false);
+            if (levelCard != null) levelCard.HideImmediate();
         }
 
         /// <summary>Live language change: the top bar and every visible tile (world banners) re-read their strings.</summary>
@@ -155,14 +172,12 @@ namespace BusRush.UI
             current = Mathf.Clamp(SaveSystem.Data.level, 1, levelCount);
             gameObject.SetActive(true);
             Instance = this;
-            levelCard.gameObject.SetActive(false);
+            ResetInteraction();
 
             content.sizeDelta = new Vector2(content.sizeDelta.x, RoadMapGeometry.TileCount(levelCount) * RoadMapGeometry.TileHeight);
             foreach (TileView tv in new List<TileView>(tiles.Values)) Release(tv);
 
             Clock = 0f;
-            seqLevel = 0;
-            seqA = seqB = null;
             bool play = unlockedLevel > 0 && unlockedLevel < levelCount && unlockedLevel > SaveSystem.Data.mapUnlockShown && unlockedLevel + 1 == current;
             if (play)
             {
@@ -221,7 +236,7 @@ namespace BusRush.UI
 
         public void Close()
         {
-            if (levelCard != null) levelCard.gameObject.SetActive(false);
+            ResetInteraction();
             gameObject.SetActive(false);
         }
 
@@ -290,13 +305,7 @@ namespace BusRush.UI
         private void FinishSequence()
         {
             int won = seqLevel;
-            seqLevel = 0;
-            seqA = seqB = null;
-            skipCatcher.gameObject.SetActive(false);
-            greyPath.gameObject.SetActive(false);
-            goldGlow.gameObject.SetActive(false);
-            goldPath.gameObject.SetActive(false);
-            dot.gameObject.SetActive(false);
+            ResetInteraction(); // interaction enabled, overlays off, card reset: the new current node must be playable
             SetScrollY(seqScrollTo);
 
             RefreshTiles(); // node N+1 is now the current node (red Play disc in the marker layer)
@@ -612,7 +621,12 @@ namespace BusRush.UI
 
         private void OnNodeTapped(MapNodeView node)
         {
-            if (seqLevel > 0 || (levelCard != null && levelCard.IsOpen)) return;
+            if (seqLevel > 0) return;
+            if (levelCard != null && levelCard.IsOpen)
+            {
+                if (levelCard.isActiveAndEnabled) return;   // really open on screen
+                levelCard.HideImmediate();                  // stale "open" state of a card that is not on screen: never blocks a tap
+            }
             if (node.State == MapNodeState.Locked)
             {
                 node.Shake();
