@@ -63,12 +63,17 @@ namespace BusRush.UI
 
         // ------------------------------------------------------------------ text style (one place for every screen)
 
-        [Header("Text style: BUTTON text (white face, no outline, soft drop shadow in a darker shade of the button)")]
+        [Header("Text style: BUTTON text (white face, thin crisp outline + hard drop shadow, both in the button's dark edge colour)")]
         public float buttonUnderlayOffsetX = 0f;
-        public float buttonUnderlayOffsetY = -0.6f;
-        [Range(0f, 1f)] public float buttonUnderlaySoftness = 0.1f;
+        public float buttonUnderlayOffsetY = -1f;
+        [Range(0f, 1f)] public float buttonUnderlaySoftness = 0f;
         [Range(-1f, 1f)] public float buttonUnderlayDilate = 0f;
-        [Range(0f, 1f)] public float buttonUnderlayAlpha = 0.65f;
+        [Range(0f, 1f)] public float buttonUnderlayAlpha = 0.9f;
+        [Range(0f, 1f)] public float buttonOutlineWidth = 0.18f;
+        [Tooltip("Secondary buttons (Restart, Home, Collect, Continue) get at least this fraction of the primary button text size.")]
+        [Range(0.5f, 1f)] public float secondaryTextMinRatio = 0.9f;
+        [Tooltip("Small info text (Level 20, spins left, descriptions): dark navy, full opacity, bold, no outline.")]
+        public Color infoTextColor = new Color(0x1B / 255f, 0x2A / 255f, 0x5C / 255f, 1f);
 
         [Header("Text style: TITLE text (white face, thin outline + small shadow in a darker shade of the header)")]
         [Range(0f, 1f)] public float titleOutlineWidth = 0.12f;
@@ -90,7 +95,7 @@ namespace BusRush.UI
         public void ApplyButtonText(Material m, Color shade)
         {
             SetCommon(m);
-            SetOutline(m, 0f, shade);
+            SetOutline(m, buttonOutlineWidth, shade);
             SetUnderlay(m, true, buttonUnderlayOffsetX, buttonUnderlayOffsetY, buttonUnderlaySoftness, buttonUnderlayDilate,
                         new Color(shade.r, shade.g, shade.b, buttonUnderlayAlpha));
         }

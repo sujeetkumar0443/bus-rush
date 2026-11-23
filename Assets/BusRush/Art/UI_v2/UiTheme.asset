@@ -58,10 +58,13 @@ MonoBehaviour:
   headingOutline: {fileID: 2100000, guid: 4c6f279cf6d57f44eabf03a33ae05ab5, type: 2}
   bodyFont: {fileID: 11400000, guid: 8c8559d7d4966e3439086c14abecbafe, type: 2}
   buttonUnderlayOffsetX: 0
-  buttonUnderlayOffsetY: -0.6
-  buttonUnderlaySoftness: 0.1
+  buttonUnderlayOffsetY: -1
+  buttonUnderlaySoftness: 0
   buttonUnderlayDilate: 0
-  buttonUnderlayAlpha: 0.65
+  buttonUnderlayAlpha: 0.9
+  buttonOutlineWidth: 0.18
+  secondaryTextMinRatio: 0.9
+  infoTextColor: {r: 0.10588235, g: 0.16470589, b: 0.36078432, a: 1}
   titleOutlineWidth: 0.12
   titleUnderlayOffsetY: -0.5
   titleUnderlaySoftness: 0.1

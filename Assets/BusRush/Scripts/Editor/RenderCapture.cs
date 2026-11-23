@@ -17,6 +17,14 @@ namespace BusRush.EditorTools
             // BUSRUSH_SHOTDIR redirects every screenshot tool to one folder (e.g. unity_shots/text_fix).
             string redirect = System.Environment.GetEnvironmentVariable("BUSRUSH_SHOTDIR");
             if (!string.IsNullOrEmpty(redirect)) directory = redirect;
+            // BUSRUSH_SHOTSCALE=2 renders at 2x (780x1688) and adds "@2x" to nothing else: same names, bigger files.
+            string scaleEnv = System.Environment.GetEnvironmentVariable("BUSRUSH_SHOTSCALE");
+            if (int.TryParse(scaleEnv, out int scale) && scale > 1)
+            {
+                width *= scale;
+                height *= scale;
+                name = name.Replace("390x844", $"{width}x{height}");
+            }
             Directory.CreateDirectory(directory);
             Camera cam = Camera.main;
             var rt = new RenderTexture(width, height, 24, RenderTextureFormat.ARGB32) { antiAliasing = 4 };

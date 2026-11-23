@@ -57,7 +57,7 @@ namespace BusRush.EditorTools
             public Dictionary<string, Material> made = new Dictionary<string, Material>();
             public HashSet<Material> styled = new HashSet<Material>();
             public float sizeFactor;
-            public int buttons, titles, plains, kept, resized;
+            public int buttons, titles, plains, kept, resized, infos, sized, glossed;
         }
 
         public static string Apply(bool dry)
@@ -108,7 +108,7 @@ namespace BusRush.EditorTools
                 AssetDatabase.SaveAssets();
             }
 
-            c.log.AppendLine($"[UiTextStyler] button={c.buttons} title={c.titles} plain/stripped={c.plains} untouched={c.kept} resized={c.resized}");
+            c.log.AppendLine($"[UiTextStyler] button={c.buttons} title={c.titles} plain/stripped={c.plains} untouched={c.kept} resized={c.resized} info={c.infos} rowSized={c.sized} glossFixed={c.glossed}");
             return c.log.ToString();
         }
 
@@ -124,6 +124,15 @@ namespace BusRush.EditorTools
                 Role role = Decide(t, out string family, out string presetName);
                 string oldName = t.fontSharedMaterial != null ? t.fontSharedMaterial.name : "-";
 
+                if ((role == Role.Keep || role == Role.Plain) && IsInfoText(t))
+                {
+                    changed |= StyleInfo(t, label, c);
+                    c.infos++;
+                    continue;
+                }
+
+                if (role == Role.Keep && t.GetComponentInParent<Button>(true) == null)
+                    c.log.AppendLine($"  (keep) {label}: color {ColorUtility.ToHtmlStringRGBA(t.color)} font={(t.font != null ? t.font.name : "-")} size={(t.enableAutoSizing ? t.fontSizeMax : t.fontSize):F1}");
                 if (role == Role.Keep)
                 {
                     c.kept++;
@@ -171,11 +180,155 @@ namespace BusRush.EditorTools
                 if (changed) EditorUtility.SetDirty(t);
             }
 
+            changed |= NormaliseButtonText(root, where, c);
+            changed |= TameGloss(root, where, c);
             if (!c.dry) changed |= RemapMaterialFields(root, c);
             return changed;
         }
 
         private static float Round(float v) => Mathf.Round(v * 2f) / 2f;
+
+        // ------------------------------------------------------------------ info text (small grey text -> navy, bold)
+
+        private static bool IsInfoText(TMP_Text t)
+        {
+            Color col = t.color;
+            Color.RGBToHSV(col, out float hue, out float sat, out float val);
+            float lum = 0.2126f * col.r + 0.7152f * col.g + 0.0722f * col.b;
+            float size = t.enableAutoSizing ? t.fontSizeMax : t.fontSize;
+            if (size > 26f || val >= 0.85f || t.GetComponentInParent<Button>(true) != null) return false;
+            string font = t.font != null ? t.font.name : "";
+            if (font.StartsWith("Nunito-ExtraBold")) return false;   // already heavy (counters)
+            bool grey = sat < 0.35f;
+            bool slate = sat >= 0.2f && hue >= 190f / 360f && hue <= 255f / 360f; // blue-grey / navy text only, not gold/brown/purple
+            bool lilita = font.StartsWith("LilitaOne");
+            if (lilita) return grey;                                  // Lilita numbers keep their colours unless they are pale grey
+            return (grey || slate) && (lum < 0.7f || col.a < 0.95f);
+        }
+
+        private static bool StyleInfo(TMP_Text t, string label, Ctx c)
+        {
+            TMP_FontAsset bold = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>($"{FontsDir}/Nunito-Bold SDF.asset");
+            bool lilita = t.font != null && t.font.name.StartsWith("LilitaOne");
+            c.log.AppendLine($"  Info   {label}: color {ColorUtility.ToHtmlStringRGBA(t.color)} font={(t.font != null ? t.font.name : "-")}" +
+                             $" -> {ColorUtility.ToHtmlStringRGB(c.theme.infoTextColor)} {(lilita ? "(Lilita kept)" : "Nunito-Bold")}");
+            if (c.dry) return false;
+            t.color = c.theme.infoTextColor;
+            if (!lilita && bold != null)
+            {
+                t.font = bold;
+                t.fontSharedMaterial = bold.material;
+            }
+            t.fontStyle = FontStyles.Normal;
+            EditorUtility.SetDirty(t);
+            return true;
+        }
+
+        // ------------------------------------------------------------------ button text sizes
+
+        private static readonly string[] SecondaryWords = { "restart", "home", "collect", "continue" };
+
+        /// <summary>
+        /// Same text size on every button of one row; secondary buttons (Restart, Home, Collect, Continue) get the primary size
+        /// minus at most (1 - secondaryTextMinRatio). Auto-size is on with one shared min/max so words never look tiny.
+        /// </summary>
+        private static bool NormaliseButtonText(GameObject root, string where, Ctx c)
+        {
+            var labels = new List<(TMP_Text t, Button bt)>();
+            foreach (TMP_Text t in root.GetComponentsInChildren<TMP_Text>(true))
+            {
+                if (PrefabUtility.IsPartOfPrefabInstance(t.gameObject)) continue;
+                Role r = Decide(t, out _, out _);
+                Button bt = t.GetComponentInParent<Button>(true);
+                if (r == Role.Button && bt != null && (t.name == "Label" || t.transform.parent == bt.transform)) labels.Add((t, bt));
+            }
+            if (labels.Count == 0) return false;
+
+            float TargetOf(TMP_Text t) => t.enableAutoSizing ? t.fontSizeMax : t.fontSize;
+            bool Secondary(TMP_Text t) => SecondaryWords.Contains((t.text ?? "").Trim().ToLowerInvariant());
+
+            float primary = 0f;
+            foreach (var l in labels) if (!Secondary(l.t)) primary = Mathf.Max(primary, TargetOf(l.t));
+
+            var size = new Dictionary<TMP_Text, float>();
+            foreach (var l in labels)
+            {
+                float s = TargetOf(l.t);
+                if (primary > 0f && Secondary(l.t)) s = Mathf.Clamp(s, primary * c.theme.secondaryTextMinRatio, primary);
+                size[l.t] = s;
+            }
+
+            // rows: same parent, same anchors, same local y (prefab contents have no canvas layout, world positions are meaningless)
+            var rows = labels.GroupBy(l =>
+            {
+                var r = (RectTransform)l.bt.transform;
+                return (r.parent, Mathf.RoundToInt(r.anchorMin.y * 100f), Mathf.RoundToInt(r.anchoredPosition.y / 4f));
+            });
+            foreach (var row in rows)
+            {
+                float rowMax = row.Max(l => size[l.t]);
+                foreach (var l in row) size[l.t] = rowMax;
+            }
+
+            bool changed = false;
+            foreach (var l in labels)
+            {
+                float s = Round(size[l.t]);
+                float min = Round(s * 0.85f);
+                bool differs = !l.t.enableAutoSizing || Mathf.Abs(l.t.fontSizeMax - s) > 0.01f || Mathf.Abs(l.t.fontSizeMin - min) > 0.01f ||
+                               Mathf.Abs(l.t.fontSize - s) > 0.01f;
+                if (!differs) continue;
+                c.log.AppendLine($"  Size   {where}/{PathOf(l.t.transform, root.transform)} \"{Short(l.t.text)}\": {l.t.fontSize:F1} -> {s:F1} (auto {min:F1}..{s:F1})");
+                c.sized++;
+                if (c.dry) continue;
+                l.t.enableAutoSizing = true;
+                l.t.fontSizeMax = s;
+                l.t.fontSizeMin = min;
+                l.t.fontSize = s;
+                EditorUtility.SetDirty(l.t);
+                changed = true;
+            }
+            return changed;
+        }
+
+        // ------------------------------------------------------------------ gloss band: top 35 percent of the face only
+
+        private static readonly string[] GlossNames = { "Shine", "Gloss" }; // Highlight / TopBand are the opaque rim behind the face
+        private const float GlossTop = 0.35f;
+
+        private static bool TameGloss(GameObject root, string where, Ctx c)
+        {
+            bool changed = false;
+            foreach (Image img in root.GetComponentsInChildren<Image>(true))
+            {
+                if (!GlossNames.Contains(img.name) || PrefabUtility.IsPartOfPrefabInstance(img.gameObject)) continue;
+                if (img.GetComponentInParent<Button>(true) == null || img.transform.parent.name.Contains("Mask")) continue;
+                var rt = (RectTransform)img.transform;
+                var parent = rt.parent as RectTransform;
+                float ph = parent != null ? parent.rect.height : 0f;
+                if (ph < 8f || rt.anchorMax.y - rt.anchorMin.y > 0.999f && ph < 8f) continue;
+
+                float bottom = rt.anchorMin.y + rt.offsetMin.y / ph;
+                float top = rt.anchorMax.y + rt.offsetMax.y / ph;
+                bool tooTall = bottom < 1f - GlossTop - 0.01f && top > 0.8f;
+                bool tooStrong = img.color.a > 0.181f;
+                if (!tooTall && !tooStrong) continue;
+                c.log.AppendLine($"  Gloss  {where}/{PathOf(rt, root.transform)}: bottom {bottom:F2} alpha {img.color.a:F2} -> {(tooTall ? 1f - GlossTop : bottom):F2} / {Mathf.Min(img.color.a, 0.18f):F2}");
+                c.glossed++;
+                if (c.dry) continue;
+                if (tooTall)
+                {
+                    rt.anchorMin = new Vector2(rt.anchorMin.x, 1f - GlossTop);
+                    rt.offsetMin = new Vector2(rt.offsetMin.x, 0f);
+                }
+                Color col = img.color;
+                col.a = Mathf.Min(col.a, 0.18f);
+                img.color = col;
+                EditorUtility.SetDirty(img);
+                changed = true;
+            }
+            return changed;
+        }
 
         // ------------------------------------------------------------------ classification
 

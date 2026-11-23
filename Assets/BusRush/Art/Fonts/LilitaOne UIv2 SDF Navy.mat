@@ -52,8 +52,8 @@ Material:
     - _StencilOp: 0
     - _StencilReadMask: 255
     - _StencilWriteMask: 255
-    - _TextureHeight: 1024
-    - _TextureWidth: 1024
+    - _TextureHeight: 2048
+    - _TextureWidth: 2048
     - _UnderlayDilate: 0
     - _UnderlayOffsetX: 0
     - _UnderlayOffsetY: -0.5
@@ -65,7 +65,7 @@ Material:
     m_Colors:
     - _ClipRect: {r: -32767, g: -32767, b: 32767, a: 32767}
     - _FaceColor: {r: 1, g: 1, b: 1, a: 1}
-    - _OutlineColor: {r: 0.105882265, g: 0.30980384, b: 0.62745106, a: 1}
-    - _UnderlayColor: {r: 0.105882265, g: 0.30980384, b: 0.62745106, a: 0.5}
+    - _OutlineColor: {r: 0.105882235, g: 0.3098038, b: 0.62745106, a: 1}
+    - _UnderlayColor: {r: 0.105882235, g: 0.3098038, b: 0.62745106, a: 0.5}
   m_BuildTextureStacks: []
   m_AllowLocking: 1
