@@ -90,7 +90,7 @@ namespace BusRush.EditorTools
                 bool allPass = true;
                 var summary = new StringBuilder();
 
-                if (mode == "normal" || mode == "fixes" || mode == "mapplay")
+                if (mode == "normal" || mode == "fixes" || mode == "mapplay" || mode == "audio")
                 {
                     // Real startup path: Boot scene -> BootLoader -> SplashController -> Home.
                     int before = entries.Count;
@@ -111,6 +111,13 @@ namespace BusRush.EditorTools
                 else
                 {
                     SaveSystem.Load();
+                }
+
+                if (mode == "audio")
+                {
+                    yield return AudioChecks(summary, ok => allPass &= ok);
+                    Finish(allPass, summary);
+                    yield break;
                 }
 
                 if (mode == "mapplay")
@@ -787,6 +794,90 @@ namespace BusRush.EditorTools
                 PlayerPrefs.DeleteKey(Localizer.PrefsKey);
                 Localizer.ResetForTests();
                 Result("E5 three worlds + digit fonts", ok && entries.Count == before, note);
+
+                done(all);
+            }
+
+
+            // ------------------------------------------------------------------ audio (BUSRUSH_SMOKE_MODE=audio)
+
+            private IEnumerator AudioChecks(StringBuilder summary, System.Action<bool> done)
+            {
+                bool all = true;
+                void Result(string name, bool ok, string note)
+                {
+                    all &= ok;
+                    Debug.Log($"[SmokeTest] audio {name}: {(ok ? "PASS" : "FAIL")} {note}");
+                    summary.AppendLine($"  {name}: {(ok ? "PASS" : "FAIL")} {note}");
+                }
+                SaveData d = SaveSystem.Data;
+                d.soundOn = true;
+                d.musicOn = true;
+                SaveSystem.Commit();
+                AudioManager am = AudioManager.Instance;
+                if (am == null || am.Library == null) { Result("manager", false, "no AudioManager / library"); done(false); yield break; }
+
+                // 1. every SfxId (and both music tracks) has a clip
+                var missing = am.Library.Missing();
+                int ids = System.Enum.GetValues(typeof(SfxId)).Length;
+                Result("every SfxId has a clip", missing.Count == 0, $"{ids} ids, missing: [{string.Join(", ", missing)}]");
+
+                // 2. plays when Sound is on; per-sound throttle; the string hook and rising chains reach the manager
+                int c0 = am.PlayCount;
+                AudioManager.Play(SfxId.UiClick);
+                AudioManager.Play(SfxId.UiClick);                       // same frame: throttled
+                int afterThrottle = am.PlayCount - c0;
+                yield return new WaitForSecondsRealtime(0.06f);
+                Sfx.Play("click");
+                yield return new WaitForSecondsRealtime(0.06f);
+                AudioManager.PlayRising(SfxId.PassengerBoard, 3);
+                yield return new WaitForSecondsRealtime(0.06f);
+                Sfx.Play("coins");
+                int played = am.PlayCount - c0;
+                bool deviceWorks = am.ActiveSfxSources > 0;
+                Result("plays with Sound on", afterThrottle == 1 && played == 4, $"throttled duplicate -> {afterThrottle} start, chain of 4 calls -> {played} starts (audio device {(deviceWorks ? "present" : "headless")})");
+
+                // 3. the Sound toggle silences everything, live, and brings it back
+                d.soundOn = false;
+                SaveSystem.Commit();
+                int c1 = am.PlayCount;
+                yield return new WaitForSecondsRealtime(0.06f);
+                AudioManager.Play(SfxId.Coin);
+                Sfx.Play("click");
+                AudioManager.PlayRising(SfxId.Star, 2);
+                AudioManager.StartLoop(SfxId.RoadShimmer);
+                bool silent = am.PlayCount == c1 && am.ActiveSfxSources == 0;
+                d.soundOn = true;
+                SaveSystem.Commit();
+                yield return new WaitForSecondsRealtime(0.06f);
+                AudioManager.Play(SfxId.Coin);
+                bool back = am.PlayCount == c1 + 1;
+                Result("Sound toggle", silent && back, $"off -> silent={silent} (no starts, no active sources), on again -> plays={back}");
+
+                // 4. the Music toggle
+                d.musicOn = false;
+                SaveSystem.Commit();
+                yield return new WaitForSecondsRealtime(1.0f);
+                bool musicOff = !am.MusicAudible;
+                d.musicOn = true;
+                SaveSystem.Commit();
+                yield return new WaitForSecondsRealtime(1.2f);
+                bool musicOn = !deviceWorks || am.MusicAudible;           // without an audio device (headless) only "off" can be proven
+                Result("Music toggle", musicOff && musicOn, $"off -> not audible={musicOff}, on -> audible={(deviceWorks ? am.MusicAudible.ToString() : "n/a headless")}; current track {am.CurrentMusic}");
+
+                // 5. the music follows the scene (menu <-> game) and cross-fades without errors
+                bool menu = am.CurrentMusic == MusicId.Menu;
+                SceneLoader.LoadGame();
+                yield return Frames(2);
+                yield return WaitFor(() => SceneManager.GetActiveScene().name == SceneLoader.GameScene && !SceneLoader.IsLoading, 30f, ok => { });
+                yield return new WaitForSecondsRealtime(0.8f);
+                bool game = am.CurrentMusic == MusicId.Game;
+                SceneLoader.LoadHome();
+                yield return Frames(2);
+                yield return WaitFor(() => SceneManager.GetActiveScene().name == SceneLoader.HomeScene && !SceneLoader.IsLoading, 30f, ok => { });
+                yield return new WaitForSecondsRealtime(0.8f);
+                bool menuAgain = am.CurrentMusic == MusicId.Menu;
+                Result("music per scene", menu && game && menuAgain, $"Home={menu}, Game={game}, Home again={menuAgain}");
 
                 done(all);
             }

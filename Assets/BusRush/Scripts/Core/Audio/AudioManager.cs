@@ -27,6 +27,18 @@ namespace BusRush
         public int PlayCount { get; private set; }
         public SfxId LastId { get; private set; }
         public MusicId? CurrentMusic => desiredMusic;
+        /// <summary>Sfx / loop sources that are playing right now (tests).</summary>
+        public int ActiveSfxSources
+        {
+            get
+            {
+                int n = 0;
+                foreach (AudioSource s in pool) if (s.isPlaying) n++;
+                foreach (AudioSource s in loopSources) if (s.isPlaying) n++;
+                return n;
+            }
+        }
+
         public bool MusicAudible => musicOn && musicSources[active].isPlaying && musicSources[active].volume > 0.001f;
 
         private AudioSource[] pool;
