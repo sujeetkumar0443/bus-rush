@@ -1,3 +1,4 @@
+using BusRush.UI;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -33,7 +34,7 @@ namespace BusRush.EditorTools
             string report = Check(out int problems);
             Debug.Log(report);
             File.WriteAllText("Temp/ui_text_check.txt", report);
-            EditorApplication.Exit(0);
+            EditorApplication.Exit(problems == 0 ? 0 : 1); // any problem (including a missing glyph) fails the run
         }
 
         public static string Check(out int problems)
@@ -50,7 +51,12 @@ namespace BusRush.EditorTools
                 texts++;
                 string path = where + " / " + PathOf(t.transform);
                 if (t.font == null) issues.Add($"{path}: no font asset");
-                else fonts.Add(t.font);
+                else
+                {
+                    fonts.Add(t.font);
+                    string missing = MissingGlyphs(t.font, t.text);
+                    if (missing.Length > 0) issues.Add($"{path}: character(s) missing from font '{t.font.name}' (and its fallbacks): {Describe(missing)} in \"{t.text}\"");
+                }
                 Material m = t.fontSharedMaterial;
                 if (m == null)
                 {
@@ -123,11 +129,61 @@ namespace BusRush.EditorTools
                 }
             }
 
+            CheckCodeStrings(issues);
+
             foreach (string sh in shaderNotIncluded) issues.Add($"shader '{sh}' is not in Always Included Shaders (run Fix UI Text)");
             problems = issues.Count;
             sb.Append($"{texts} texts, {fonts.Count} fonts, {problems} problem(s)");
             foreach (string i in issues.Distinct()) sb.Append("\n  - ").Append(i);
             return sb.ToString();
+        }
+
+        // ------------------------------------------------------------------ missing glyphs
+
+        private static readonly System.Text.RegularExpressions.Regex RichTag = new System.Text.RegularExpressions.Regex("<[^>]*>");
+
+        /// <summary>Characters of <paramref name="text"/> (rich-text tags removed) that the font and its fallbacks cannot draw.</summary>
+        private static string MissingGlyphs(TMP_FontAsset font, string text)
+        {
+            if (font == null || string.IsNullOrEmpty(text)) return "";
+            var missing = new StringBuilder();
+            foreach (char ch in RichTag.Replace(text, ""))
+            {
+                if (char.IsWhiteSpace(ch) || char.IsControl(ch) || char.IsSurrogate(ch)) continue;
+                if (!font.HasCharacter(ch, true, true) && missing.ToString().IndexOf(ch) < 0) missing.Append(ch);
+            }
+            return missing.ToString();
+        }
+
+        private static string Describe(string chars) => string.Join(" ", chars.Select(c => $"'{c}' U+{(int)c:X4}"));
+
+        /// <summary>Non-ASCII characters in string literals of runtime scripts must exist in the heading and body fonts.</summary>
+        private static void CheckCodeStrings(List<string> issues)
+        {
+            var theme = AssetDatabase.LoadAssetAtPath<UiTheme>("Assets/BusRush/Art/UI_v2/UiTheme.asset");
+            if (theme == null) return;
+            var fontsToTest = new[] { theme.headingFont, theme.bodyFont }.Where(f => f != null).ToArray();
+            var literal = new System.Text.RegularExpressions.Regex(@"""(?:[^""\\]|\\.)*""|'(?:[^'\\]|\\.)'");
+            foreach (string file in Directory.GetFiles("Assets/BusRush/Scripts", "*.cs", SearchOption.AllDirectories))
+            {
+                if (file.Replace('\\', '/').Contains("/Editor/")) continue;
+                int line = 0;
+                foreach (string src in File.ReadAllLines(file))
+                {
+                    line++;
+                    string code = src.TrimStart();
+                    if (code.StartsWith("//") || code.StartsWith("*") || code.StartsWith("///")) continue;
+                    foreach (System.Text.RegularExpressions.Match m in literal.Matches(src))
+                    {
+                        string v = m.Value;
+                        foreach (TMP_FontAsset f in fontsToTest)
+                        {
+                            string missing = MissingGlyphs(f, new string(v.Where(c => c > 0x7E).ToArray()));
+                            if (missing.Length > 0) issues.Add($"{file.Replace('\\', '/')}:{line}: string literal uses {Describe(missing)}, missing from font '{f.name}'");
+                        }
+                    }
+                }
+            }
         }
 
         // ------------------------------------------------------------------ fix

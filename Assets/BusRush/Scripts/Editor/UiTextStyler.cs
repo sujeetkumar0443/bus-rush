@@ -57,7 +57,7 @@ namespace BusRush.EditorTools
             public Dictionary<string, Material> made = new Dictionary<string, Material>();
             public HashSet<Material> styled = new HashSet<Material>();
             public float sizeFactor;
-            public int buttons, titles, plains, kept, resized, infos, sized, glossed;
+            public int buttons, titles, plains, kept, resized, infos, sized, glossed, whole;
         }
 
         public static string Apply(bool dry)
@@ -108,7 +108,7 @@ namespace BusRush.EditorTools
                 AssetDatabase.SaveAssets();
             }
 
-            c.log.AppendLine($"[UiTextStyler] button={c.buttons} title={c.titles} plain/stripped={c.plains} untouched={c.kept} resized={c.resized} info={c.infos} rowSized={c.sized} glossFixed={c.glossed}");
+            c.log.AppendLine($"[UiTextStyler] button={c.buttons} title={c.titles} plain/stripped={c.plains} untouched={c.kept} resized={c.resized} info={c.infos} rowSized={c.sized} glossFixed={c.glossed} wholePixel={c.whole}");
             return c.log.ToString();
         }
 
@@ -182,6 +182,7 @@ namespace BusRush.EditorTools
 
             changed |= NormaliseButtonText(root, where, c);
             changed |= TameGloss(root, where, c);
+            changed |= WholePixelTexts(root, where, c);
             if (!c.dry) changed |= RemapMaterialFields(root, c);
             return changed;
         }
@@ -208,16 +209,23 @@ namespace BusRush.EditorTools
 
         private static bool StyleInfo(TMP_Text t, string label, Ctx c)
         {
-            TMP_FontAsset bold = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>($"{FontsDir}/Nunito-Bold SDF.asset");
+            TMP_FontAsset heavy = AssetDatabase.LoadAssetAtPath<TMP_FontAsset>($"{FontsDir}/Nunito-ExtraBold SDF.asset");
             bool lilita = t.font != null && t.font.name.StartsWith("LilitaOne");
-            c.log.AppendLine($"  Info   {label}: color {ColorUtility.ToHtmlStringRGBA(t.color)} font={(t.font != null ? t.font.name : "-")}" +
-                             $" -> {ColorUtility.ToHtmlStringRGB(c.theme.infoTextColor)} {(lilita ? "(Lilita kept)" : "Nunito-Bold")}");
+            float size = t.enableAutoSizing ? t.fontSizeMax : t.fontSize;
+            float newSize = lilita ? size : Mathf.Max(size, c.theme.infoTextMinSize);
+            c.log.AppendLine($"  Info   {label}: color {ColorUtility.ToHtmlStringRGBA(t.color)} font={(t.font != null ? t.font.name : "-")} size {size:F1}" +
+                             $" -> {ColorUtility.ToHtmlStringRGB(c.theme.infoTextColor)} {(lilita ? "(Lilita kept)" : $"Nunito-ExtraBold {newSize:F1}")}");
             if (c.dry) return false;
             t.color = c.theme.infoTextColor;
-            if (!lilita && bold != null)
+            if (!lilita && heavy != null)
             {
-                t.font = bold;
-                t.fontSharedMaterial = bold.material;
+                t.font = heavy;
+                t.fontSharedMaterial = heavy.material;
+                // Auto-size (never below 14) so the larger text still fits its rect.
+                t.enableAutoSizing = true;
+                t.fontSizeMax = newSize;
+                t.fontSizeMin = Mathf.Min(14f, newSize);
+                t.fontSize = newSize;
             }
             t.fontStyle = FontStyles.Normal;
             EditorUtility.SetDirty(t);
@@ -226,6 +234,7 @@ namespace BusRush.EditorTools
 
         // ------------------------------------------------------------------ button text sizes
 
+        private const float PrimaryTextRatio = 32.5f / 66f; // Resume (Pause): 30 x 1.08 text in a 66 high button
         private static readonly string[] SecondaryWords = { "restart", "home", "collect", "continue" };
 
         /// <summary>
@@ -270,6 +279,15 @@ namespace BusRush.EditorTools
                 foreach (var l in row) size[l.t] = rowMax;
             }
 
+            // The Level Failed "Retry" is the primary button of its screen: same text/height ratio as "Resume" on Pause.
+            foreach (var l in labels)
+            {
+                if (l.bt.name != "RetryButton") continue;
+                var br = (RectTransform)l.bt.transform;
+                float h = br.rect.height > 8f ? br.rect.height : br.sizeDelta.y;
+                if (h > 8f) size[l.t] = Mathf.Max(size[l.t], PrimaryTextRatio * h);
+            }
+
             bool changed = false;
             foreach (var l in labels)
             {
@@ -286,6 +304,44 @@ namespace BusRush.EditorTools
                 l.t.fontSizeMin = min;
                 l.t.fontSize = s;
                 EditorUtility.SetDirty(l.t);
+                changed = true;
+            }
+            return changed;
+        }
+
+        // ------------------------------------------------------------------ whole-pixel text rects
+
+        /// <summary>Text rects on buttons: scale 1 and whole-number positions/sizes (fractional values blur SDF text).</summary>
+        private static bool WholePixelTexts(GameObject root, string where, Ctx c)
+        {
+            bool changed = false;
+            foreach (TMP_Text t in root.GetComponentsInChildren<TMP_Text>(true))
+            {
+                if (PrefabUtility.IsPartOfPrefabInstance(t.gameObject) || t.GetComponentInParent<Button>(true) == null) continue;
+                var rt = (RectTransform)t.transform;
+                if (rt.parent != null && rt.parent.GetComponent<LayoutGroup>() != null) continue; // the layout owns its rect
+                string name = $"{where}/{PathOf(rt, root.transform)}";
+
+                bool scaleOff = rt.localScale != Vector3.one;
+                Vector2 pos = rt.anchoredPosition, size = rt.sizeDelta, omin = rt.offsetMin, omax = rt.offsetMax;
+                bool stretchX = rt.anchorMin.x != rt.anchorMax.x, stretchY = rt.anchorMin.y != rt.anchorMax.y;
+                Vector2 npos = new Vector2(Mathf.Round(pos.x), Mathf.Round(pos.y));
+                Vector2 nsize = new Vector2(Mathf.Round(size.x), Mathf.Round(size.y));
+                Vector2 nmin = new Vector2(Mathf.Round(omin.x), Mathf.Round(omin.y));
+                Vector2 nmax = new Vector2(Mathf.Round(omax.x), Mathf.Round(omax.y));
+                bool fracX = stretchX ? (nmin.x != omin.x || nmax.x != omax.x) : (npos.x != pos.x || nsize.x != size.x);
+                bool fracY = stretchY ? (nmin.y != omin.y || nmax.y != omax.y) : (npos.y != pos.y || nsize.y != size.y);
+                if (!scaleOff && !fracX && !fracY) continue;
+
+                c.log.AppendLine($"  Whole  {name}: scale={rt.localScale} pos={pos} size={size} offsets={omin}/{omax}");
+                c.whole++;
+                if (c.dry) continue;
+                if (scaleOff) rt.localScale = Vector3.one;
+                if (stretchX) { omin.x = nmin.x; omax.x = nmax.x; } else { pos.x = npos.x; size.x = nsize.x; }
+                if (stretchY) { omin.y = nmin.y; omax.y = nmax.y; } else { pos.y = npos.y; size.y = nsize.y; }
+                if (stretchX || stretchY) { rt.offsetMin = new Vector2(stretchX ? omin.x : rt.offsetMin.x, stretchY ? omin.y : rt.offsetMin.y); rt.offsetMax = new Vector2(stretchX ? omax.x : rt.offsetMax.x, stretchY ? omax.y : rt.offsetMax.y); }
+                if (!stretchX || !stretchY) { rt.anchoredPosition = new Vector2(stretchX ? rt.anchoredPosition.x : pos.x, stretchY ? rt.anchoredPosition.y : pos.y); rt.sizeDelta = new Vector2(stretchX ? rt.sizeDelta.x : size.x, stretchY ? rt.sizeDelta.y : size.y); }
+                EditorUtility.SetDirty(rt);
                 changed = true;
             }
             return changed;

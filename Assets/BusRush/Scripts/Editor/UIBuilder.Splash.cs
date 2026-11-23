@@ -144,7 +144,7 @@ namespace BusRush.EditorTools
             shineRt.sizeDelta = new Vector2(40f, 0f);
             shine.gameObject.AddComponent<UiSkew>();
 
-            string text = theme.headingFont.HasCharacter('…') ? "Loading…" : "Loading...";
+            string text = "Loading...";
             TextMeshProUGUI loading = Label(safe, "LoadingText", text, 17f, TextStyle.Heading, Color.white);
             loading.font = theme.headingFont;
             loading.fontSharedMaterial = theme.headingOutline != null ? theme.headingOutline : theme.headingFont.material;

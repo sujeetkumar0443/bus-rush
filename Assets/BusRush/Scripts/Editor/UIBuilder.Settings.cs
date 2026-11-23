@@ -206,7 +206,7 @@ namespace BusRush.EditorTools
 
             // Value (Language): "English >".
             RectTransform value = Stretch(Rect(rt, "Value"), 150f, 0f, 14f, 0f);
-            TextMeshProUGUI valueText = V2Text(value, "Text", "English  ›", 15f, false, H(0x5A6E9C), null, TextAlignmentOptions.Right);
+            TextMeshProUGUI valueText = V2Text(value, "Text", "English  >", 15f, false, H(0x5A6E9C), null, TextAlignmentOptions.Right);
             valueText.fontStyle = FontStyles.Bold;
             value.gameObject.SetActive(false);
 

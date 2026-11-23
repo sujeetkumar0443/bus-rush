@@ -69,11 +69,14 @@ namespace BusRush.UI
         [Range(0f, 1f)] public float buttonUnderlaySoftness = 0f;
         [Range(-1f, 1f)] public float buttonUnderlayDilate = 0f;
         [Range(0f, 1f)] public float buttonUnderlayAlpha = 0.9f;
-        [Range(0f, 1f)] public float buttonOutlineWidth = 0.18f;
+        [Range(0f, 1f)] public float buttonOutlineWidth = 0.28f;
+        [Tooltip("Face dilate of button text: kept low so the white face does not swallow the outline.")]
+        [Range(-1f, 1f)] public float buttonFaceDilate = 0.1f;
         [Tooltip("Secondary buttons (Restart, Home, Collect, Continue) get at least this fraction of the primary button text size.")]
         [Range(0.5f, 1f)] public float secondaryTextMinRatio = 0.9f;
-        [Tooltip("Small info text (Level 20, spins left, descriptions): dark navy, full opacity, bold, no outline.")]
+        [Tooltip("Small info text (Level 20, spins left, descriptions): dark navy, full opacity, Nunito-ExtraBold, no outline.")]
         public Color infoTextColor = new Color(0x1B / 255f, 0x2A / 255f, 0x5C / 255f, 1f);
+        [Tooltip("Smallest size of info text.")] public float infoTextMinSize = 18f;
 
         [Header("Text style: TITLE text (white face, thin outline + small shadow in a darker shade of the header)")]
         [Range(0f, 1f)] public float titleOutlineWidth = 0.12f;
@@ -96,6 +99,7 @@ namespace BusRush.UI
         {
             SetCommon(m);
             SetOutline(m, buttonOutlineWidth, shade);
+            if (m.HasProperty(ShaderUtilities.ID_FaceDilate)) m.SetFloat(ShaderUtilities.ID_FaceDilate, buttonFaceDilate);
             SetUnderlay(m, true, buttonUnderlayOffsetX, buttonUnderlayOffsetY, buttonUnderlaySoftness, buttonUnderlayDilate,
                         new Color(shade.r, shade.g, shade.b, buttonUnderlayAlpha));
         }

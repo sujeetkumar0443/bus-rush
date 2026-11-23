@@ -2135,8 +2135,8 @@ MonoBehaviour:
       m_Calls: []
   m_text: Watch a short video to get 50 coins.
   m_isRightToLeft: 0
-  m_fontAsset: {fileID: 11400000, guid: e28c16a8840dc9044ae40e5cb3b17fef, type: 2}
-  m_sharedMaterial: {fileID: 6351050672572675661, guid: e28c16a8840dc9044ae40e5cb3b17fef, type: 2}
+  m_fontAsset: {fileID: 11400000, guid: 32e9a619ec4c4be4a838b9af9d6c8ebe, type: 2}
+  m_sharedMaterial: {fileID: 2211122110129612178, guid: 32e9a619ec4c4be4a838b9af9d6c8ebe, type: 2}
   m_fontSharedMaterials: []
   m_fontMaterial: {fileID: 0}
   m_fontMaterials: []
@@ -2160,12 +2160,12 @@ MonoBehaviour:
   m_faceColor:
     serializedVersion: 2
     rgba: 4294967295
-  m_fontSize: 17
+  m_fontSize: 18
   m_fontSizeBase: 17
   m_fontWeight: 400
-  m_enableAutoSizing: 0
-  m_fontSizeMin: 18
-  m_fontSizeMax: 72
+  m_enableAutoSizing: 1
+  m_fontSizeMin: 14
+  m_fontSizeMax: 18
   m_fontStyle: 0
   m_HorizontalAlignment: 2
   m_VerticalAlignment: 512

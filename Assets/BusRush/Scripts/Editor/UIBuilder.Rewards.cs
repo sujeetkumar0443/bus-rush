@@ -277,7 +277,7 @@ namespace BusRush.EditorTools
 
             RectTransform levels = Box(Rect(frame, "Levels"), 0f, 540f, 390f, 24f);
             CanvasGroup levelsGroup = levels.gameObject.AddComponent<CanvasGroup>();
-            TextMeshProUGUI levelsText = V2Text(levels, "Label", "Levels 11 – 20 are open", 18f, false, Color.white);
+            TextMeshProUGUI levelsText = V2Text(levels, "Label", "Levels 11-20 are open", 18f, false, Color.white);
             levelsText.fontStyle = FontStyles.Bold;
 
             RectTransform go = GreenButton(frame, "LetsGo", "Let's go!", 55f, 600f, 280f, 74f, 30f, false, out Button goButton, out _);

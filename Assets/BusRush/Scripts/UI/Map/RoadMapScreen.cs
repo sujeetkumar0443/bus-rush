@@ -426,10 +426,7 @@ namespace BusRush.UI
                     SceneLoader.LoadGame();
                     break;
                 case MapNodeState.Completed:
-                    bool glyph = toastFontProbe != null && toastFontProbe.font != null && toastFontProbe.font.HasCharacter('★');
-                    string stars = glyph
-                        ? new string('★', node.Stars) + new string('☆', 3 - node.Stars)
-                        : $"{node.Stars}/3 stars";
+                    string stars = $"{node.Stars}/3 stars"; // Latin only: the UI fonts have no star glyphs
                     Toast.Show($"Level {node.Level}  {stars}");
                     break;
                 default:

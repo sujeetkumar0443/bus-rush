@@ -48,7 +48,7 @@ namespace BusRush.UI
             valueRoot.SetActive(!isSwitch);
             if (!isSwitch)
             {
-                valueText.text = "English  ›";
+                valueText.text = "English  >";
                 return;
             }
             Tween.Stop(this, ref anim);

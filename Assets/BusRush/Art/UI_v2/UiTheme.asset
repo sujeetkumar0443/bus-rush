@@ -62,9 +62,11 @@ MonoBehaviour:
   buttonUnderlaySoftness: 0
   buttonUnderlayDilate: 0
   buttonUnderlayAlpha: 0.9
-  buttonOutlineWidth: 0.18
+  buttonOutlineWidth: 0.28
+  buttonFaceDilate: 0.1
   secondaryTextMinRatio: 0.9
   infoTextColor: {r: 0.10588235, g: 0.16470589, b: 0.36078432, a: 1}
+  infoTextMinSize: 18
   titleOutlineWidth: 0.12
   titleUnderlayOffsetY: -0.5
   titleUnderlaySoftness: 0.1

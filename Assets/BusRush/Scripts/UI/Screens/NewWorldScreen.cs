@@ -89,7 +89,7 @@ namespace BusRush.UI
             worldNameText.text = RoadMapScreen.WorldNames[index];
             int first = (world - 1) * MapRewards.LevelsPerWorld + 1;
             int last = Mathf.Min(first + MapRewards.LevelsPerWorld - 1, LevelPlan.PlannedLevels);
-            levelsText.text = $"Levels {first} – {last} are open";
+            levelsText.text = $"Levels {first}-{last} are open";
             Sprite map = worldMaps[index];
             cardMap.sprite = map;
             ReleaseSoft();

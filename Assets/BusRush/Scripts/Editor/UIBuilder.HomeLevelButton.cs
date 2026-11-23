@@ -81,7 +81,7 @@ namespace BusRush.EditorTools
         private static (Button button, TextMeshProUGUI text, HomeLevelButtonFx fx) BuildLevelButton(RectTransform pulse)
         {
             Color top = H(0xA4F560), mid = H(0x56D134), bottom = H(0x36A920), edge = H(0x1D5F12);
-            Sprite sparkle = GeneratedSprite("ui_sparkle", 64, 64, PaintSparkle);
+            Sprite sparkle = GeneratedSprite("ui_sparkle", 64, 64, PaintSparkle, true);
             Sprite play = GeneratedSprite("ui_play", 64, 64, PaintPlay);
             Sprite streakSprite = GeneratedSprite("ui_streak", 128, 8, PaintStreak);
 
@@ -184,11 +184,11 @@ namespace BusRush.EditorTools
 
         // ------------------------------------------------------------------ generated sprites
 
-        private static Sprite GeneratedSprite(string name, int w, int h, Func<float, float, float> alpha)
+        private static Sprite GeneratedSprite(string name, int w, int h, Func<float, float, float> alpha, bool force = false)
         {
             string path = $"{GeneratedDir}/{name}.png";
             var existing = AssetDatabase.LoadAssetAtPath<Sprite>(path);
-            if (existing != null) return existing;
+            if (existing != null && !force) return existing;
 
             Directory.CreateDirectory(GeneratedDir);
             var tex = new Texture2D(w, h, TextureFormat.RGBA32, false);
@@ -219,12 +219,24 @@ namespace BusRush.EditorTools
         }
 
         /// <summary>Four-point star: concave astroid with a soft round core. (x, y) in -1..1.</summary>
+        /// <summary>
+        /// 4-point sparkle: concave diamond (|x|^0.45 + |y|^0.45 &lt;= 1, thin sharp rays), a solid white core and a soft round glow.
+        /// </summary>
+        /// <summary>Shader-style smoothstep (0 at e0, 1 at e1, clamped; e0 may be above e1). Mathf.SmoothStep is a lerp, not this.</summary>
+        private static float Smooth(float e0, float e1, float x)
+        {
+            float t = Mathf.Clamp01((x - e0) / (e1 - e0));
+            return t * t * (3f - 2f * t);
+        }
+
         private static float PaintSparkle(float x, float y)
         {
-            float f = Mathf.Sqrt(Mathf.Abs(x)) + Mathf.Sqrt(Mathf.Abs(y));
-            float star = Mathf.SmoothStep(1f, 0.55f, f);
-            float core = Mathf.SmoothStep(0.34f, 0f, Mathf.Sqrt(x * x + y * y));
-            return Mathf.Max(star, core * 0.9f);
+            float f = Mathf.Pow(Mathf.Abs(x), 0.45f) + Mathf.Pow(Mathf.Abs(y), 0.45f);
+            float star = Smooth(1f, 0.88f, f);
+            float r = Mathf.Sqrt(x * x + y * y);
+            float core = Smooth(0.22f, 0.1f, r);
+            float glow = 0.5f * Mathf.Exp(-r * r * 9f);
+            return Mathf.Max(Mathf.Max(star, core), glow);
         }
 
         /// <summary>Right-pointing triangle with rounded corners (distance to a slightly smaller triangle, minus a radius).</summary>
