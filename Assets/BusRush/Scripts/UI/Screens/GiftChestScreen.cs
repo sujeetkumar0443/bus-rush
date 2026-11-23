@@ -77,7 +77,7 @@ namespace BusRush.UI
                     busy = false;
                     if (this == null) return;
                     if (granted) Collect(2);
-                    else Toast.Show("Video not available");
+                    else Toast.Show(Localizer.T("Video not available"));
                 });
             });
             collectButton.onClick.AddListener(() => Collect(1));
@@ -95,7 +95,7 @@ namespace BusRush.UI
             closed = onClosed;
             busy = false;
             Elapsed = 0f;
-            subtitleText.text = $"Level {level} reward";
+            subtitleText.text = Localizer.F("Level {0} reward", level);
             coinAmountText.text = "+" + reward.coins;
             BoosterType booster = reward.MainBooster ?? BoosterType.Vip;
             boosterIcon.sprite = boosterSprites[(int)booster];

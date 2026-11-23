@@ -20,10 +20,10 @@ namespace BusRush.UI
 
         public void Play(int level, LevelTier tier)
         {
-            title.text = "Level " + level;
+            title.text = Localizer.F("Level {0}", level);
             bool boss = tier == LevelTier.Boss;
             subtitle.gameObject.SetActive(boss);
-            if (boss) subtitle.text = "BOSS LEVEL";
+            if (boss) subtitle.text = Localizer.T("BOSS LEVEL");
             StopAllCoroutines();
             StartCoroutine(Run());
         }

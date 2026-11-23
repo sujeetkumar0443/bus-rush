@@ -236,6 +236,7 @@ GameObject:
   - component: {fileID: 6017431437060843091}
   - component: {fileID: 6079954441854241981}
   - component: {fileID: 6320760507240123306}
+  - component: {fileID: 3153155533965334826}
   m_Layer: 5
   m_Name: Label
   m_TagString: Untagged
@@ -362,6 +363,20 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &3153155533965334826
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 503864347933937165}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3b7949e470049d445bf354cee745f7c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BusRush.UI.LocalizedText
+  key: NEW WORLD!
+  args: []
 --- !u!1 &581496100421717813
 GameObject:
   m_ObjectHideFlags: 0
@@ -1112,7 +1127,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Levels 11-20 are open"
+  m_text: Levels 11-20 are open
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 8c8559d7d4966e3439086c14abecbafe, type: 2}
   m_sharedMaterial: {fileID: -7065371771733439422, guid: 8c8559d7d4966e3439086c14abecbafe, type: 2}
@@ -2342,6 +2357,7 @@ GameObject:
   - component: {fileID: 9060748613258675663}
   - component: {fileID: 4626895380444614977}
   - component: {fileID: 2444167925139654}
+  - component: {fileID: 8709691256325482387}
   m_Layer: 5
   m_Name: Label
   m_TagString: Untagged
@@ -2468,6 +2484,20 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &8709691256325482387
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5026907271906398005}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3b7949e470049d445bf354cee745f7c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BusRush.UI.LocalizedText
+  key: Let's go!
+  args: []
 --- !u!1 &5177176508223571947
 GameObject:
   m_ObjectHideFlags: 0

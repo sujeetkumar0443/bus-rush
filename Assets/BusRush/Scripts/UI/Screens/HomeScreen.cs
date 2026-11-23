@@ -60,12 +60,14 @@ namespace BusRush.UI
         {
             CoinTarget = coinIcon;
             SaveSystem.Changed += Refresh;
+            Localizer.Changed += Refresh;
             Refresh();
         }
 
         private void OnDisable()
         {
             SaveSystem.Changed -= Refresh;
+            Localizer.Changed -= Refresh;
             if (CoinTarget == coinIcon) CoinTarget = null;
         }
 
@@ -73,7 +75,7 @@ namespace BusRush.UI
 
         private void Refresh()
         {
-            levelText.text = "Level " + SaveSystem.Data.level;
+            levelText.text = Localizer.F("Level {0}", SaveSystem.Data.level);
             dailyDot.SetActive(DailyRewards.CanClaim);
         }
     }

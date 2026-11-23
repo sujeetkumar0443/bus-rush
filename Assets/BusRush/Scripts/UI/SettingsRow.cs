@@ -41,14 +41,44 @@ namespace BusRush.UI
             button.onClick.AddListener(OnTap);
         }
 
+        private TMP_Text label;
+
+        private void OnDisable()
+        {
+            Localizer.Changed -= RefreshLanguageValue;
+            Localizer.Changed -= RefreshLabel;
+        }
+
+        /// <summary>"Sound" / "Music" / "Vibration" / "Language" in the current language (the row's Label child).</summary>
+        private void RefreshLabel()
+        {
+            if (label == null)
+            {
+                foreach (TMP_Text t in GetComponentsInChildren<TMP_Text>(true))
+                    if (t.name == "Label") label = t;
+            }
+            if (label != null) label.text = Localizer.T(setting.ToString());
+        }
+
+        /// <summary>The Language row shows the current language in its own name (">" is plain ASCII: no font has the chevron).</summary>
+        private void RefreshLanguageValue()
+        {
+            if (valueText != null) valueText.text = Localizer.NativeName(Localizer.Current) + "  >";
+        }
+
         private void OnEnable()
         {
+            Localizer.Changed -= RefreshLabel;
+            Localizer.Changed += RefreshLabel;
+            RefreshLabel();
             bool isSwitch = setting != Setting.Language;
             switchRoot.SetActive(isSwitch);
             valueRoot.SetActive(!isSwitch);
             if (!isSwitch)
             {
-                valueText.text = "English  >";
+                Localizer.Changed -= RefreshLanguageValue;
+                Localizer.Changed += RefreshLanguageValue;
+                RefreshLanguageValue();
                 return;
             }
             Tween.Stop(this, ref anim);
@@ -75,7 +105,8 @@ namespace BusRush.UI
         {
             if (setting == Setting.Language)
             {
-                Toast.Show("More languages soon");
+                Sfx.Play("click");
+                Localizer.Set(Localizer.Next(Localizer.Current)); // saved, applied live: every visible text refreshes
                 return;
             }
 

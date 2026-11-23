@@ -1,7 +1,10 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 using System.Text;
+using BusRush;
 using BusRush.Gameplay;
+using TMPro;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -86,7 +89,7 @@ namespace BusRush.EditorTools
                 bool allPass = true;
                 var summary = new StringBuilder();
 
-                if (mode == "normal")
+                if (mode == "normal" || mode == "fixes")
                 {
                     // Real startup path: Boot scene -> BootLoader -> SplashController -> Home.
                     int before = entries.Count;
@@ -107,6 +110,13 @@ namespace BusRush.EditorTools
                 else
                 {
                     SaveSystem.Load();
+                }
+
+                if (mode == "fixes")
+                {
+                    yield return Fixes(summary, ok => allPass &= ok);
+                    Finish(allPass, summary);
+                    yield break;
                 }
 
                 foreach (int level in levels)
@@ -149,6 +159,241 @@ namespace BusRush.EditorTools
                 }
 
                 Finish(allPass, summary);
+            }
+
+            // ------------------------------------------------------------------ fix checks (BUSRUSH_SMOKE_MODE=fixes)
+
+            private static T Field<T>(Object obj, string name) where T : Object
+            {
+                SerializedProperty p = new SerializedObject(obj).FindProperty(name);
+                return p != null ? p.objectReferenceValue as T : null;
+            }
+
+            private IEnumerator Fixes(StringBuilder summary, System.Action<bool> done)
+            {
+                bool all = true;
+                void Result(string name, bool ok, string note)
+                {
+                    all &= ok;
+                    Debug.Log($"[SmokeTest] fix {name}: {(ok ? "PASS" : "FAIL")} {note}");
+                    summary.AppendLine($"  {name}: {(ok ? "PASS" : "FAIL")} {note}");
+                }
+
+                // ---- A: gift chest state comes from the save (progress set like the debug panel's go-to-level) ----
+                int before = entries.Count;
+                string aNote = "";
+                bool aOk = true;
+                SaveData d = SaveSystem.Data;
+                d.level = 20;
+                d.giftChestsClaimed.Clear();
+                d.mapUnlockShown = 20;
+                SaveSystem.Commit();
+                var map = FindAnyObjectByType<BusRush.UI.RoadMapScreen>(FindObjectsInactive.Include);
+                var chest = FindAnyObjectByType<BusRush.UI.GiftChestScreen>(FindObjectsInactive.Include);
+                if (map == null || chest == null) { aOk = false; aNote = "RoadMapScreen / GiftChestScreen not found in Home"; }
+                else
+                {
+                    aOk &= MapRewards.StateOf(d, 5) == MapRewards.ChestState.Ready && MapRewards.StateOf(d, 15) == MapRewards.ChestState.Ready &&
+                           MapRewards.StateOf(d, 25) == MapRewards.ChestState.Locked;
+                    if (!aOk) aNote += "StateOf wrong (want 5,15 READY, 25 LOCKED); ";
+                    map.Open(0);
+                    yield return Frames(20);
+                    int ready = 0, locked = 0;
+                    foreach (var v in FindObjectsByType<BusRush.UI.MapChestView>(FindObjectsInactive.Exclude))
+                    {
+                        if (v.State == MapRewards.ChestState.Ready) ready++;
+                        if (v.State == MapRewards.ChestState.Locked) locked++;
+                    }
+                    aNote += $"visible chests ready={ready} locked={locked}; ";
+                    aOk &= ready >= 1;
+
+                    int coins0 = d.coins, vip0 = d.boosterVip, arr0 = d.boosterArrange, shuf0 = d.boosterShuffle;
+                    map.OnChestTapped(25); // LOCKED: toast only
+                    yield return Frames(5);
+                    bool lockedOpened = chest.gameObject.activeSelf;
+                    map.OnChestTapped(15); // READY: opens the screen
+                    yield return Frames(5);
+                    bool opened = chest.gameObject.activeSelf;
+                    aOk &= !lockedOpened && opened;
+                    aNote += $"locked tap opened={lockedOpened}, ready tap opened={opened}; ";
+                    if (opened)
+                    {
+                        float t0 = Time.unscaledTime;
+                        while (chest.Elapsed < 2.6f && Time.unscaledTime - t0 < 10f) yield return null;
+                        Field<UnityEngine.UI.Button>(chest, "collectButton").onClick.Invoke();
+                        yield return new WaitForSecondsRealtime(1.8f); // coin fly pays out
+                    }
+                    bool claimed = MapRewards.StateOf(d, 15) == MapRewards.ChestState.Claimed && d.giftChestsClaimed.Contains(15);
+                    int boosterGain = (d.boosterVip - vip0) + (d.boosterArrange - arr0) + (d.boosterShuffle - shuf0);
+                    aOk &= claimed && d.coins - coins0 >= GameTuning.GiftChestCoins && boosterGain == 1;
+                    aNote += $"claimed15={claimed} coins+{d.coins - coins0} boosters+{boosterGain}; ";
+                    int coinsAfter = d.coins;
+                    map.OnChestTapped(15); // CLAIMED: nothing
+                    yield return new WaitForSecondsRealtime(0.3f);
+                    bool again = chest.gameObject.activeSelf || d.coins != coinsAfter;
+                    bool five = MapRewards.StateOf(d, 5) == MapRewards.ChestState.Ready;
+                    aOk &= !again && five;
+                    aNote += $"claimed tap does nothing={!again}; chest5 still READY={five}";
+                    map.Close();
+                }
+                Result("A chest state", aOk && entries.Count == before, aNote);
+
+                // ---- B: Lucky Spin cannot be closed mid-spin, the result is always granted ----
+                before = entries.Count;
+                string bNote = "";
+                bool bOk = true;
+                d.luckySpinDate = string.Empty;
+                d.luckySpinsUsed = 0;
+                d.luckySpinPending = -1;
+                SaveSystem.Commit();
+                var ui = BusRush.UI.UIManager.Instance;
+                var popup = ui != null ? ui.Open<BusRush.UI.LuckySpinPopup>() : null;
+                if (popup == null) { bOk = false; bNote = "LuckySpinPopup did not open"; }
+                else
+                {
+                    yield return new WaitForSecondsRealtime(1.2f);
+                    var spin = Field<UnityEngine.UI.Button>(popup, "spinButton");
+                    var closeBtn = Field<UnityEngine.UI.Button>(popup, "closeButton");
+                    var dim = Field<UnityEngine.UI.Image>(popup, "dim");
+                    var collect = Field<UnityEngine.UI.Button>(popup, "collectButton");
+                    var wonGo = new SerializedObject(popup).FindProperty("wonRoot").objectReferenceValue as GameObject;
+                    int coins0 = d.coins, vip0 = d.boosterVip, arr0 = d.boosterArrange, shuf0 = d.boosterShuffle;
+                    spin.onClick.Invoke();
+                    yield return new WaitForSecondsRealtime(0.6f);
+                    int pending = d.luckySpinPending;
+                    bool spinning = popup.IsSpinning;
+                    popup.Close();
+                    ui.CloseTop();
+                    ui.HandleBack();
+                    if (dim != null && dim.TryGetComponent(out UnityEngine.UI.Button dimButton)) dimButton.onClick.Invoke();
+                    closeBtn.onClick.Invoke();
+                    yield return Frames(10);
+                    bool stillOpen = popup.IsOpen && popup.gameObject.activeInHierarchy;
+                    bool xDisabled = closeBtn != null && !closeBtn.interactable;
+                    bOk &= spinning && pending >= 0 && stillOpen && xDisabled;
+                    bNote += $"spinning={spinning} pending={pending} open after close/back/dim/X={stillOpen} X disabled={xDisabled}; ";
+
+                    // wait for the result card: still not closable; Collect pays and unlocks closing
+                    float t1 = Time.unscaledTime;
+                    while (!wonGo.activeSelf && Time.unscaledTime - t1 < 12f) yield return null;
+                    bool cardShown = wonGo.activeSelf;
+                    popup.Close();
+                    yield return Frames(5);
+                    bool openWithCard = popup.IsOpen;
+                    collect.onClick.Invoke();
+                    yield return new WaitForSecondsRealtime(1.8f);
+                    RewardSpec r = pending >= 0 ? GameTuning.LuckySpinSegments[pending] : default;
+                    int gain = (d.boosterVip - vip0) + (d.boosterArrange - arr0) + (d.boosterShuffle - shuf0);
+                    bool paid = d.coins - coins0 == r.coins && gain == r.vip + r.arrange + r.shuffle && d.luckySpinPending == -1;
+                    bool canClose = popup.CanClose;
+                    popup.Close();
+                    yield return new WaitForSecondsRealtime(0.4f);
+                    bOk &= cardShown && openWithCard && paid && canClose && !popup.IsOpen;
+                    bNote += $"card shown={cardShown}, still open before Collect={openWithCard}, paid={paid} (coins+{d.coins - coins0}, boosters+{gain}), closes after Collect={!popup.IsOpen}; ";
+
+                    // B2: leaving mid-spin (scene leaves / object disabled) still grants the already-decided result
+                    d.luckySpinDate = string.Empty;
+                    d.luckySpinsUsed = 0;
+                    SaveSystem.Commit();
+                    popup = ui.Open<BusRush.UI.LuckySpinPopup>();
+                    yield return new WaitForSecondsRealtime(1.0f);
+                    spin = Field<UnityEngine.UI.Button>(popup, "spinButton");
+                    coins0 = d.coins; vip0 = d.boosterVip; arr0 = d.boosterArrange; shuf0 = d.boosterShuffle;
+                    spin.onClick.Invoke();
+                    yield return new WaitForSecondsRealtime(0.5f);
+                    pending = d.luckySpinPending;
+                    popup.gameObject.SetActive(false); // what a scene unload does to it
+                    yield return Frames(3);
+                    r = pending >= 0 ? GameTuning.LuckySpinSegments[pending] : default;
+                    gain = (d.boosterVip - vip0) + (d.boosterArrange - arr0) + (d.boosterShuffle - shuf0);
+                    bool forced = pending >= 0 && d.luckySpinPending == -1 && d.coins - coins0 == r.coins && gain == r.vip + r.arrange + r.shuffle;
+                    bOk &= forced;
+                    bNote += $"leave mid-spin granted={forced} (segment {pending}, coins+{d.coins - coins0}, boosters+{gain})";
+                    ui.CloseAll();
+                }
+                Result("B lucky spin", bOk && entries.Count == before, bNote);
+
+                // ---- C: language selection works live, is saved, covers every string, Hindi draws with the static fallback ----
+                before = entries.Count;
+                string cNote = "";
+                bool cOk = true;
+                PlayerPrefs.DeleteKey(Localizer.PrefsKey);
+                Localizer.ResetForTests();
+                cOk &= Localizer.Current == Language.English;
+
+                // table completeness: every key has a translation in every language
+                int holes = 0;
+                foreach (string key in Localizer.Keys.ToList())
+                    for (int l = 1; l < Localizer.Count; l++)
+                        if (string.IsNullOrEmpty(Localizer.Get(key, (Language)l))) holes++;
+                cOk &= holes == 0;
+                cNote += $"table keys={Localizer.Keys.Count()} untranslated cells={holes}; ";
+
+                var settings = ui != null ? ui.Open<BusRush.UI.SettingsPopup>() : null;
+                if (settings == null) { cOk = false; cNote += "SettingsPopup did not open"; }
+                else
+                {
+                    yield return new WaitForSecondsRealtime(0.8f);
+                    BusRush.UI.SettingsRow langRow = null;
+                    foreach (var row in settings.GetComponentsInChildren<BusRush.UI.SettingsRow>(true))
+                        if (row.Kind == BusRush.UI.SettingsRow.Setting.Language) langRow = row;
+                    var langButton = Field<UnityEngine.UI.Button>(langRow, "button");
+                    TMP_Text TextOf(string key)
+                    {
+                        foreach (var lt in FindObjectsByType<BusRush.UI.LocalizedText>(FindObjectsInactive.Exclude))
+                            if (lt.Key == key) return lt.GetComponent<TMP_Text>();
+                        return null;
+                    }
+                    var title = TextOf("SETTINGS");
+                    var home = TextOf("Daily"); // Home screen label behind the popup
+                    var level = FindAnyObjectByType<BusRush.UI.HomeScreen>();
+                    var levelText = Field<TMP_Text>(level, "levelText");
+                    var valueText = Field<TMP_Text>(langRow, "valueText");
+                    cOk &= title != null && home != null && levelText != null && valueText != null && title.text == "SETTINGS";
+                    cNote += $"English: title='{title?.text}' value='{valueText?.text}'; ";
+
+                    foreach (Language lang in new[] { Language.Spanish, Language.Portuguese, Language.French, Language.Hindi })
+                    {
+                        langButton.onClick.Invoke(); // the real selection path: the row cycles to the next language
+                        yield return Frames(3);
+                        string wantTitle = Localizer.Get("SETTINGS", lang), wantDaily = Localizer.Get("Daily", lang);
+                        string wantLevel = Localizer.F("Level {0}", SaveSystem.Data.level);
+                        bool live = Localizer.Current == lang && title.text == wantTitle && home.text == wantDaily && levelText.text == wantLevel &&
+                                    valueText.text == Localizer.NativeName(lang) + "  >";
+                        bool saved = PlayerPrefs.GetInt(Localizer.PrefsKey, -1) == (int)lang;
+                        // every character must really be drawn: no missing-glyph squares
+                        int bad = 0;
+                        foreach (TMP_Text t in new[] { title, home, levelText, valueText })
+                        {
+                            t.ForceMeshUpdate();
+                            for (int i = 0; i < t.textInfo.characterCount; i++)
+                            {
+                                var ci = t.textInfo.characterInfo[i];
+                                if (char.IsWhiteSpace(ci.character)) continue;
+                                if (!ci.isVisible || ci.elementType != TMP_TextElementType.Character || !ci.fontAsset.HasCharacter(ci.character, false, false)) bad++;
+                            }
+                        }
+                        cOk &= live && saved && bad == 0;
+                        cNote += $"{Localizer.Code(lang)}: live={live} saved={saved} missingGlyphs={bad}; ";
+                    }
+
+                    // saved in PlayerPrefs and applied on startup: a new session reads it back
+                    Localizer.ResetForTests();
+                    bool restart = Localizer.Current == Language.Hindi;
+                    cOk &= restart;
+                    cNote += $"after restart language={Localizer.Current}; ";
+
+                    langButton.onClick.Invoke(); // Hindi -> English again
+                    yield return Frames(3);
+                    cOk &= Localizer.Current == Language.English && title.text == "SETTINGS" && levelText.text == "Level " + SaveSystem.Data.level;
+                    cNote += $"back to English title='{title.text}'";
+                    ui.CloseAll();
+                }
+                PlayerPrefs.DeleteKey(Localizer.PrefsKey);
+                Localizer.ResetForTests();
+                Result("C language", cOk && entries.Count == before, cNote);
+
+                done(all);
             }
 
             private void Report(string label, bool pass, int firstIndex, string note)

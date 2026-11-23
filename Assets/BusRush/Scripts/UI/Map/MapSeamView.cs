@@ -17,10 +17,10 @@ namespace BusRush.UI
 
         public void Setup(int world, string name, int firstLevel, bool locked)
         {
-            worldNumber.text = "WORLD " + world;
-            worldName.text = name;
+            worldNumber.text = Localizer.F("WORLD {0}", world);
+            worldName.text = Localizer.T(name);
             lockBadge.SetActive(locked);
-            lockText.text = "Level " + firstLevel;
+            lockText.text = Localizer.F("Level {0}", firstLevel);
         }
     }
 }

@@ -105,7 +105,7 @@ namespace BusRush.UI
                 if (this == null) return;
                 if (!granted)
                 {
-                    Toast.Show("Video not available");
+                    Toast.Show(Localizer.T("Video not available"));
                     return;
                 }
                 Gameplay.GameSession session = Gameplay.GameSession.Current;

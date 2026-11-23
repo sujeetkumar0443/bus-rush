@@ -31,6 +31,7 @@ namespace BusRush.UI
         private void OnEnable()
         {
             SaveSystem.Changed += Refresh;
+            Localizer.Changed += Refresh;
             Refresh();
         }
 
@@ -51,6 +52,7 @@ namespace BusRush.UI
         private void OnDisable()
         {
             SaveSystem.Changed -= Refresh;
+            Localizer.Changed -= Refresh;
         }
 
         private void OnDestroy()
@@ -83,7 +85,7 @@ namespace BusRush.UI
             // The session's level, not the save: the save already points at the next level once the board is cleared.
             Gameplay.GameSession session = Gameplay.GameSession.Current;
             int level = session != null && session.Level > 0 ? session.Level : SaveSystem.Data.level;
-            levelText.text = "Level " + level;
+            levelText.text = Localizer.F("Level {0}", level);
         }
 
         private static void OpenPause()

@@ -33,7 +33,7 @@ namespace BusRush.UI
                 waiting = false;
                 if (this == null || !granted)
                 {
-                    if (this != null) Toast.Show("Video not available");
+                    if (this != null) Toast.Show(Localizer.T("Video not available"));
                     return;
                 }
                 Vector3 from = coinImage.rectTransform.position;

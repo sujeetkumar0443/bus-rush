@@ -134,7 +134,7 @@ namespace BusRush.Gameplay
                 case TapResult.NoBay:
                     NoBayTaps++;
                     Haptics.Short();
-                    Toast.Show("No free bay!");
+                    Toast.Show(Localizer.T("No free bay!"));
                     break;
             }
         }

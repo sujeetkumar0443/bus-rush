@@ -85,11 +85,11 @@ namespace BusRush.UI
             Elapsed = 0f;
             int index = (world - 1) % RoadMapScreen.WorldNames.Length;
             theme = (Theme)index;
-            worldNumberText.text = "WORLD " + world;
-            worldNameText.text = RoadMapScreen.WorldNames[index];
+            worldNumberText.text = Localizer.F("WORLD {0}", world);
+            worldNameText.text = Localizer.T(RoadMapScreen.WorldNames[index]);
             int first = (world - 1) * MapRewards.LevelsPerWorld + 1;
             int last = Mathf.Min(first + MapRewards.LevelsPerWorld - 1, LevelPlan.PlannedLevels);
-            levelsText.text = $"Levels {first}-{last} are open";
+            levelsText.text = Localizer.F("Levels {0}-{1} are open", first, last);
             Sprite map = worldMaps[index];
             cardMap.sprite = map;
             ReleaseSoft();

@@ -50,7 +50,8 @@ namespace BusRush.UI
         /// <summary>Speech bubble above (or below, if there is no room) a screen position.</summary>
         public void ShowBubble(string text, Vector2 screenPoint, bool preferBelow = false)
         {
-            if (bubbleText.text != text) bubbleText.text = text;
+            string shown = Localizer.T(text);
+            if (bubbleText.text != shown) bubbleText.text = shown;
             bubble.gameObject.SetActive(true);
 
             Vector2 local = ToLocal(screenPoint);

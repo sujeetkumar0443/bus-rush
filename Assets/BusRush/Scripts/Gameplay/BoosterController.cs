@@ -102,7 +102,7 @@ namespace BusRush.Gameplay
                 case BoosterType.Vip:
                     if (!session.Bays.OpenVipBay()) return BoosterOutcome.NoEffect;
                     Spend(type);
-                    Toast.Show("VIP bay open!");
+                    Toast.Show(Localizer.T("VIP bay open!"));
                     return BoosterOutcome.Used;
 
                 case BoosterType.Arrange:
@@ -111,7 +111,7 @@ namespace BusRush.Gameplay
                     List<GameColor> arranged = BoosterLogic.Arrange(snap, GameTuning.FrontWindow, out bool changed);
                     if (!changed)
                     {
-                        Toast.Show("The line is already in order.");
+                        Toast.Show(Localizer.T("The line is already in order."));
                         return BoosterOutcome.NoEffect;
                     }
                     session.Crowd.Rearrange(arranged, GameTuning.ArrangeAnimSeconds);
@@ -126,7 +126,7 @@ namespace BusRush.Gameplay
                     if (colours == null)
                     {
                         // No winnable new colouring in 20 tries: colours stay, the booster is not spent (refund).
-                        Toast.Show("No better shuffle right now - booster kept.");
+                        Toast.Show(Localizer.T("No better shuffle right now - booster kept."));
                         return BoosterOutcome.NoEffect;
                     }
                     foreach (VehicleView v in session.Board.Vehicles)

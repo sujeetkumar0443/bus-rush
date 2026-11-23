@@ -24,6 +24,18 @@ namespace BusRush.Gameplay
             return r;
         }
 
+        /// <summary>Locked (level not completed yet), Ready (completed, not claimed) or Claimed. Derived from the save only.</summary>
+        public enum ChestState { Locked, Ready, Claimed }
+
+        /// <summary>Highest completed level: the save holds the level to play next, so completed = level - 1.</summary>
+        public static int HighestCompleted(SaveData d) => d.level - 1;
+
+        public static ChestState StateOf(SaveData d, int chestLevel)
+        {
+            if (ChestClaimed(d, chestLevel)) return ChestState.Claimed;
+            return HighestCompleted(d) >= chestLevel ? ChestState.Ready : ChestState.Locked;
+        }
+
         public static bool ChestClaimed(SaveData d, int level) => d.giftChestsClaimed != null && d.giftChestsClaimed.Contains(level);
 
         /// <summary>Winning <paramref name="wonLevel"/> earns its chest (if it has one and it was not given yet).</summary>

@@ -120,12 +120,12 @@ namespace BusRush.UI
             Level = Mathf.Max(1, level);
             StarsEarned = Mathf.Clamp(starsEarned, 0, 3);
             Reward = Mathf.Max(0, reward);
-            levelText.text = "LEVEL " + Level;
+            levelText.text = Localizer.F("LEVEL {0}", Level);
             rewardText.text = "+" + Reward;
             claimCoinsText.text = (Reward * 3).ToString();
-            continueText.text = "Continue with " + Reward;
+            continueText.text = Localizer.F("Continue with {0}", Reward);
             noteText.gameObject.SetActive(!string.IsNullOrEmpty(note));
-            noteText.text = note ?? string.Empty;
+            noteText.text = Localizer.T(note) ?? string.Empty;
             for (int i = 0; i < stars.Length; i++)
             {
                 stars[i].color = i < StarsEarned ? Color.white : dimStar;
@@ -156,7 +156,7 @@ namespace BusRush.UI
                 else
                 {
                     claimButton.interactable = true;
-                    Toast.Show("Video not available");
+                    Toast.Show(Localizer.T("Video not available"));
                 }
             });
         }

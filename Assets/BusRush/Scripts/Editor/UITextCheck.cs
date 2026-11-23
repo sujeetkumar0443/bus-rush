@@ -130,6 +130,7 @@ namespace BusRush.EditorTools
             }
 
             CheckCodeStrings(issues);
+            CheckTranslations(issues);
 
             foreach (string sh in shaderNotIncluded) issues.Add($"shader '{sh}' is not in Always Included Shaders (run Fix UI Text)");
             problems = issues.Count;
@@ -156,6 +157,33 @@ namespace BusRush.EditorTools
         }
 
         private static string Describe(string chars) => string.Join(" ", chars.Select(c => $"'{c}' U+{(int)c:X4}"));
+
+        /// <summary>Every translation must exist and every character of it must be drawable by the UI fonts (with their fallbacks).</summary>
+        private static void CheckTranslations(List<string> issues)
+        {
+            var theme = AssetDatabase.LoadAssetAtPath<UiTheme>("Assets/BusRush/Art/UI_v2/UiTheme.asset");
+            if (theme == null) return;
+            Localizer.ResetForTests();
+            var fontsToTest = new[] { theme.headingFont, theme.bodyFont }.Where(f => f != null).ToArray();
+            foreach (string key in Localizer.Keys.ToList())
+            {
+                for (int l = 1; l < Localizer.Count; l++)
+                {
+                    var lang = (Language)l;
+                    string v = Localizer.Get(key, lang);
+                    if (string.IsNullOrEmpty(v))
+                    {
+                        issues.Add($"translation missing: [{Localizer.Code(lang)}] \"{key}\"");
+                        continue;
+                    }
+                    foreach (TMP_FontAsset f in fontsToTest)
+                    {
+                        string missing = MissingGlyphs(f, v);
+                        if (missing.Length > 0) issues.Add($"translation [{Localizer.Code(lang)}] \"{key}\": {Describe(missing)} missing from font '{f.name}' (and fallbacks)");
+                    }
+                }
+            }
+        }
 
         /// <summary>Non-ASCII characters in string literals of runtime scripts must exist in the heading and body fonts.</summary>
         private static void CheckCodeStrings(List<string> issues)

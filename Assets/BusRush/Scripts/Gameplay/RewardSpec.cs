@@ -36,9 +36,9 @@ namespace BusRush.Gameplay
         public string BoosterText()
         {
             var parts = new List<string>();
-            if (vip > 0) parts.Add($"+{vip} VIP");
-            if (arrange > 0) parts.Add($"+{arrange} Arrange");
-            if (shuffle > 0) parts.Add($"+{shuffle} Shuffle");
+            if (vip > 0) parts.Add(Localizer.F("+{0} VIP", vip));
+            if (arrange > 0) parts.Add(Localizer.F("+{0} Arrange", arrange));
+            if (shuffle > 0) parts.Add(Localizer.F("+{0} Shuffle", shuffle));
             return string.Join(", ", parts);
         }
 

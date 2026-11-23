@@ -11,6 +11,7 @@ GameObject:
   - component: {fileID: 3529729042881224977}
   - component: {fileID: 9069426897590289253}
   - component: {fileID: 8321781448702662516}
+  - component: {fileID: 4313650155294551952}
   m_Layer: 5
   m_Name: Label
   m_TagString: Untagged
@@ -137,6 +138,20 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &4313650155294551952
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 49811493120373450}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3b7949e470049d445bf354cee745f7c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BusRush.UI.LocalizedText
+  key: Watch
+  args: []
 --- !u!1 &69588205694868141
 GameObject:
   m_ObjectHideFlags: 0
@@ -2079,6 +2094,7 @@ GameObject:
   - component: {fileID: 4562892885817926758}
   - component: {fileID: 1777976064410713320}
   - component: {fileID: 5771091181946265642}
+  - component: {fileID: 6704988570895648489}
   m_Layer: 5
   m_Name: Body
   m_TagString: Untagged
@@ -2205,6 +2221,20 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &6704988570895648489
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4966170434640091752}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3b7949e470049d445bf354cee745f7c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BusRush.UI.LocalizedText
+  key: Watch a short video to get 50 coins.
+  args: []
 --- !u!1 &4985180861945877316
 GameObject:
   m_ObjectHideFlags: 0
@@ -2823,6 +2853,7 @@ GameObject:
   - component: {fileID: 5593777775660119828}
   - component: {fileID: 1452916026027413527}
   - component: {fileID: 5083428998254850799}
+  - component: {fileID: 5803310634170532654}
   m_Layer: 5
   m_Name: Title
   m_TagString: Untagged
@@ -2949,6 +2980,20 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &5803310634170532654
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 7178802902723641678}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3b7949e470049d445bf354cee745f7c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BusRush.UI.LocalizedText
+  key: FREE COINS
+  args: []
 --- !u!1 &7835644696422991090
 GameObject:
   m_ObjectHideFlags: 0

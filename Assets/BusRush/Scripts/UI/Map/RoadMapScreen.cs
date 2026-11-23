@@ -103,11 +103,26 @@ namespace BusRush.UI
             puffEase ??= CssCurve.Build(new[] { 0f, 1f }, new[] { 0f, 1f }, new Vector4(0f, 0f, 0.58f, 1f));
         }
 
-        private void OnEnable() => Instance = this;
+        private void OnEnable()
+        {
+            Instance = this;
+            Localizer.Changed += OnLanguageChanged;
+        }
 
         private void OnDisable()
         {
+            Localizer.Changed -= OnLanguageChanged;
             if (Instance == this) Instance = null;
+        }
+
+        /// <summary>Live language change: the top bar and every visible tile (world signs, lock badges) re-read their strings.</summary>
+        private void OnLanguageChanged()
+        {
+            if (geo == null || !gameObject.activeInHierarchy) return;
+            int world = RoadMapGeometry.TileOf(current);
+            worldNumberText.text = Localizer.F("WORLD {0}", world + 1);
+            worldNameText.text = Localizer.T(WorldNames[world % WorldNames.Length]);
+            RefreshTiles();
         }
 
         /// <summary>Opens the map; unlockedLevel > 0 plays that level's unlock once (if it has not played yet).</summary>
@@ -153,8 +168,8 @@ namespace BusRush.UI
             dragged = false;
 
             int world = RoadMapGeometry.TileOf(current);
-            worldNumberText.text = "WORLD " + (world + 1);
-            worldNameText.text = WorldNames[world % WorldNames.Length];
+            worldNumberText.text = Localizer.F("WORLD {0}", world + 1);
+            worldNameText.text = Localizer.T(WorldNames[world % WorldNames.Length]);
             UpdateTiles();
             PlaceBus(0f);
         }
@@ -322,11 +337,9 @@ namespace BusRush.UI
             {
                 Vector2 p = geo.NodeContent(chestLevel);
                 ((RectTransform)tv.chest.transform).anchoredPosition = p + new Vector2(-104f, 40f);
-                bool claimed = MapRewards.ChestClaimed(SaveSystem.Data, chestLevel);
-                tv.chest.GetComponent<MapChestView>().SetClaimed(claimed);
+                tv.chest.GetComponent<MapChestView>().SetState(MapRewards.StateOf(SaveSystem.Data, chestLevel));
                 tv.chest.onClick.RemoveAllListeners();
-                tv.chest.onClick.AddListener(() => Toast.Show(MapRewards.ChestClaimed(SaveSystem.Data, chestLevel)
-                    ? "Gift collected" : $"Gift after level {chestLevel}"));
+                tv.chest.onClick.AddListener(() => OnChestTapped(chestLevel));
             }
 
             bool seam = index > 0;
@@ -343,7 +356,7 @@ namespace BusRush.UI
                 {
                     // Unlocked: preview the New World screen; locked: just its name.
                     if (firstLevel <= current && pendingWorld != index + 1 && newWorld != null) newWorld.Show(index + 1, null);
-                    else Toast.Show($"World {index + 1}: {name}");
+                    else Toast.Show(Localizer.F("World {0}: {1}", index + 1, Localizer.T(name)));
                 });
             }
             return tv;
@@ -418,6 +431,21 @@ namespace BusRush.UI
 
         // ------------------------------------------------------------------ taps
 
+        /// <summary>State comes from the save each time: LOCKED toast, READY opens the gift screen (pays out), CLAIMED does nothing.</summary>
+        public void OnChestTapped(int chestLevel)
+        {
+            switch (MapRewards.StateOf(SaveSystem.Data, chestLevel))
+            {
+                case MapRewards.ChestState.Locked:
+                    Toast.Show(Localizer.F("Gift after level {0}", chestLevel));
+                    break;
+                case MapRewards.ChestState.Ready:
+                    if (giftChest == null || rewards != null) break; // the unlock sequence is already handling the chest
+                    giftChest.Show(chestLevel, coinTarget, RefreshTiles);
+                    break;
+            }
+        }
+
         private void OnNodeTapped(MapNodeView node)
         {
             switch (node.State)
@@ -426,11 +454,10 @@ namespace BusRush.UI
                     SceneLoader.LoadGame();
                     break;
                 case MapNodeState.Completed:
-                    string stars = $"{node.Stars}/3 stars"; // Latin only: the UI fonts have no star glyphs
-                    Toast.Show($"Level {node.Level}  {stars}");
+                    Toast.Show(Localizer.F("Level {0}  {1}/3 stars", node.Level, node.Stars)); // Latin only: the UI fonts have no star glyphs
                     break;
                 default:
-                    Toast.Show($"Level {node.Level} is locked");
+                    Toast.Show(Localizer.F("Level {0} is locked", node.Level));
                     break;
             }
         }

@@ -1061,6 +1061,7 @@ GameObject:
   - component: {fileID: 5657210036064363121}
   - component: {fileID: 5914679130394219836}
   - component: {fileID: 3664597872591409113}
+  - component: {fileID: 43294061152737892}
   m_Layer: 5
   m_Name: Label
   m_TagString: Untagged
@@ -1187,6 +1188,20 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &43294061152737892
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 5691675292834950756}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3b7949e470049d445bf354cee745f7c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BusRush.UI.LocalizedText
+  key: VIP
+  args: []
 --- !u!1 &6835264499764240248
 GameObject:
   m_ObjectHideFlags: 0

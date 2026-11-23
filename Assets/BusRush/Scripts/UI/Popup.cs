@@ -28,6 +28,9 @@ namespace BusRush.UI
 
         public bool IsOpen { get; private set; }
         public bool CloseOnBack => closeOnBack;
+
+        /// <summary>False while the popup must not be closed (a Lucky Spin in progress): dim taps, X and Back are ignored.</summary>
+        public virtual bool CanClose => true;
         public RectTransform Panel => panel;
 
         public event Action<Popup> Closed;
@@ -47,9 +50,14 @@ namespace BusRush.UI
 
         public void Close()
         {
-            if (!IsOpen) return;
+            if (!IsOpen || !CanClose) return;
             if (UIManager.Instance != null) UIManager.Instance.Close(this);
             else Hide();
+        }
+
+        protected void SetCloseInteractable(bool interactable)
+        {
+            if (closeButton != null) closeButton.interactable = interactable;
         }
 
         internal void Show()

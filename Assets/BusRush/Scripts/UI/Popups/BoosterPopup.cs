@@ -116,14 +116,14 @@ namespace BusRush.UI
         private void Refresh()
         {
             Style s = styles[Mathf.Clamp(StyleIndex, 0, styles.Length - 1)];
-            titleText.text = s.title;
+            titleText.text = Localizer.T(s.title);
             if (s.titleMaterial != null) titleText.fontSharedMaterial = s.titleMaterial;
             ribbonGradient.Set(s.top, s.bottom);
             foreach (Image e in ribbonEdges) e.color = s.edge;
             icon.sprite = s.icon;
-            descriptionText.text = s.description;
+            descriptionText.text = Localizer.T(s.description);
             ownedPill.SetActive(!extraBay);
-            ownedText.text = "You have " + BoosterInventory.Count(current);
+            ownedText.text = Localizer.F("You have {0}", BoosterInventory.Count(current));
             buyPrice.text = Price.ToString();
             bool affordable = CoinWallet.Coins >= Price;
             buyGroup.alpha = affordable ? 1f : 0.55f;
@@ -165,7 +165,7 @@ namespace BusRush.UI
                 if (this == null) return;
                 if (!granted)
                 {
-                    Toast.Show("Video not available");
+                    Toast.Show(Localizer.T("Video not available"));
                     return;
                 }
                 Haptics.Light();
@@ -188,7 +188,7 @@ namespace BusRush.UI
             {
                 Tween.Shake(this, (RectTransform)buyButton.transform, 10f);
                 Haptics.Light();
-                Toast.Show("Not enough coins!");
+                Toast.Show(Localizer.T("Not enough coins!"));
                 return;
             }
             Haptics.Light();

@@ -20,11 +20,13 @@ namespace BusRush.UI
         {
             Render();
             SaveSystem.Changed += Render;
+            Localizer.Changed += Render;
         }
 
         private void OnDisable()
         {
             SaveSystem.Changed -= Render;
+            Localizer.Changed -= Render;
         }
 
         private void Render()
@@ -35,7 +37,7 @@ namespace BusRush.UI
             if (timerText != null)
             {
                 // Life refill timer arrives with the lives system; placeholder for now.
-                timerText.text = lives >= max ? "FULL" : "--:--";
+                timerText.text = lives >= max ? Localizer.T("FULL") : "--:--";
             }
         }
     }

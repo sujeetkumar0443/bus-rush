@@ -31,12 +31,21 @@ namespace BusRush.UI
             });
         }
 
+        private void OnEnable() => Localizer.Changed += RefreshLevel;
+
+        private void OnDisable() => Localizer.Changed -= RefreshLevel;
+
+        private void RefreshLevel()
+        {
+            Gameplay.GameSession session = Gameplay.GameSession.Current;
+            int level = session != null && session.Level > 0 ? session.Level : SaveSystem.Data.level;
+            levelText.text = Localizer.F("Level {0}", level);
+        }
+
         protected override void OnOpening()
         {
             base.OnOpening();
-            Gameplay.GameSession session = Gameplay.GameSession.Current;
-            int level = session != null && session.Level > 0 ? session.Level : SaveSystem.Data.level;
-            levelText.text = "Level " + level;
+            RefreshLevel();
             if (GameManager.Instance != null && GameManager.Instance.State == GameState.Playing)
             {
                 GameManager.Instance.SetState(GameState.Paused);

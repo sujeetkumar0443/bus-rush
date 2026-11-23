@@ -92,9 +92,11 @@ namespace BusRush.UI
             return instances.TryGetValue(typeof(T), out Popup p) && p != null && p.IsOpen;
         }
 
-        public void Close(Popup popup)
+        public void Close(Popup popup, bool force = false)
         {
-            if (popup == null || !stack.Remove(popup)) return;
+            if (popup == null || !stack.Contains(popup)) return;
+            if (!force && !popup.CanClose) return;
+            stack.Remove(popup);
             popup.Hide();
             PopupClosed?.Invoke(popup);
         }
@@ -106,7 +108,7 @@ namespace BusRush.UI
 
         public void CloseAll()
         {
-            for (int i = stack.Count - 1; i >= 0; i--) Close(stack[i]);
+            for (int i = stack.Count - 1; i >= 0; i--) Close(stack[i], true); // scene changes etc.: always
         }
 
         public void HandleBack()

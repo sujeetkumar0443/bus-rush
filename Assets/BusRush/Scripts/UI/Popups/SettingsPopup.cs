@@ -21,10 +21,16 @@ namespace BusRush.UI
             termsButton.onClick.AddListener(() => Application.OpenURL(Gameplay.GameTuning.TermsOfUseUrl));
         }
 
+        private void OnEnable() => Localizer.Changed += RefreshVersion;
+
+        private void OnDisable() => Localizer.Changed -= RefreshVersion;
+
+        private void RefreshVersion() => versionText.text = Localizer.F("Version {0}", Application.version);
+
         protected override void OnOpening()
         {
             base.OnOpening();
-            versionText.text = "Version " + Application.version;
+            RefreshVersion();
         }
     }
 }

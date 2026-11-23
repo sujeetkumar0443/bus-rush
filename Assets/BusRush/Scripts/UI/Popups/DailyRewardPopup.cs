@@ -34,7 +34,7 @@ namespace BusRush.UI
                 {
                     if (this == null) return;
                     if (granted) Claim(2);
-                    else Toast.Show("Video not available");
+                    else Toast.Show(Localizer.T("Video not available"));
                 });
             });
         }

@@ -42,6 +42,9 @@ namespace BusRush.UI
         private float clock;
 
         public bool IsSpinning => spinning;
+
+        /// <summary>Not while the wheel is committed (ad, turning, or the prize card waiting for Collect).</summary>
+        public override bool CanClose => !spinning;
         public float Rotation => rotation;
 
         protected override void Awake()
@@ -57,16 +60,34 @@ namespace BusRush.UI
             wonRoot.SetActive(false);
             spinning = false;
             clock = 0f;
+            RecoverPending();
             Refresh();
+        }
+
+        /// <summary>A result that was never paid (left mid-spin, app killed): pay it now.</summary>
+        private void RecoverPending()
+        {
+            RewardSpec? r = LuckySpin.GrantPending();
+            if (r.HasValue) Toast.Show(r.Value.HasBoosters ? r.Value.BoosterText() : Localizer.F("+{0} coins", r.Value.coins));
+        }
+
+        private void OnEnable() => Localizer.Changed += Refresh;
+
+        private void OnDisable()
+        {
+            Localizer.Changed -= Refresh;
+            // Leaving mid-spin (scene change, forced close): the result was decided already, so it is still granted.
+            if (spinning) LuckySpin.GrantPending();
         }
 
         private void Refresh()
         {
             int left = LuckySpin.SpinsLeftToday;
-            spinsText.text = left <= 0 ? "Come back tomorrow" : left == 1 ? "1 spin left today" : $"{left} spins left today";
+            spinsText.text = left <= 0 ? Localizer.T("Come back tomorrow") : left == 1 ? Localizer.T("1 spin left today") : Localizer.F("{0} spins left today", left);
             bool can = left > 0 && !spinning;
             spinButton.interactable = can;
             spinGroup.alpha = left > 0 ? 1f : 0.55f;
+            SetCloseInteractable(!spinning);
         }
 
         private void Spin()
@@ -81,11 +102,12 @@ namespace BusRush.UI
                 {
                     spinning = false;
                     Refresh();
-                    Toast.Show("Video not available");
+                    Toast.Show(Localizer.T("Video not available"));
                     return;
                 }
                 LuckySpin.UseSpin();
                 int segment = LuckySpin.Pick(rng);
+                LuckySpin.SetPending(segment); // saved before the wheel moves
                 StartCoroutine(Turn(segment));
             });
         }
@@ -137,7 +159,7 @@ namespace BusRush.UI
         {
             if (!wonRoot.activeSelf) return;
             wonRoot.SetActive(false);
-            spinning = false;
+            LuckySpin.ClearPending();
             won.GrantBoosters();
             if (won.HasBoosters) Toast.Show(won.BoosterText());
             if (won.coins > 0)
@@ -146,6 +168,7 @@ namespace BusRush.UI
                 CoinFly.Play(ui, ui != null ? ui.transform : null, coinSprite, wonIcon.rectTransform.position, HomeScreen.CoinTarget, won.coins, 8);
             }
             won = default;
+            spinning = false;
             Refresh();
         }
 

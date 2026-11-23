@@ -45,12 +45,14 @@ namespace BusRush.UI
 
         private void OnEnable()
         {
+            Localizer.Changed += Refresh;
             BoosterInventory.Changed += Refresh;
             Refresh();
         }
 
         private void OnDisable()
         {
+            Localizer.Changed -= Refresh;
             BoosterInventory.Changed -= Refresh;
         }
 
@@ -73,7 +75,7 @@ namespace BusRush.UI
             int unlock = BoosterInventory.UnlockLevel(type);
 
             lockOverlay.SetActive(locked);
-            lockText.text = "LV " + unlock;
+            lockText.text = Localizer.F("LV {0}", unlock);
             if (nameLabel != null) nameLabel.SetActive(!locked || unlockedTile != null);
             if (unlockedTile != null) unlockedTile.SetActive(!locked);
             if (lockedTile != null) lockedTile.SetActive(locked);
@@ -87,7 +89,7 @@ namespace BusRush.UI
         {
             if (IsLocked)
             {
-                Toast.Show($"Unlocks at level {BoosterInventory.UnlockLevel(type)}");
+                Toast.Show(Localizer.F("Unlocks at level {0}", BoosterInventory.UnlockLevel(type)));
                 Shake();
                 return;
             }

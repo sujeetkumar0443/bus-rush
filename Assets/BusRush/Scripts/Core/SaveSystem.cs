@@ -34,6 +34,9 @@ namespace BusRush
         public string luckySpinDate = string.Empty;
         public int luckySpinsUsed;
 
+        /// <summary>Segment already won by a Lucky Spin whose reward is not paid out yet (-1 = none). Survives leaving mid-spin.</summary>
+        public int luckySpinPending = -1;
+
         /// <summary>Highest level whose Road Map unlock animation has already played (never replays).</summary>
         public int mapUnlockShown;
 

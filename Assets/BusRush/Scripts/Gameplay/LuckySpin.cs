@@ -66,6 +66,33 @@ namespace BusRush.Gameplay
             }
         }
 
+        public static bool HasPending => SaveSystem.Data.luckySpinPending >= 0 && SaveSystem.Data.luckySpinPending < Segments;
+
+        /// <summary>Remembers the won segment before the wheel starts turning, so leaving mid-spin cannot lose it.</summary>
+        public static void SetPending(int segment)
+        {
+            SaveSystem.Data.luckySpinPending = segment;
+            SaveSystem.Commit();
+        }
+
+        public static void ClearPending()
+        {
+            if (SaveSystem.Data.luckySpinPending < 0) return;
+            SaveSystem.Data.luckySpinPending = -1;
+            SaveSystem.Commit();
+        }
+
+        /// <summary>Pays out a pending result at once (coins and boosters, no animation). Returns it, or null when none.</summary>
+        public static RewardSpec? GrantPending()
+        {
+            if (!HasPending) return null;
+            RewardSpec r = GameTuning.LuckySpinSegments[SaveSystem.Data.luckySpinPending];
+            ClearPending();
+            r.GrantBoosters();
+            if (r.coins > 0) CoinWallet.Add(r.coins);
+            return r;
+        }
+
         public static void UseSpin()
         {
             SaveData d = SaveSystem.Data;

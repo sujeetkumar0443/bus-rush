@@ -505,6 +505,7 @@ GameObject:
   - component: {fileID: 4625731408160881194}
   - component: {fileID: 7892320314250382386}
   - component: {fileID: 9165129009725815584}
+  - component: {fileID: 5417321807180660009}
   m_Layer: 5
   m_Name: LoadingText
   m_TagString: Untagged
@@ -559,7 +560,7 @@ MonoBehaviour:
   m_OnCullStateChanged:
     m_PersistentCalls:
       m_Calls: []
-  m_text: "Loading..."
+  m_text: Loading...
   m_isRightToLeft: 0
   m_fontAsset: {fileID: 11400000, guid: 677f471c82cddc64dae36d3709ded6c7, type: 2}
   m_sharedMaterial: {fileID: 2100000, guid: 4c6f279cf6d57f44eabf03a33ae05ab5, type: 2}
@@ -631,6 +632,20 @@ MonoBehaviour:
   m_hasFontAssetChanged: 0
   m_baseMaterial: {fileID: 0}
   m_maskOffset: {x: 0, y: 0, z: 0, w: 0}
+--- !u!114 &5417321807180660009
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 4345439040727827154}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 3b7949e470049d445bf354cee745f7c2, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::BusRush.UI.LocalizedText
+  key: Loading...
+  args: []
 --- !u!1 &4381740870262692486
 GameObject:
   m_ObjectHideFlags: 0

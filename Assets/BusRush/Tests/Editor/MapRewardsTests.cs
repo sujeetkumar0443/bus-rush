@@ -52,5 +52,20 @@ namespace BusRush.Tests
             MapRewards.MarkWorldShown(d, 1);
             Assert.AreEqual(2, d.worldsShown, "never goes back");
         }
+
+        [Test]
+        public void ChestState_ComesFromSavedProgress_NotFromTheWinAnimation()
+        {
+            var d = new SaveData { level = 20 }; // e.g. set by the debug panel's go-to-level: levels 1-19 count as completed
+            Assert.AreEqual(MapRewards.ChestState.Ready, MapRewards.StateOf(d, 5));
+            Assert.AreEqual(MapRewards.ChestState.Ready, MapRewards.StateOf(d, 15));
+            Assert.AreEqual(MapRewards.ChestState.Locked, MapRewards.StateOf(d, 25));
+            MapRewards.MarkChestClaimed(d, 15);
+            Assert.AreEqual(MapRewards.ChestState.Claimed, MapRewards.StateOf(d, 15));
+            Assert.AreEqual(MapRewards.ChestState.Ready, MapRewards.StateOf(d, 5), "other chests unaffected");
+            d.level = 15; // playing level 15: it is not completed yet
+            Assert.AreEqual(MapRewards.ChestState.Locked, MapRewards.StateOf(new SaveData { level = 15 }, 15));
+            Assert.AreEqual(MapRewards.ChestState.Ready, MapRewards.StateOf(new SaveData { level = 16 }, 15));
+        }
     }
 }
