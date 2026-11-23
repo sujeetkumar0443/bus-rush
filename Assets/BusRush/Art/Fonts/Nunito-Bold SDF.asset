@@ -40305,7 +40305,6 @@ MonoBehaviour:
   m_ShouldReimportFontFeatures: 0
   m_FallbackFontAssetTable:
   - {fileID: 11400000, guid: 11a31e9c8124c0c479867d74ade6da2b, type: 2}
-  - {fileID: 11400000, guid: 9230fbc931d7c974bb4c3aafed241a58, type: 2}
   m_FontWeightTable:
   - regularTypeface: {fileID: 0}
     italicTypeface: {fileID: 0}

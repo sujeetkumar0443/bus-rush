@@ -7,10 +7,18 @@ using UnityEngine.UI;
 namespace BusRush.UI
 {
     /// <summary>
-    /// Animated Road Map (RoadMap.dc.html), a full-screen overlay in the Home scene. A vertical ScrollRect over map
-    /// tiles (City, Snow, Beach repeating, 10 levels each, for every level in LevelPlan); only tiles near the view are
-    /// alive (pooled with their road, nodes, chest and world sign). Opening right after a win plays the unlock: trail,
-    /// bus drive along the road, grey disc burst, green disc pop. Design px everywhere (canvas matches width 390).
+    /// Animated Road Map, a full-screen overlay in the Home scene. A vertical ScrollRect over map tiles (City, Snow, Beach
+    /// repeating, 10 levels each, for every level in LevelPlan); only tiles near the view are alive (pooled with their path dots,
+    /// nodes, chest, mist and world banner).
+    ///
+    /// Draw order inside the content, back to front: tiles, seam mist, path dots (white dashes + the gold progress), sequence fx,
+    /// seam banner (above the dashes, so they never cross its text), nodes, chests, current-node marker. The card, skip catcher
+    /// and top bar sit above the scroll view.
+    ///
+    /// Tapping an unlocked node opens the <see cref="LevelStartCard"/>; locked nodes shake and toast. Opening right after a win plays
+    /// the ~2.3 s level-complete sequence: the camera scrolls to the completed node, it pops with a star burst and a white flash, the
+    /// path to the next node fills from grey to gold dashes with a glowing dot, the next node's lock shakes, cracks, its halves fly off,
+    /// it pops open to gold with a ring, then it becomes the current node. A tap skips it.
     /// </summary>
     public sealed class RoadMapScreen : MonoBehaviour
     {
@@ -24,35 +32,38 @@ namespace BusRush.UI
 
         [SerializeField] private TextAsset roadJson;
         [SerializeField] private Sprite[] tileSprites = new Sprite[3];
-        [SerializeField] private Sprite[] busFrames = new Sprite[0];
 
         [Header("Scroll")]
         [SerializeField] private ScrollRect scroll;
         [SerializeField] private RectTransform content;
-        [SerializeField] private RectTransform tilesLayer, roadLayer, nodesLayer, chestLayer, seamLayer, fxLayer;
+        [Tooltip("Back to front: tiles, mist, road (path dots), fx (sequence), banner, nodes, chests, marker (current node).")]
+        [SerializeField] private RectTransform tilesLayer, mistLayer, bannerLayer, roadLayer, fxLayer, nodesLayer, chestLayer, markerLayer;
         [Tooltip("Where the focus level sits, as a fraction of the view height from the bottom.")]
         [SerializeField, Range(0f, 1f)] private float focusFraction = 0.38f;
 
         [Header("Templates (inactive)")]
         [SerializeField] private Image tileTemplate;
         [SerializeField] private UiPolyline roadTemplate;
+        [SerializeField] private UiPolyline goldRoadTemplate;
         [SerializeField] private MapNodeView nodeTemplate;
         [SerializeField] private Button chestTemplate;
         [SerializeField] private MapSeamView seamTemplate;
 
-        [Header("Bus + unlock trail")]
-        [SerializeField] private RectTransform bus;
-        [SerializeField] private RectTransform busRumble;
-        [SerializeField] private Image busImage;
-        [SerializeField] private Image[] busPuffs = new Image[3];
-        [SerializeField] private UiPolyline trailGlow;
-        [SerializeField] private UiPolyline trailMarch;
+        [Header("Level-complete sequence")]
+        [SerializeField] private UiPolyline greyPath;
+        [SerializeField] private UiPolyline goldGlow;
+        [SerializeField] private UiPolyline goldPath;
+        [SerializeField] private RectTransform dot;
+        [SerializeField] private Image dotImage;
+        [SerializeField] private Button skipCatcher;
+
+        [Header("Level card")]
+        [SerializeField] private LevelStartCard levelCard;
 
         [Header("Top bar")]
         [SerializeField] private Button homeButton;
         [SerializeField] private TMP_Text worldNumberText;
         [SerializeField] private TMP_Text worldNameText;
-        [SerializeField] private TMP_Text toastFontProbe;
         [Tooltip("Coin icon of the map's coin pill (target of coin flies).")]
         [SerializeField] private RectTransform coinTarget;
 
@@ -61,46 +72,57 @@ namespace BusRush.UI
         [SerializeField] private NewWorldScreen newWorld;
 
         public float Clock { get; private set; }
-        /// <summary>Seconds into the unlock timeline (design times), or negative when no unlock is playing.</summary>
-        public float UnlockTime => unlockLevel > 0 ? Clock - unlockStart : -1f;
+        public LevelStartCard Card => levelCard;
+        /// <summary>True while the level-complete sequence plays.</summary>
+        public bool SequenceActive => seqLevel > 0;
+        /// <summary>Seconds into the sequence (0..MapSequence.End), or -1 when none is playing.</summary>
+        public float SequenceTime => seqLevel > 0 ? seqTime : -1f;
+        /// <summary>Fires at the end of a sequence (also when skipped), with the level that was completed.</summary>
+        public event System.Action<int> SequenceFinished;
 
         private RoadMapGeometry geo;
         private int levelCount, current;
         private readonly Dictionary<int, TileView> tiles = new Dictionary<int, TileView>();
         private readonly Stack<TileView> pool = new Stack<TileView>();
-        private int unlockLevel;
-        private float unlockStart;
-        private float busArc;
-        private float scrollVelocity;
-        private bool following;
+        private readonly List<TileView> drop = new List<TileView>(4);
+        private int pendingWorld; // world whose banner/intro waits for its New World screen
+        private Coroutine rewards;
 
-        private const float UnlockEnd = 5f;
-        private const float StopBeforeNext = 30f;
-        private static AnimationCurve puffEase;
+        // sequence state
+        private int seqLevel;
+        private float seqTime, seqScrollFrom, seqScrollTo, seqArc, arcA, arcB;
+        private MapNodeView seqA, seqB;
+        private static AnimationCurve easeOut, easeInOut, dotScale;
+
+        private const float NodeBoxHalf = 44f;                       // node incl. stars / 125 % Play disc, half size
+        private const float BannerHalfW = MapSeamView.BannerWidth * 0.5f + 4f, BannerHalfH = MapSeamView.BannerHeight * 0.5f + 4f;
 
         private sealed class TileView
         {
             public int index;
             public Image image;
             public UiPolyline road;
+            public UiPolyline goldRoad;
             public readonly MapNodeView[] nodes = new MapNodeView[RoadMapGeometry.LevelsPerTile];
             public Button chest;
-            public MapSeamView seam;
+            public MapSeamView mist;
+            public MapSeamView banner;
         }
 
         // ------------------------------------------------------------------ open / close
 
-        private bool dragged;
-        private int pendingWorld; // world whose sign stays locked until its New World screen has shown
-        private Coroutine rewards;
-
         private void Awake()
         {
             homeButton.onClick.AddListener(Close);
-            MapDragWatcher watcher = scroll.GetComponent<MapDragWatcher>();
-            if (watcher == null) watcher = scroll.gameObject.AddComponent<MapDragWatcher>();
-            watcher.BeganDrag += () => dragged = true;
-            puffEase ??= CssCurve.Build(new[] { 0f, 1f }, new[] { 0f, 1f }, new Vector4(0f, 0f, 0.58f, 1f));
+            skipCatcher.onClick.AddListener(Skip);
+            skipCatcher.gameObject.SetActive(false);
+            if (easeOut == null)
+            {
+                Vector4 eo = new Vector4(0f, 0f, 0.58f, 1f);
+                easeOut = CssCurve.Build(new[] { 0f, 1f }, new[] { 0f, 1f }, eo);
+                easeInOut = CssCurve.Build(new[] { 0f, 1f }, new[] { 0f, 1f }, CssCurve.EaseInOut);
+                dotScale = CssCurve.Build(new[] { 0f, 0.5f, 1f }, new[] { 0.8f, 1.3f, 0.8f }, CssCurve.EaseInOut);
+            }
         }
 
         private void OnEnable()
@@ -115,7 +137,7 @@ namespace BusRush.UI
             if (Instance == this) Instance = null;
         }
 
-        /// <summary>Live language change: the top bar and every visible tile (world signs, lock badges) re-read their strings.</summary>
+        /// <summary>Live language change: the top bar and every visible tile (world banners) re-read their strings.</summary>
         private void OnLanguageChanged()
         {
             if (geo == null || !gameObject.activeInHierarchy) return;
@@ -125,7 +147,7 @@ namespace BusRush.UI
             RefreshTiles();
         }
 
-        /// <summary>Opens the map; unlockedLevel > 0 plays that level's unlock once (if it has not played yet).</summary>
+        /// <summary>Opens the map; unlockedLevel > 0 plays that level's unlock sequence once (if it has not played yet).</summary>
         public void Open(int unlockedLevel = 0)
         {
             geo ??= new RoadMapGeometry(roadJson.text);
@@ -133,137 +155,163 @@ namespace BusRush.UI
             current = Mathf.Clamp(SaveSystem.Data.level, 1, levelCount);
             gameObject.SetActive(true);
             Instance = this;
+            levelCard.gameObject.SetActive(false);
 
             content.sizeDelta = new Vector2(content.sizeDelta.x, RoadMapGeometry.TileCount(levelCount) * RoadMapGeometry.TileHeight);
             foreach (TileView tv in new List<TileView>(tiles.Values)) Release(tv);
 
-            unlockLevel = 0;
             Clock = 0f;
-            if (unlockedLevel > 0 && unlockedLevel < levelCount && unlockedLevel > SaveSystem.Data.mapUnlockShown)
+            seqLevel = 0;
+            seqA = seqB = null;
+            bool play = unlockedLevel > 0 && unlockedLevel < levelCount && unlockedLevel > SaveSystem.Data.mapUnlockShown && unlockedLevel + 1 == current;
+            if (play)
             {
-                unlockLevel = unlockedLevel;
-                unlockStart = 0f;
+                seqLevel = unlockedLevel;
+                seqTime = 0f;
                 SaveSystem.Data.mapUnlockShown = unlockedLevel; // never replays, even if the map is closed mid-way
                 SaveSystem.Commit();
-                busArc = geo.LevelArc(unlockedLevel);
-                // Trail graphics stretch over the content with pivot (0,0): content space = their local space.
-                List<Vector2> path = geo.ContentPath(geo.LevelArc(unlockedLevel), geo.LevelArc(unlockedLevel + 1));
-                trailGlow.SetPoints(path);
-                trailMarch.SetPoints(path);
+                arcA = geo.LevelArc(unlockedLevel);
+                arcB = geo.LevelArc(unlockedLevel + 1);
+                seqArc = arcA;
+                List<Vector2> path = geo.ContentPath(arcA, arcB);
+                SetSequenceLine(greyPath, path, 1f);
+                SetSequenceLine(goldGlow, path, 0f);
+                SetSequenceLine(goldPath, path, 0f);
+                dot.gameObject.SetActive(false);
+                skipCatcher.gameObject.SetActive(true);
             }
             else
             {
-                busArc = ParkArc(current); // where the last unlock left it, facing along the road
+                greyPath.gameObject.SetActive(false);
+                goldGlow.gameObject.SetActive(false);
+                goldPath.gameObject.SetActive(false);
+                dot.gameObject.SetActive(false);
+                skipCatcher.gameObject.SetActive(false);
             }
-            trailGlow.gameObject.SetActive(unlockLevel > 0);
-            trailMarch.gameObject.SetActive(unlockLevel > 0);
 
             if (rewards != null) StopCoroutine(rewards);
             rewards = null;
-            pendingWorld = unlockLevel > 0 && MapRewards.WorldDue(SaveSystem.Data, unlockLevel + 1) ? MapRewards.WorldOf(unlockLevel + 1) : 0;
-            int focus = unlockLevel > 0 ? unlockLevel : current;
+            pendingWorld = play && MapRewards.WorldDue(SaveSystem.Data, unlockedLevel + 1) ? MapRewards.WorldOf(unlockedLevel + 1) : 0;
             Canvas.ForceUpdateCanvases();
-            SetScrollY(TargetScrollFor(geo.ContentAt(unlockLevel > 0 ? busArc : geo.LevelArc(focus), out _).y));
-            following = unlockLevel > 0;
-            dragged = false;
+            if (play)
+            {
+                float nodeY = geo.ContentAt(arcA, out _).y;
+                seqScrollTo = ClearOfTopBar(TargetScrollFor(nodeY));
+                seqScrollFrom = TargetScrollFor(nodeY - 240f); // the camera starts below and scrolls up to the completed node
+                SetScrollY(seqScrollFrom);
+            }
+            else
+            {
+                SetScrollY(ClearOfTopBar(TargetScrollFor(geo.ContentAt(geo.LevelArc(current), out _).y)));
+            }
 
             int world = RoadMapGeometry.TileOf(current);
             worldNumberText.text = Localizer.F("WORLD {0}", world + 1);
             worldNameText.text = Localizer.T(WorldNames[world % WorldNames.Length]);
             UpdateTiles();
-            PlaceBus(0f);
+            ApplyGoldProgress();
         }
 
-        public void Close() => gameObject.SetActive(false);
+        private static void SetSequenceLine(UiPolyline line, List<Vector2> path, float fill)
+        {
+            line.SetPoints(path);
+            line.Fill = fill;
+            line.gameObject.SetActive(true);
+        }
+
+        public void Close()
+        {
+            if (levelCard != null) levelCard.gameObject.SetActive(false);
+            gameObject.SetActive(false);
+        }
 
         // ------------------------------------------------------------------ frame loop
 
         private void Update()
         {
-            Clock += Time.deltaTime;
-            float ut = UnlockTime;
-            if (ut >= UnlockEnd)
-            {
-                int won = unlockLevel;
-                unlockLevel = 0;
-                rewards = StartCoroutine(AfterUnlock(won));
-            }
-
-            if (unlockLevel > 0)
-            {
-                // Bus: drives N -> just before N+1 in 2.4 s from 0.6 s (smoothstep), trail marches and fades out.
-                float k = Mathf.Clamp01((ut - 0.6f) / 2.4f);
-                float s = k * k * (3f - 2f * k);
-                busArc = Mathf.Lerp(geo.LevelArc(unlockLevel), ParkArc(unlockLevel + 1), s);
-                // The trail stays until the bus arrives (3.0 s), then fades out over 0.3 s.
-                float trailAlpha = ut < 3f ? 1f : Mathf.Clamp01(1f - (ut - 3f) / 0.3f);
-                SetAlpha(trailGlow, 0.35f * trailAlpha);
-                SetAlpha(trailMarch, trailAlpha);
-                trailMarch.DashOffset = -38f * (Clock / 0.6f % 1f);
-                if (trailAlpha <= 0f)
-                {
-                    trailGlow.gameObject.SetActive(false);
-                    trailMarch.gameObject.SetActive(false);
-                }
-            }
-            else if (trailGlow.gameObject.activeSelf)
-            {
-                trailGlow.gameObject.SetActive(false);
-                trailMarch.gameObject.SetActive(false);
-            }
-
-            bool driving = unlockLevel > 0 && ut > 0.6f && ut < 3f;
-            PlaceBus(driving ? ut : -1f);
-
-            if (following)
-            {
-                if (dragged) following = false; // the player took over
-                else
-                {
-                    float target = TargetScrollFor(bus.anchoredPosition.y);
-                    SetScrollY(Mathf.SmoothDamp(content.anchoredPosition.y, target, ref scrollVelocity, 0.25f));
-                    if (unlockLevel == 0) following = false;
-                }
-            }
+            float dt = Time.deltaTime;
+            Clock += dt;
+            if (seqLevel > 0) RunSequence(dt);
 
             UpdateTiles();
             foreach (TileView tv in tiles.Values)
             {
                 foreach (MapNodeView n in tv.nodes)
                 {
-                    if (n != null && n.gameObject.activeSelf) n.Tick(Clock, n.Level == unlockLevel + 1 ? ut : -1f);
+                    if (n != null && n.gameObject.activeSelf) n.Tick(Clock);
                 }
             }
         }
 
-        /// <summary>The bus waits just before the level to play (the same spot an unlock drive ends on).</summary>
-        private float ParkArc(int level) => Mathf.Max(0f, geo.LevelArc(level) - StopBeforeNext);
+        // ------------------------------------------------------------------ level-complete sequence
 
-        private void PlaceBus(float driveTime)
+        private void RunSequence(float dt)
         {
-            Vector2 p = geo.ContentAt(busArc, out Vector2 dir);
-            bus.anchoredPosition = p;
-            int frame = RoadMapGeometry.FrameFor(dir.x, -dir.y);
-            if (busFrames.Length == RoadMapGeometry.BusFrames) busImage.sprite = busFrames[frame];
+            seqTime += dt;
+            float t = seqTime;
 
-            bool driving = driveTime >= 0f;
-            float r = driving ? Clock / 0.22f % 1f : 0f;
-            busRumble.anchoredPosition = new Vector2(0f, driving ? 2f * (1f - Mathf.Abs(2f * r - 1f)) : 0f);
+            // 1. camera scrolls to the completed node
+            float ck = Mathf.Clamp01(t / MapSequence.Scroll);
+            SetScrollY(Mathf.Lerp(seqScrollFrom, seqScrollTo, easeOut.Evaluate(ck)));
 
-            // Smoke puffs behind the bus (opposite its heading), 0.7 s ease-out, staggered 0.23 s.
-            for (int i = 0; i < busPuffs.Length; i++)
+            // 2. completed node: pop + star burst + white flash
+            if (seqA != null) seqA.SeqCompleted(t);
+
+            // 3. path fills grey -> gold with a glowing dot travelling along it
+            float pk = Mathf.Clamp01((t - MapSequence.PathStart) / (MapSequence.PathEnd - MapSequence.PathStart));
+            float fill = easeInOut.Evaluate(pk);
+            goldGlow.Fill = fill;
+            goldPath.Fill = fill;
+            seqArc = Mathf.Lerp(arcA, arcB, fill);
+            bool dotOn = t >= MapSequence.PathStart && t < MapSequence.PathEnd + 0.1f;
+            dot.gameObject.SetActive(dotOn);
+            if (dotOn)
             {
-                Image puff = busPuffs[i];
-                if (!driving)
-                {
-                    SetAlpha(puff, 0f);
-                    continue;
-                }
-                float e = puffEase.Evaluate(Mathf.Repeat((Clock - i * 0.23f) / 0.7f, 1f));
-                puff.rectTransform.anchoredPosition = new Vector2(0f, 9.4f) - dir * (38f + 44f * e);
-                puff.rectTransform.localScale = Vector3.one * Mathf.Lerp(0.35f, 1.8f, e);
-                SetAlpha(puff, Mathf.Lerp(0.9f, 0f, e));
+                dot.anchoredPosition = geo.ContentAt(seqArc, out _);
+                dot.localScale = Vector3.one * dotScale.Evaluate(pk);
+                Color c = dotImage.color;
+                c.a = t < MapSequence.PathEnd ? 0.95f : Mathf.Clamp01(1f - (t - MapSequence.PathEnd) / 0.1f);
+                dotImage.color = c;
             }
+
+            // 4. next node: lock shakes, cracks, halves fly off, pops open to gold with a ring
+            if (seqB != null) seqB.SeqNext(t);
+
+            ApplyGoldProgress();
+            if (t >= MapSequence.End) FinishSequence();
+        }
+
+        /// <summary>Tap anywhere: jump to the end state.</summary>
+        public void Skip()
+        {
+            if (seqLevel > 0) seqTime = MapSequence.End;
+        }
+
+        private void FinishSequence()
+        {
+            int won = seqLevel;
+            seqLevel = 0;
+            seqA = seqB = null;
+            skipCatcher.gameObject.SetActive(false);
+            greyPath.gameObject.SetActive(false);
+            goldGlow.gameObject.SetActive(false);
+            goldPath.gameObject.SetActive(false);
+            dot.gameObject.SetActive(false);
+            SetScrollY(seqScrollTo);
+
+            RefreshTiles(); // node N+1 is now the current node (red Play disc in the marker layer)
+            MapNodeView next = NodeView(won + 1);
+            if (next != null) next.PlayArrive();
+            if (rewards != null) StopCoroutine(rewards);
+            rewards = StartCoroutine(AfterUnlock(won));
+            SequenceFinished?.Invoke(won);
+        }
+
+        /// <summary>The persistent gold dashes: from the first tile up to the current node (or the sequence's travelling front).</summary>
+        private void ApplyGoldProgress()
+        {
+            float arc = seqLevel > 0 ? seqArc : (current > 1 ? geo.LevelArc(current) : 0f);
+            foreach (TileView tv in tiles.Values) tv.goldRoad.Fill = Mathf.Clamp01((arc - tv.index * geo.TileArc) / geo.TileArc);
         }
 
         // ------------------------------------------------------------------ scrolling
@@ -275,6 +323,42 @@ namespace BusRush.UI
         {
             float max = Mathf.Max(0f, content.rect.height - ViewHeight);
             return -Mathf.Clamp(contentY - focusFraction * ViewHeight, 0f, max);
+        }
+
+        /// <summary>Top bar height (design px) plus the 80 px a chest label must stay clear of it.</summary>
+        private const float TopBarClear = 92f + 80f;
+
+        /// <summary>
+        /// Adjusts the opening scroll so no chest (and its "Gift" tag) sits under the top bar or within 80 px of it: it scrolls the map
+        /// so the chest moves down into the clear area, or - if that would push the focus node too low - up past the bar.
+        /// </summary>
+        private float ClearOfTopBar(float scrollY)
+        {
+            float h = ViewHeight;
+            float minY = -(content.rect.height - h);
+            float nodeY = geo.ContentAt(geo.LevelArc(current), out _).y;
+            int tileCount = RoadMapGeometry.TileCount(levelCount);
+            for (int tile = 0; tile < tileCount; tile++)
+            {
+                int chestLevel = tile * RoadMapGeometry.LevelsPerTile + 5;
+                if (chestLevel > levelCount) break;
+                float top = geo.NodeContent(chestLevel).y + 40f + scrollY; // chest column: 66 px tall below its top
+                float bottom = top - 66f;
+                if (bottom > h + 4f || top < 0f) continue;                  // not on screen at all
+                if (top <= h - TopBarClear) continue;                       // already clear of the bar
+                float down = top - (h - TopBarClear);
+                float lowered = Mathf.Max(scrollY - down, minY);
+                if (nodeY + lowered >= 0.15f * h)
+                {
+                    scrollY = lowered;                                       // chest moves down, the node stays comfortably on screen
+                }
+                else
+                {
+                    float up = h + 6f - bottom;                              // otherwise push the chest up and out above the bar
+                    scrollY = Mathf.Min(scrollY + up, 0f);
+                }
+            }
+            return scrollY;
         }
 
         private void SetScrollY(float y)
@@ -293,16 +377,24 @@ namespace BusRush.UI
             int first = Mathf.Max(0, Mathf.FloorToInt(bottom / RoadMapGeometry.TileHeight));
             int last = Mathf.Min(tileCount - 1, Mathf.FloorToInt(top / RoadMapGeometry.TileHeight));
 
-            var drop = new List<TileView>();
+            bool changed = false;
+            drop.Clear();
             foreach (TileView tv in tiles.Values)
             {
                 if (tv.index < first || tv.index > last) drop.Add(tv);
             }
-            foreach (TileView tv in drop) Release(tv);
+            foreach (TileView tv in drop)
+            {
+                Release(tv);
+                changed = true;
+            }
             for (int i = first; i <= last; i++)
             {
-                if (!tiles.ContainsKey(i)) tiles[i] = Acquire(i);
+                if (tiles.ContainsKey(i)) continue;
+                tiles[i] = Acquire(i);
+                changed = true;
             }
+            if (changed) ApplyGoldProgress();
         }
 
         private TileView Acquire(int index)
@@ -314,8 +406,10 @@ namespace BusRush.UI
             tv.image.sprite = tileSprites[index % tileSprites.Length];
             tv.image.rectTransform.anchoredPosition = new Vector2(RoadMapGeometry.TileLeft, y0);
             tv.road.rectTransform.anchoredPosition = new Vector2(0f, y0);
+            tv.goldRoad.rectTransform.anchoredPosition = new Vector2(0f, y0);
             tv.image.gameObject.SetActive(true);
             tv.road.gameObject.SetActive(true);
+            tv.goldRoad.gameObject.SetActive(true);
 
             for (int i = 0; i < tv.nodes.Length; i++)
             {
@@ -324,10 +418,15 @@ namespace BusRush.UI
                 bool exists = level <= levelCount;
                 n.gameObject.SetActive(exists);
                 if (!exists) continue;
+                MapNodeState state = level < current ? MapNodeState.Completed : level == current ? MapNodeState.Current : MapNodeState.Locked;
+                if (seqLevel > 0 && level == seqLevel + 1) state = MapNodeState.Locked; // opens during the sequence
+                Transform wantParent = state == MapNodeState.Current ? markerLayer : nodesLayer;
+                if (n.transform.parent != wantParent) n.transform.SetParent(wantParent, false);
                 Vector2 p = geo.NodeContent(level);
                 ((RectTransform)n.transform).anchoredPosition = p + new Vector2(0f, 3f);
-                MapNodeState state = level < current ? MapNodeState.Completed : level == current ? MapNodeState.Current : MapNodeState.Locked;
                 n.Setup(level, state, SaveSystem.Data.GetStars(level), level % 10 == 0);
+                if (seqLevel > 0 && level == seqLevel) seqA = n;
+                if (seqLevel > 0 && level == seqLevel + 1) seqB = n;
             }
 
             int chestLevel = index * RoadMapGeometry.LevelsPerTile + 5;
@@ -343,16 +442,21 @@ namespace BusRush.UI
             }
 
             bool seam = index > 0;
-            tv.seam.gameObject.SetActive(seam);
+            tv.mist.gameObject.SetActive(seam);
+            tv.banner.gameObject.SetActive(seam);
             if (seam)
             {
-                ((RectTransform)tv.seam.transform).anchoredPosition = new Vector2(0f, y0);
+                ((RectTransform)tv.mist.transform).anchoredPosition = new Vector2(0f, y0);
+                tv.mist.SetupMist();
+
                 int firstLevel = index * RoadMapGeometry.LevelsPerTile + 1;
                 string name = WorldNames[index % WorldNames.Length];
                 bool locked = firstLevel > current || pendingWorld == index + 1;
-                tv.seam.Setup(index + 1, name, firstLevel, locked);
-                tv.seam.Button.onClick.RemoveAllListeners();
-                tv.seam.Button.onClick.AddListener(() =>
+                tv.banner.Setup(index + 1, name, firstLevel, locked);
+                Vector2 bc = BannerCentre(index);
+                ((RectTransform)tv.banner.transform).anchoredPosition = new Vector2(bc.x - MapSeamView.BannerCentreX, bc.y);
+                tv.banner.Button.onClick.RemoveAllListeners();
+                tv.banner.Button.onClick.AddListener(() =>
                 {
                     // Unlocked: preview the New World screen; locked: just its name.
                     if (firstLevel <= current && pendingWorld != index + 1 && newWorld != null) newWorld.Show(index + 1, null);
@@ -362,14 +466,54 @@ namespace BusRush.UI
             return tv;
         }
 
+        /// <summary>
+        /// The banner sits centred on the seam, on the road. If a node would be under it, it slides along the road (nearest first, both
+        /// ways) to the closest spot where no node box touches the banner box.
+        /// </summary>
+        public Vector2 BannerCentre(int seamIndex)
+        {
+            geo ??= new RoadMapGeometry(roadJson.text);
+            float seamArc = seamIndex * geo.TileArc;
+            int firstLevel = seamIndex * RoadMapGeometry.LevelsPerTile + 1;
+            for (int step = 0; step <= 40; step++)
+            {
+                for (int sign = 1; sign >= -1; sign -= 2)
+                {
+                    if (step == 0 && sign < 0) continue;
+                    Vector2 p = geo.ContentAt(seamArc + sign * step * 4f, out _);
+                    if (BannerClearAt(p, firstLevel)) return p;
+                }
+            }
+            return geo.ContentAt(seamArc, out _);
+        }
+
+        private bool BannerClearAt(Vector2 p, int firstLevel)
+        {
+            for (int level = firstLevel - 2; level <= firstLevel + 1; level++)
+            {
+                if (level < 1 || level > levelCount) continue;
+                Vector2 n = geo.NodeContent(level) + new Vector2(0f, 3f);
+                if (Mathf.Abs(p.x - n.x) < NodeBoxHalf + BannerHalfW && Mathf.Abs(p.y - n.y) < NodeBoxHalf + BannerHalfH) return false;
+            }
+            return true;
+        }
+
         private void Release(TileView tv)
         {
             tiles.Remove(tv.index);
             tv.image.gameObject.SetActive(false);
             tv.road.gameObject.SetActive(false);
-            foreach (MapNodeView n in tv.nodes) n.gameObject.SetActive(false);
+            tv.goldRoad.gameObject.SetActive(false);
+            foreach (MapNodeView n in tv.nodes)
+            {
+                if (n == seqA) seqA = null;
+                if (n == seqB) seqB = null;
+                n.gameObject.SetActive(false);
+                if (n.transform.parent != nodesLayer) n.transform.SetParent(nodesLayer, false);
+            }
             tv.chest.gameObject.SetActive(false);
-            tv.seam.gameObject.SetActive(false);
+            tv.mist.gameObject.SetActive(false);
+            tv.banner.gameObject.SetActive(false);
             pool.Push(tv);
         }
 
@@ -378,11 +522,14 @@ namespace BusRush.UI
             var tv = new TileView
             {
                 image = Instantiate(tileTemplate, tilesLayer),
+                mist = Instantiate(seamTemplate, mistLayer),
+                banner = Instantiate(seamTemplate, bannerLayer),
                 road = Instantiate(roadTemplate, roadLayer),
-                chest = Instantiate(chestTemplate, chestLayer),
-                seam = Instantiate(seamTemplate, seamLayer)
+                goldRoad = Instantiate(goldRoadTemplate, roadLayer),
+                chest = Instantiate(chestTemplate, chestLayer)
             };
             tv.road.SetPoints(geo.Points);
+            tv.goldRoad.SetPoints(geo.Points);
             for (int i = 0; i < tv.nodes.Length; i++)
             {
                 tv.nodes[i] = Instantiate(nodeTemplate, nodesLayer);
@@ -422,7 +569,7 @@ namespace BusRush.UI
             rewards = null;
         }
 
-        /// <summary>Rebuilds the visible tiles (chest / sign state changed).</summary>
+        /// <summary>Rebuilds the visible tiles (chest / banner / node state changed).</summary>
         private void RefreshTiles()
         {
             foreach (TileView tv in new List<TileView>(tiles.Values)) Release(tv);
@@ -446,29 +593,55 @@ namespace BusRush.UI
             }
         }
 
-        private void OnNodeTapped(MapNodeView node)
+        /// <summary>The live node view of a level (null when its tile is not on screen).</summary>
+        public MapNodeView NodeView(int level)
         {
-            switch (node.State)
-            {
-                case MapNodeState.Current:
-                    SceneLoader.LoadGame();
-                    break;
-                case MapNodeState.Completed:
-                    Toast.Show(Localizer.F("Level {0}  {1}/3 stars", node.Level, node.Stars)); // Latin only: the UI fonts have no star glyphs
-                    break;
-                default:
-                    Toast.Show(Localizer.F("Level {0} is locked", node.Level));
-                    break;
-            }
+            if (!tiles.TryGetValue(RoadMapGeometry.TileOf(level), out TileView tv)) return null;
+            MapNodeView n = tv.nodes[(level - 1) % RoadMapGeometry.LevelsPerTile];
+            return n != null && n.gameObject.activeSelf ? n : null;
         }
 
-        // ------------------------------------------------------------------ helpers
-
-        private static void SetAlpha(Graphic g, float a)
+        /// <summary>Taps the node of a level exactly like a finger would (tests, tools). False when it is not on screen.</summary>
+        public bool TapLevel(int level)
         {
-            Color c = g.color;
-            c.a = a;
-            g.color = c;
+            MapNodeView n = NodeView(level);
+            if (n == null) return false;
+            OnNodeTapped(n);
+            return true;
+        }
+
+        private void OnNodeTapped(MapNodeView node)
+        {
+            if (seqLevel > 0 || (levelCard != null && levelCard.IsOpen)) return;
+            if (node.State == MapNodeState.Locked)
+            {
+                node.Shake();
+                Toast.Show(Localizer.F("Level {0} is locked", node.Level));
+                return;
+            }
+            OpenCard(node);
+        }
+
+        /// <summary>Level Start card for an unlocked node (current = playable, completed = shown with its stars only).</summary>
+        private void OpenCard(MapNodeView node)
+        {
+            int level = node.Level;
+            int world = RoadMapGeometry.TileOf(level);
+            bool playable = node.State == MapNodeState.Current;
+            bool intro = playable && MapRewards.IntroDue(SaveSystem.Data, level);
+            Sprite art = tileSprites[world % tileSprites.Length];
+            levelCard.Show((RectTransform)node.transform, level, world, WorldNames[world % WorldNames.Length], SaveSystem.Data.GetStars(level),
+                level % 10 == 0, GameSession.CoinsFor(3), intro, playable, art, () => StartLevel(level, intro));
+        }
+
+        private static void StartLevel(int level, bool intro)
+        {
+            if (intro)
+            {
+                MapRewards.MarkIntroShown(SaveSystem.Data, level);
+                SaveSystem.Commit();
+            }
+            SceneLoader.LoadGame();
         }
     }
 }

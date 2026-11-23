@@ -123,21 +123,6 @@ namespace BusRush.UI
             return list;
         }
 
-        // ------------------------------------------------------------------ bus frame
-
-        public const int BusFrames = 32;
-
-        /// <summary>
-        /// Bus sprite frame for a screen direction (dx right, dyDown down): frame i = ground heading i*11.25 deg
-        /// (0 = right, 90 = up/away); the ground is seen at 50 deg, so screen-vertical is divided by sin 50.
-        /// </summary>
-        public static int FrameFor(float dx, float dyDown)
-        {
-            float ground = Mathf.Atan2(-dyDown / Mathf.Sin(50f * Mathf.Deg2Rad), dx) * Mathf.Rad2Deg;
-            int frame = Mathf.RoundToInt(ground / (360f / BusFrames));
-            return ((frame % BusFrames) + BusFrames) % BusFrames;
-        }
-
         // ------------------------------------------------------------------ json (nested arrays: no JsonUtility)
 
         private static string Section(string json, string key)

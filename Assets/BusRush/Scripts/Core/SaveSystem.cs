@@ -46,6 +46,9 @@ namespace BusRush
         /// <summary>Highest world (1-based) whose "New World" screen has been shown; world 1 needs none.</summary>
         public int worldsShown = 1;
 
+        /// <summary>Highest world (1-based) whose intro card ("Welcome to ... World") was shown when its first level was started.</summary>
+        public int worldIntroShown = 1;
+
         /// <summary>Best stars per level (index = level - 1; 0 = not completed).</summary>
         public List<int> levelStars = new List<int>();
 

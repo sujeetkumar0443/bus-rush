@@ -25,10 +25,6 @@ namespace BusRush.EditorTools
         public const string HeadingOutlinePath = FontsDir + "/LilitaOne UIv2 SDF Outline.mat";
         public const string BodyFontPath = FontsDir + "/Fredoka UIv2 SDF.asset";
 
-        private const string MapBusPath = ArtDir + "/Map/map_bus_32dir.png";
-        private const int MapBusFrames = 32;
-        private const int MapBusFrame = 192;
-
         /// <summary>Latin (ASCII + Latin-1), digits and common symbols.</summary>
         private static readonly string Charset = BuildCharset();
 
@@ -37,14 +33,13 @@ namespace BusRush.EditorTools
         {
             AssetDatabase.Refresh();
             int textures = ApplyTextureSettings();
-            SliceMapBus();
             TMP_FontAsset heading = MakeStaticFont("LilitaOne-Regular", HeadingFontPath);
             TMP_FontAsset body = MakeStaticFont("Fredoka-Variable", BodyFontPath);
             Material outline = MakeHeadingOutline(heading);
             RefreshOldLilitaAsset();
             MakeTheme(heading, outline, body);
             AssetDatabase.SaveAssets();
-            Debug.Log($"[UiV2Importer] Done: {textures} textures, map bus sliced into {MapBusFrames}, fonts + UiTheme created.");
+            Debug.Log($"[UiV2Importer] Done: {textures} textures, fonts + UiTheme created.");
         }
 
         public static void ImportAllBatch()
@@ -71,15 +66,13 @@ namespace BusRush.EditorTools
                 string path = AssetDatabase.GUIDToAssetPath(guid);
                 if (!path.EndsWith(".png", StringComparison.OrdinalIgnoreCase)) continue;
                 var ti = (TextureImporter)AssetImporter.GetAtPath(path);
-                bool sheet = path == MapBusPath;
 
                 ti.textureType = TextureImporterType.Sprite;
-                ti.spriteImportMode = sheet ? SpriteImportMode.Multiple : SpriteImportMode.Single;
+                ti.spriteImportMode = SpriteImportMode.Single;
                 ti.mipmapEnabled = false;
                 ti.alphaIsTransparency = true;
                 ti.alphaSource = TextureImporterAlphaSource.FromInput;
-                // The bus sheet is 6144x192; at 2048 its 192 px frames would shrink to 64 px.
-                ti.maxTextureSize = sheet ? 8192 : 2048;
+                ti.maxTextureSize = 2048;
                 ti.textureCompression = TextureImporterCompression.CompressedHQ;
                 ti.wrapMode = TextureWrapMode.Clamp;
                 ti.filterMode = FilterMode.Bilinear;
@@ -99,43 +92,6 @@ namespace BusRush.EditorTools
                 n++;
             }
             return n;
-        }
-
-        private static void SliceMapBus()
-        {
-            var ti = (TextureImporter)AssetImporter.GetAtPath(MapBusPath);
-            if (ti == null) throw new InvalidOperationException("Missing " + MapBusPath);
-
-            var factory = new SpriteDataProviderFactories();
-            factory.Init();
-            ISpriteEditorDataProvider dp = factory.GetSpriteEditorDataProviderFromObject(ti);
-            dp.InitSpriteEditorDataProvider();
-
-            // Keep the sprite ids of an earlier slicing so references survive a re-run.
-            Dictionary<string, GUID> oldIds = dp.GetSpriteRects().ToDictionary(r => r.name, r => r.spriteID);
-            var rects = new SpriteRect[MapBusFrames];
-            for (int i = 0; i < MapBusFrames; i++)
-            {
-                string name = $"mapbus_{i:00}";
-                rects[i] = new SpriteRect
-                {
-                    name = name,
-                    rect = new Rect(i * MapBusFrame, 0, MapBusFrame, MapBusFrame),
-                    alignment = SpriteAlignment.Center,
-                    pivot = new Vector2(0.5f, 0.5f),
-                    border = Vector4.zero,
-                    spriteID = oldIds.TryGetValue(name, out GUID id) ? id : GUID.Generate()
-                };
-            }
-            dp.SetSpriteRects(rects);
-
-            var names = dp.GetDataProvider<ISpriteNameFileIdDataProvider>();
-            names?.SetNameFileIdPairs(rects.Select(r => new SpriteNameFileIdPair(r.name, r.spriteID)).ToList());
-            dp.Apply();
-            ti.SaveAndReimport();
-
-            int sliced = AssetDatabase.LoadAllAssetsAtPath(MapBusPath).OfType<Sprite>().Count();
-            if (sliced != MapBusFrames) throw new InvalidOperationException($"map bus: {sliced} sprites, expected {MapBusFrames}");
         }
 
         // ------------------------------------------------------------------ fonts

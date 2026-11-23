@@ -393,6 +393,94 @@ namespace BusRush.EditorTools
                 Localizer.ResetForTests();
                 Result("C language", cOk && entries.Count == before, cNote);
 
+                // ---- D: Road Map v3: card on tap, Play starts the level, level-complete sequence, no bus ----
+                before = entries.Count;
+                string dNote = "";
+                bool dOk = true;
+                {
+                    var map3 = FindAnyObjectByType<BusRush.UI.RoadMapScreen>(FindObjectsInactive.Include);
+                    SaveData sd = SaveSystem.Data;
+                    for (int lv = 1; lv < 20; lv++) sd.SetBestStars(lv, 3);
+                    sd.worldIntroShown = 1;
+
+                    // D1: level 20 just completed -> the sequence ends with node 21 current and node 20 completed
+                    sd.level = 21;
+                    sd.mapUnlockShown = 19;
+                    int finished = 0;
+                    System.Action<int> onFinished = l => finished = l;
+                    map3.SequenceFinished += onFinished;
+                    map3.Open(20);
+                    bool started = map3.SequenceActive;
+                    float s0 = Time.unscaledTime;
+                    float seenMax = 0f;
+                    while (map3.SequenceActive && Time.unscaledTime - s0 < 10f)
+                    {
+                        seenMax = Mathf.Max(seenMax, map3.SequenceTime);
+                        yield return null;
+                    }
+                    yield return Frames(3);
+                    map3.SequenceFinished -= onFinished;
+                    var n20 = map3.NodeView(20);
+                    var n21 = map3.NodeView(21);
+                    bool seqOk = started && finished == 20 && n20 != null && n21 != null &&
+                                 n20.State == BusRush.UI.MapNodeState.Completed && n21.State == BusRush.UI.MapNodeState.Current &&
+                                 Time.unscaledTime - s0 < 6f;
+                    dNote += $"sequence started={started} reached {seenMax:0.00}s finished={finished} node20={n20?.State} node21={n21?.State}; ";
+                    dOk &= seqOk;
+
+                    // D1b: tap skips (a second sequence: pretend level 21 completes right away)
+                    sd.level = 22;
+                    sd.mapUnlockShown = 20;
+                    map3.Open(21);
+                    yield return Frames(10);
+                    bool running = map3.SequenceActive;
+                    map3.Skip();
+                    yield return Frames(3);
+                    bool skipped = running && !map3.SequenceActive && map3.NodeView(22) != null && map3.NodeView(22).State == BusRush.UI.MapNodeState.Current;
+                    dOk &= skipped;
+                    dNote += $"skip ok={skipped}; ";
+
+                    // D2: map at level 20, tap node 20 -> the card opens (not the level), X closes it, Play starts level 20
+                    sd.level = 20;
+                    sd.mapUnlockShown = 20;
+                    map3.Open();
+                    yield return Frames(20);
+                    var card = map3.Card;
+                    bool tapped = map3.TapLevel(20);
+                    yield return Frames(5);
+                    bool opened = card.IsOpen && card.Level == 20;
+                    bool stillHome = SceneManager.GetActiveScene().name == SceneLoader.HomeScene;
+                    float t1 = Time.unscaledTime;
+                    while (card.OpenProgress < 1f && Time.unscaledTime - t1 < 3f) yield return null;
+                    dNote += $"tap20={tapped} card open={opened} still on Home={stillHome}; ";
+                    dOk &= tapped && opened && stillHome;
+
+                    // locked node: toast + no card
+                    card.RequestClose();
+                    yield return new WaitForSecondsRealtime(0.5f);
+                    bool closed = !card.IsOpen;
+                    map3.TapLevel(25);
+                    yield return Frames(5);
+                    bool lockedNoCard = !card.IsOpen;
+                    dOk &= closed && lockedNoCard;
+                    dNote += $"X closes={closed} locked tap opens no card={lockedNoCard}; ";
+
+                    map3.TapLevel(20);
+                    yield return new WaitForSecondsRealtime(0.6f);
+                    Field<UnityEngine.UI.Button>(card, "playButton").onClick.Invoke();
+                    float t2 = Time.unscaledTime;
+                    while (!(SceneManager.GetActiveScene().name == SceneLoader.GameScene && !SceneLoader.IsLoading) && Time.unscaledTime - t2 < 20f) yield return null;
+                    yield return Frames(30);
+                    bool inGame = SceneManager.GetActiveScene().name == SceneLoader.GameScene && GameSession.Current != null;
+                    int playedLevel = GameSession.Current != null ? GameSession.Current.Level : -1;
+                    dOk &= inGame && playedLevel == 20;
+                    dNote += $"Play -> Game scene={inGame} level={playedLevel}";
+
+                    // no bus anywhere
+                    dOk &= AssetDatabase.LoadAssetAtPath<Texture2D>("Assets/BusRush/Art/UI_v2/Map/map_bus_32dir.png") == null;
+                }
+                Result("D road map v3", dOk && entries.Count == before, dNote);
+
                 done(all);
             }
 

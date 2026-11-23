@@ -55,6 +55,15 @@ namespace BusRush.Gameplay
         /// <summary>Unlocking <paramref name="unlockedLevel"/> opens a new world that has not been shown yet.</summary>
         public static bool WorldDue(SaveData d, int unlockedLevel) => IsWorldStart(unlockedLevel) && d.worldsShown < WorldOf(unlockedLevel);
 
+        /// <summary>The Level Start card of a world's first level shows the world intro once (never for world 1).</summary>
+        public static bool IntroDue(SaveData d, int level) => IsWorldStart(level) && d.worldIntroShown < WorldOf(level);
+
+        public static void MarkIntroShown(SaveData d, int level)
+        {
+            int world = WorldOf(level);
+            if (d.worldIntroShown < world) d.worldIntroShown = world;
+        }
+
         public static void MarkWorldShown(SaveData d, int world)
         {
             if (d.worldsShown < world) d.worldsShown = world;

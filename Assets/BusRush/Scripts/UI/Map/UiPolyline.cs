@@ -17,12 +17,30 @@ namespace BusRush.UI
         [SerializeField] private float dashOffset;
 
         private readonly List<Vector2> points = new List<Vector2>();
+        private readonly List<Vector2> run = new List<Vector2>(32); // reused by every rebuild: no allocation per frame
+        private float totalLength;
+        private float fill = 1f;
 
         public void SetPoints(IList<Vector2> pts)
         {
             points.Clear();
             points.AddRange(pts);
+            totalLength = 0f;
+            for (int i = 1; i < points.Count; i++) totalLength += Vector2.Distance(points[i - 1], points[i]);
             SetVerticesDirty();
+        }
+
+        /// <summary>Fraction (0..1) of the line that is drawn, from its first point: the gold path filling along the road.</summary>
+        public float Fill
+        {
+            get => fill;
+            set
+            {
+                value = Mathf.Clamp01(value);
+                if (Mathf.Abs(fill - value) < 0.0004f) return;
+                fill = value;
+                SetVerticesDirty();
+            }
         }
 
         public void SetStyle(float strokeWidth, float dashLength, float gapLength)
@@ -55,19 +73,22 @@ namespace BusRush.UI
             float phase = dashed ? Mod(dashOffset, period) : 0f;
 
             float along = 0f;
-            var run = new List<Vector2>();
+            float limit = totalLength * fill;
+            run.Clear();
             for (int i = 1; i < points.Count; i++)
             {
+                if (along >= limit) break;
                 Vector2 a = points[i - 1], b = points[i];
                 float len = Vector2.Distance(a, b);
                 if (len < 1e-4f) continue;
+                float end = Mathf.Min(len, limit - along);
                 float s = 0f;
-                while (s < len)
+                while (s < end)
                 {
                     float pos = along + s;
                     bool on = !dashed || Mod(pos + phase, period) < dash;
-                    float toEdge = dashed ? (on ? dash - Mod(pos + phase, period) : period - Mod(pos + phase, period)) : len - s;
-                    float step = Mathf.Min(len - s, Mathf.Max(toEdge, 1e-3f));
+                    float toEdge = dashed ? (on ? dash - Mod(pos + phase, period) : period - Mod(pos + phase, period)) : end - s;
+                    float step = Mathf.Min(end - s, Mathf.Max(toEdge, 1e-3f));
                     if (on)
                     {
                         if (run.Count == 0) run.Add(Vector2.Lerp(a, b, s / len));

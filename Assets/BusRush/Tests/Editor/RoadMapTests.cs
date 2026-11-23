@@ -5,21 +5,10 @@ using UnityEngine;
 
 namespace BusRush.Tests
 {
-    /// <summary>Edit-mode tests for the Road Map geometry: bus frame picker and node placement.</summary>
+    /// <summary>Edit-mode tests for the Road Map geometry: node placement and path continuity.</summary>
     public sealed class RoadMapTests
     {
         private const string JsonPath = "Assets/BusRush/Art/UI_v2/Map/road_centerline.json";
-
-        [Test]
-        public void FramePicker_CardinalDirections()
-        {
-            Assert.AreEqual(0, RoadMapGeometry.FrameFor(1f, 0f), "right");
-            Assert.AreEqual(8, RoadMapGeometry.FrameFor(0f, -1f), "up (screen y down)");
-            Assert.AreEqual(16, RoadMapGeometry.FrameFor(-1f, 0f), "left");
-            Assert.AreEqual(24, RoadMapGeometry.FrameFor(0f, 1f), "down");
-            // Up-right on screen at 45 deg is steeper on the ground (divided by sin 50): 52.5 deg = frame 5, not 4.
-            Assert.AreEqual(5, RoadMapGeometry.FrameFor(1f, -1f), "up-right");
-        }
 
         [Test]
         public void Nodes_InsideTheirTile_InOrder()
@@ -46,7 +35,7 @@ namespace BusRush.Tests
         [Test]
         public void Path_IsContinuousAcrossTileSeams()
         {
-            // The bus drive 10 -> 11 (and 20 -> 21 ...) crosses a seam: consecutive 1 px arc samples never jump > 4 px.
+            // The path 10 -> 11 (and 20 -> 21 ...) crosses a seam: consecutive 1 px arc samples never jump > 4 px.
             var geo = new RoadMapGeometry(File.ReadAllText(JsonPath));
             for (int seam = 1; seam <= 3; seam++)
             {
