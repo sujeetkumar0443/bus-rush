@@ -92,7 +92,14 @@ namespace BusRush.UI
         private int seqLevel;
         private float seqTime, seqScrollFrom, seqScrollTo, seqArc, arcA, arcB;
         private MapNodeView seqA, seqB;
+        private MapSeamView seqBanner;
+        private bool worldSeq, worldHold, worldAfter, skipRequested;
+        private int seqSeam;
+        private float arcSign, fillSign, seqTime2;
         private static AnimationCurve easeOut, easeInOut, dotScale;
+
+        // New-world variant: the road runs gold to the world sign, the sign drops in, the New World card zooms out of it, then the next pin unlocks.
+        private const float WorldPathEnd = 1.80f, DropEnd = 2.30f, WorldCardAt = 2.30f, PathAfterCard = 0.5f;
 
         // A pin's box around its tip (the node position): 72 wide, from 8 px below the lip to the top of its crown, 88 px up.
         private const float NodeHalfW = 36f, NodeBottom = -8f, NodeTop = 88f;
@@ -147,6 +154,8 @@ namespace BusRush.UI
         {
             seqLevel = 0;
             seqA = seqB = null;
+            seqBanner = null;
+            worldSeq = worldHold = worldAfter = skipRequested = false;
             if (skipCatcher != null) skipCatcher.gameObject.SetActive(false);
             if (greyPath != null) greyPath.gameObject.SetActive(false);
             if (goldGlow != null) goldGlow.gameObject.SetActive(false);
@@ -189,6 +198,15 @@ namespace BusRush.UI
                 arcA = geo.LevelArc(unlockedLevel);
                 arcB = geo.LevelArc(unlockedLevel + 1);
                 seqArc = arcA;
+                worldSeq = newWorld != null && MapRewards.IsWorldStart(unlockedLevel + 1);   // the boss of a world was completed
+                worldHold = worldAfter = skipRequested = false;
+                seqTime2 = 0f;
+                seqSeam = unlockedLevel / RoadMapGeometry.LevelsPerTile;
+                if (worldSeq)
+                {
+                    arcSign = Mathf.Clamp(BannerArc(seqSeam), arcA + 12f, arcB - 12f);
+                    fillSign = Mathf.InverseLerp(arcA, arcB, arcSign);
+                }
                 List<Vector2> path = geo.ContentPath(arcA, arcB);
                 SetSequenceLine(greyPath, path, 1f);
                 SetSequenceLine(goldGlow, path, 0f);
@@ -263,44 +281,95 @@ namespace BusRush.UI
 
         private void RunSequence(float dt)
         {
-            seqTime += dt;
-            float t = seqTime;
+            if (skipRequested)
+            {
+                FinishSequence();
+                return;
+            }
+            if (worldHold) return; // the New World card is open: the sequence waits for it
 
-            // 1. camera scrolls to the completed node
-            float ck = Mathf.Clamp01(t / MapSequence.Scroll);
-            SetScrollY(Mathf.Lerp(seqScrollFrom, seqScrollTo, easeOut.Evaluate(ck)));
+            float t;
+            float fill;
+            bool dotOn;
+            if (!worldSeq || !worldAfter)
+            {
+                seqTime += dt;
+                t = seqTime;
+                float ck = Mathf.Clamp01(t / MapSequence.Scroll);
+                SetScrollY(Mathf.Lerp(seqScrollFrom, seqScrollTo, easeOut.Evaluate(ck)));                          // 1. camera to the completed pin
 
-            // 2. completed node: pop + star burst + white flash
-            if (seqA != null) seqA.SeqCompleted(t);
+                if (seqA != null) seqA.SeqCompleted(t);                                                            // 2. lift, squash, orange, stars
 
-            // 3. path fills grey -> gold with a glowing dot travelling along it
-            float pk = Mathf.Clamp01((t - MapSequence.PathStart) / (MapSequence.PathEnd - MapSequence.PathStart));
-            float fill = easeInOut.Evaluate(pk);
+                float pathEnd = worldSeq ? WorldPathEnd : MapSequence.PathEnd;
+                float pk = Mathf.Clamp01((t - MapSequence.PathStart) / (pathEnd - MapSequence.PathStart));       // 3. gold road + dot
+                fill = (worldSeq ? fillSign : 1f) * easeInOut.Evaluate(pk);
+                dotOn = t >= MapSequence.PathStart && t < pathEnd + 0.1f;
+                SetDot(dotOn, fill, t < pathEnd ? 0.95f : Mathf.Clamp01(1f - (t - pathEnd) / 0.1f), pk);
+
+                if (worldSeq)
+                {
+                    if (seqB != null) seqB.SeqNext(0f);                                                            // next pin waits, locked
+                    if (seqBanner != null) seqBanner.SetDrop(t < WorldPathEnd ? -1f : Mathf.Clamp01((t - WorldPathEnd) / (DropEnd - WorldPathEnd)));
+                    if (t >= WorldCardAt)
+                    {
+                        worldHold = true;
+                        int world = seqSeam + 1;                                                                   // the world that just opened
+                        MapRewards.MarkWorldShown(SaveSystem.Data, world);
+                        SaveSystem.Commit();
+                        Vector3? from = seqBanner != null ? seqBanner.SignRect.position : (Vector3?)null;
+                        newWorld.Show(world, OnWorldCardClosed, from);                                            // card zooms out of the sign
+                    }
+                }
+                else
+                {
+                    if (seqB != null) seqB.SeqNext(t);                                                             // 4. padlock breaks, green pin
+                }
+                goldGlow.Fill = fill;
+                goldPath.Fill = fill;
+                seqArc = Mathf.Lerp(arcA, arcB, fill);
+                ApplyGoldProgress();
+                if (!worldSeq && t >= MapSequence.End) FinishSequence();
+                return;
+            }
+
+            // New world, after the card: the road continues to the next pin, which unlocks.
+            seqTime2 += dt;
+            float t2 = seqTime2;
+            if (seqA != null) seqA.SeqCompleted(MapSequence.End);
+            float pk2 = Mathf.Clamp01(t2 / PathAfterCard);
+            fill = Mathf.Lerp(fillSign, 1f, easeInOut.Evaluate(pk2));
+            SetDot(t2 < PathAfterCard + 0.1f, fill, t2 < PathAfterCard ? 0.95f : Mathf.Clamp01(1f - (t2 - PathAfterCard) / 0.1f), pk2);
+            float u = MapSequence.ShakeStart - 0.01f + Mathf.Max(0f, t2 - PathAfterCard + 0.01f);
+            if (seqB != null) seqB.SeqNext(u);
             goldGlow.Fill = fill;
             goldPath.Fill = fill;
             seqArc = Mathf.Lerp(arcA, arcB, fill);
-            bool dotOn = t >= MapSequence.PathStart && t < MapSequence.PathEnd + 0.1f;
-            dot.gameObject.SetActive(dotOn);
-            if (dotOn)
-            {
-                dot.anchoredPosition = geo.ContentAt(seqArc, out _);
-                dot.localScale = Vector3.one * dotScale.Evaluate(pk);
-                Color c = dotImage.color;
-                c.a = t < MapSequence.PathEnd ? 0.95f : Mathf.Clamp01(1f - (t - MapSequence.PathEnd) / 0.1f);
-                dotImage.color = c;
-            }
-
-            // 4. next node: lock shakes, cracks, halves fly off, pops open to gold with a ring
-            if (seqB != null) seqB.SeqNext(t);
-
             ApplyGoldProgress();
-            if (t >= MapSequence.End) FinishSequence();
+            if (u >= MapSequence.End) FinishSequence();
+        }
+
+        private void SetDot(bool on, float fill, float alpha, float k)
+        {
+            dot.gameObject.SetActive(on);
+            if (!on) return;
+            dot.anchoredPosition = geo.ContentAt(Mathf.Lerp(arcA, arcB, fill), out _);
+            dot.localScale = Vector3.one * dotScale.Evaluate(Mathf.Clamp01(k));
+            Color c = dotImage.color;
+            c.a = alpha;
+            dotImage.color = c;
+        }
+
+        private void OnWorldCardClosed()
+        {
+            worldHold = false;
+            worldAfter = true;
+            seqTime2 = 0f;
         }
 
         /// <summary>Tap anywhere: jump to the end state.</summary>
         public void Skip()
         {
-            if (seqLevel > 0) seqTime = MapSequence.End;
+            if (seqLevel > 0) skipRequested = true;
         }
 
         private void FinishSequence()
@@ -461,13 +530,19 @@ namespace BusRush.UI
                 string name = WorldNames[index % WorldNames.Length];
                 bool locked = firstLevel > current || pendingWorld == index + 1;
                 tv.banner.Setup(index + 1, name, firstLevel, locked);
+                if (seqLevel > 0 && worldSeq && index == seqSeam)
+                {
+                    seqBanner = tv.banner;     // this sign drops in during the sequence
+                    if (!worldAfter) seqBanner.SetDrop(seqTime < WorldPathEnd ? -1f : 1f);
+                }
+                MapSeamView bannerView = tv.banner;
                 Vector2 bc = BannerCentre(index);
                 ((RectTransform)tv.banner.transform).anchoredPosition = new Vector2(bc.x - MapSeamView.BannerCentreX, bc.y);
                 tv.banner.Button.onClick.RemoveAllListeners();
                 tv.banner.Button.onClick.AddListener(() =>
                 {
                     // Unlocked: preview the New World screen; locked: just its name.
-                    if (firstLevel <= current && pendingWorld != index + 1 && newWorld != null) newWorld.Show(index + 1, null);
+                    if (firstLevel <= current && pendingWorld != index + 1 && newWorld != null) newWorld.Show(index + 1, null, bannerView.SignRect.position);
                     else Toast.Show(Localizer.F("World {0}: {1}", index + 1, Localizer.T(name)));
                 });
             }
@@ -478,27 +553,30 @@ namespace BusRush.UI
         /// The banner sits centred on the seam, on the road. If a pin would be under it, it slides along the road (nearest first, both ways)
         /// to the closest spot where no pin box touches the banner box; if there is no such spot it takes the one with the least overlap.
         /// </summary>
-        public Vector2 BannerCentre(int seamIndex)
+        public Vector2 BannerCentre(int seamIndex) => geo.ContentAt(BannerArc(seamIndex), out _);
+
+        /// <summary>Global road arc of the banner centre of a seam (the seam itself, or the nearest free spot along the road).</summary>
+        private float BannerArc(int seamIndex)
         {
             geo ??= new RoadMapGeometry(roadJson.text);
             float seamArc = seamIndex * geo.TileArc;
             int firstLevel = seamIndex * RoadMapGeometry.LevelsPerTile + 1;
-            Vector2 best = geo.ContentAt(seamArc, out _);
-            float bestOverlap = BannerOverlapAt(best, firstLevel);
+            float bestArc = seamArc;
+            float bestOverlap = BannerOverlapAt(geo.ContentAt(seamArc, out _), firstLevel);
             for (int step = 1; step <= 40 && bestOverlap > 0f; step++)
             {
                 for (int sign = 1; sign >= -1; sign -= 2)
                 {
-                    Vector2 p = geo.ContentAt(seamArc + sign * step * 4f, out _);
-                    float o = BannerOverlapAt(p, firstLevel);
+                    float arc = seamArc + sign * step * 4f;
+                    float o = BannerOverlapAt(geo.ContentAt(arc, out _), firstLevel);
                     if (o < bestOverlap)
                     {
-                        best = p;
+                        bestArc = arc;
                         bestOverlap = o;
                     }
                 }
             }
-            return best;
+            return bestArc;
         }
 
         /// <summary>How far the banner box at <paramref name="p"/> sinks into the pin boxes next to the seam (0 = clear).</summary>
@@ -531,6 +609,7 @@ namespace BusRush.UI
                 n.gameObject.SetActive(false);
                 if (n.transform.parent != nodesLayer) n.transform.SetParent(nodesLayer, false);
             }
+            if (tv.banner == seqBanner) seqBanner = null;
             tv.chest.gameObject.SetActive(false);
             tv.mist.gameObject.SetActive(false);
             tv.banner.gameObject.SetActive(false);
@@ -581,7 +660,8 @@ namespace BusRush.UI
                 MapRewards.MarkWorldShown(d, world);
                 SaveSystem.Commit();
                 bool done = false;
-                newWorld.Show(world, () => done = true);
+                Vector3? from = tiles.TryGetValue(world - 1, out TileView wtv) && wtv.banner.gameObject.activeSelf ? wtv.banner.SignRect.position : (Vector3?)null;
+                newWorld.Show(world, () => done = true, from);
                 while (!done) yield return null;
             }
             pendingWorld = 0;

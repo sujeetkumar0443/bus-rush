@@ -60,7 +60,9 @@ namespace BusRush.UI
         private Theme theme;
         private Action closed;
         private RenderTexture soft;
-        private Vector2 titleHome, padHome, levelsHome, goHome;
+        private Vector2 titleHome, padHome, levelsHome, goHome, cardHome;
+        private Vector3 originWorld, homeWorld;
+        private bool fromSign;
         private static readonly Vector4 Pop = new Vector4(0.3f, 1.5f, 0.5f, 1f), EaseOut = new Vector4(0f, 0f, 0.58f, 1f),
                                         EaseIn = new Vector4(0.42f, 0f, 1f, 1f);
         private static AnimationCurve cardS, cardR, cardA, dropY, dropS, lockY, lockS, lockR, rise;
@@ -71,14 +73,18 @@ namespace BusRush.UI
             padHome = padlock.anchoredPosition;
             levelsHome = levels.anchoredPosition;
             goHome = go.anchoredPosition;
+            cardHome = card.anchoredPosition;
             goButton.onClick.AddListener(Close);
             BuildCurves();
         }
 
         private void OnDestroy() => ReleaseSoft();
 
-        /// <summary>Opens for a 1-based world; <paramref name="onClosed"/> runs after "Let's go!".</summary>
-        public void Show(int world, Action onClosed)
+        /// <summary>
+        /// Opens for a 1-based world; <paramref name="onClosed"/> runs after "Let's go!". With <paramref name="fromSign"/> (the world sign's
+        /// world position on the map) the card zooms out of the sign instead of growing in place.
+        /// </summary>
+        public void Show(int world, Action onClosed, Vector3? fromSign = null)
         {
             World = world;
             closed = onClosed;
@@ -105,6 +111,13 @@ namespace BusRush.UI
                 p.image.color = tint;
             }
             gameObject.SetActive(true);
+            card.anchoredPosition = cardHome;
+            this.fromSign = fromSign.HasValue;
+            if (this.fromSign)
+            {
+                homeWorld = card.position;
+                originWorld = fromSign.Value;
+            }
             Apply(0f);
             Sfx.Play("new_world");
             Haptics.Light();
@@ -144,6 +157,7 @@ namespace BusRush.UI
 
             float c = Mathf.Clamp01((t - 0.2f) / 0.7f); // cardIn .7s from .2s
             card.localScale = Vector3.one * cardS.Evaluate(c);
+            if (fromSign) card.position = Vector3.Lerp(originWorld, homeWorld, rise.Evaluate(c)); // scales out of the sign position
             card.localRotation = Quaternion.Euler(0f, 0f, cardR.Evaluate(c));
             cardGroup.alpha = cardA.Evaluate(c);
 

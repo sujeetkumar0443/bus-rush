@@ -445,6 +445,7 @@ namespace BusRush.EditorTools
             TextMeshProUGUI name = V2Text(sign, "Name", "Snow", 22f, true, Color.white, blueText);
             Place(name.rectTransform, 0.5f, 0.5f, 0f, -7f, 200f, 26f);
             Button signButton = V2Button(sign);
+            CanvasGroup signGroup = sign.gameObject.AddComponent<CanvasGroup>(); // the sign can drop in (fade + bounce) during the new-world sequence
 
             // Old lock badge: kept (inactive) so serialized references stay valid; locked nodes carry their own lock now.
             RectTransform badge = V2Box(sign, "Lock", 12f, H(0x24345E), H(0x24345E), null, 2f, Color.white, 0f);
@@ -455,7 +456,7 @@ namespace BusRush.EditorTools
 
             MapSeamView view = seam.gameObject.AddComponent<MapSeamView>();
             Wire(view, ("signButton", signButton), ("worldNumber", num), ("worldName", name), ("lockBadge", badge.gameObject),
-                ("lockText", lockText), ("clouds", cloudObjects), ("sign", sign));
+                ("lockText", lockText), ("clouds", cloudObjects), ("sign", sign), ("signGroup", signGroup));
             seam.gameObject.SetActive(false);
             return view;
         }

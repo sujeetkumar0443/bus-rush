@@ -40,6 +40,7 @@ namespace BusRush.EditorTools
         public static void Run()
         {
             string mode = Env("BUSRUSH_SMOKE_MODE", "normal");
+            if (mode == "mapplay") UIBuilder.PatchRoadMapV3(); // seam sign canvas group etc., same launch
             Debug.Log($"[SmokeTest] START mode={mode} batchMode={Application.isBatchMode} " +
                       $"graphicsDevice={SystemInfo.graphicsDeviceType} ({SystemInfo.graphicsDeviceName})");
             SessionState.SetBool(Flag, true);
@@ -664,6 +665,128 @@ namespace BusRush.EditorTools
                 }
                 else note = "no map in Home";
                 Result("E3 map opened again", ok && entries.Count == before, note);
+
+                // E4: a boss completes (level 10): road to the world sign, the sign drops in, the New World card zooms out of it, then pin 11 unlocks.
+                before = entries.Count;
+                note = "";
+                d.level = 10;
+                d.worldsShown = 1;
+                RealWin(10);
+                map = null;
+                yield return HomeMap(m => map = m);
+                ok = map != null;
+                if (ok)
+                {
+                    var nw = Field<BusRush.UI.NewWorldScreen>(map, "newWorld");
+                    float t0 = Time.unscaledTime;
+                    while (!map.SequenceActive && Time.unscaledTime - t0 < 8f) yield return null;
+                    bool started = map.SequenceActive;
+                    float tc = Time.unscaledTime;
+                    while (!nw.gameObject.activeSelf && Time.unscaledTime - tc < 12f) yield return null;
+                    bool cardShown = nw.gameObject.activeSelf && nw.World == 2;
+                    bool waiting = map.SequenceActive;                       // the sequence waits for the card
+                    float te = Time.unscaledTime;
+                    while (nw.Elapsed < 2.2f && Time.unscaledTime - te < 8f) yield return null;
+                    Field<UnityEngine.UI.Button>(nw, "goButton").onClick.Invoke();
+                    yield return Frames(3);
+                    float s0 = Time.unscaledTime;
+                    while (map.SequenceActive && Time.unscaledTime - s0 < 10f) yield return null;
+                    bool ended = !map.SequenceActive;
+                    var catcher = Field<UnityEngine.UI.Button>(map, "skipCatcher");
+                    bool catcherOff = !catcher.gameObject.activeSelf && !nw.gameObject.activeSelf;
+                    bool worldMarked = SaveSystem.Data.worldsShown >= 2;
+                    note += $"started={started} New World card from the sign={cardShown} sequence waited={waiting} resumed+ended={ended} catcher off={catcherOff} world marked={worldMarked}; ";
+                    bool played = false; string r = "";
+                    yield return TapAndPlay(map, 11, "node 11", (o, n) => { played = o; r = n; });
+                    ok = started && cardShown && waiting && ended && catcherOff && worldMarked && played;
+                    note += r;
+                }
+                else note = "no map in Home";
+                Result("E4 boss complete + New World card", ok && entries.Count == before, note);
+
+                // E4b: the same boss sequence skipped by a tap before the card: the card still shows afterwards, nothing stays blocked.
+                before = entries.Count;
+                note = "";
+                d.level = 20;
+                d.worldsShown = 2;
+                RealWin(20);
+                map = null;
+                yield return HomeMap(m => map = m);
+                ok = map != null;
+                if (ok)
+                {
+                    var nw = Field<BusRush.UI.NewWorldScreen>(map, "newWorld");
+                    float t0 = Time.unscaledTime;
+                    while (!map.SequenceActive && Time.unscaledTime - t0 < 8f) yield return null;
+                    bool started = map.SequenceActive;
+                    yield return new WaitForSecondsRealtime(0.6f);
+                    Field<UnityEngine.UI.Button>(map, "skipCatcher").onClick.Invoke();
+                    yield return Frames(4);
+                    bool stopped = !map.SequenceActive;
+                    float tc = Time.unscaledTime;
+                    while (!nw.gameObject.activeSelf && Time.unscaledTime - tc < 8f) yield return null;
+                    bool cardAfter = nw.gameObject.activeSelf && nw.World == 3;
+                    float te = Time.unscaledTime;
+                    while (nw.Elapsed < 2.2f && Time.unscaledTime - te < 8f) yield return null;
+                    Field<UnityEngine.UI.Button>(nw, "goButton").onClick.Invoke();
+                    yield return new WaitForSecondsRealtime(0.6f);
+                    bool clean = !nw.gameObject.activeSelf && !Field<UnityEngine.UI.Button>(map, "skipCatcher").gameObject.activeSelf;
+                    note += $"started={started} skipped={stopped} card after skip={cardAfter} clean={clean}; ";
+                    bool played = false; string r = "";
+                    yield return TapAndPlay(map, 21, "node 21", (o, n) => { played = o; r = n; });
+                    ok = started && stopped && cardAfter && clean && played;
+                    note += r;
+                }
+                else note = "no map in Home";
+                Result("E4b boss sequence skipped", ok && entries.Count == before, note);
+
+                // E5: all three worlds render in English, Spanish and Hindi; the number and PLAY fonts really draw their characters.
+                before = entries.Count;
+                note = "";
+                SceneLoader.LoadHome();
+                map = null;
+                yield return HomeMap(m => map = m);
+                ok = map != null;
+                int worlds = 0, glyphProblems = 0;
+                if (ok)
+                {
+                    foreach (Language lang in new[] { Language.English, Language.Spanish, Language.Hindi })
+                    {
+                        Localizer.Set(lang);
+                        foreach (int lvl in new[] { 5, 15, 25 })       // City, Snow, Beach
+                        {
+                            d.level = lvl;
+                            d.mapUnlockShown = lvl;
+                            map.Open();
+                            yield return Frames(15);
+                            var node = map.NodeView(lvl);
+                            if (node == null) { glyphProblems++; continue; }
+                            if (lang == Language.English) worlds++;
+                            foreach (string field in new[] { "number", "playText" })
+                            {
+                                var txt = Field<TMP_Text>(node, field);
+                                if (txt == null || !txt.gameObject.activeInHierarchy) { glyphProblems++; continue; }
+                                txt.ForceMeshUpdate();
+                                int visible = 0;
+                                for (int i = 0; i < txt.textInfo.characterCount; i++)
+                                {
+                                    var ci = txt.textInfo.characterInfo[i];
+                                    if (char.IsWhiteSpace(ci.character)) continue;
+                                    if (!ci.isVisible || ci.elementType != TMP_TextElementType.Character || !ci.fontAsset.HasCharacter(ci.character, false, false)) glyphProblems++;
+                                    else visible++;
+                                }
+                                if (visible == 0) glyphProblems++;
+                            }
+                        }
+                    }
+                    Localizer.Set(Language.English);
+                    note += $"worlds rendered={worlds}/3 glyph problems (digits / PLAY, en+es+hi)={glyphProblems}";
+                    ok = worlds == 3 && glyphProblems == 0;
+                }
+                else note = "no map in Home";
+                PlayerPrefs.DeleteKey(Localizer.PrefsKey);
+                Localizer.ResetForTests();
+                Result("E5 three worlds + digit fonts", ok && entries.Count == before, note);
 
                 done(all);
             }
