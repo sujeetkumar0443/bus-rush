@@ -28,7 +28,6 @@ namespace BusRush.EditorTools
             Write(SfxDir + "/Horn_1.wav", Horn());
             Write(SfxDir + "/LevelWin_1.wav", LevelWin());
             Write(SfxDir + "/Star_1.wav", Star());
-            Write(SfxDir + "/Coin_1.wav", Coin());
             Write(SfxDir + "/ChestCreak_1.wav", ChestCreak());
             Write(SfxDir + "/ChestSparkle_1.wav", ChestSparkle());
             Write(SfxDir + "/SpinWin_1.wav", SpinWin());
@@ -201,16 +200,6 @@ namespace BusRush.EditorTools
                 ph += 1760f * (1f + 0.18f * t / dur) / Rate;
                 b[i] = (Mathf.Sin(Tau * ph) + 0.4f * Mathf.Sin(Tau * ph * 1.5f) + 0.25f * Tri(ph * 2f)) * Mathf.Exp(-8f * t) * Ar(t, dur, 0.002f, 0.05f);
             }
-            Normalize(b, 0.8f);
-            return b;
-        }
-
-        /// <summary>Coin clink: two quick blips B5 then E6 with a little shine.</summary>
-        private static float[] Coin()
-        {
-            float[] b = Buf(0.34f);
-            Add(b, 0f, 0.18f, t => (Mathf.Sin(Tau * 988f * t) + 0.3f * Mathf.Sin(Tau * 1976f * t)) * Mathf.Exp(-14f * t));
-            Add(b, 0.07f, 0.27f, t => (Mathf.Sin(Tau * 1319f * t) + 0.3f * Mathf.Sin(Tau * 2638f * t)) * Mathf.Exp(-9f * t));
             Normalize(b, 0.8f);
             return b;
         }

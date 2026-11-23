@@ -8,6 +8,14 @@ namespace BusRush.UI
     [RequireComponent(typeof(TMP_Text))]
     public sealed class CoinText : MonoBehaviour
     {
+        public const float TickGap = 0.065f;            // minimum time between ticks
+        public const float TickSemitonesPerCoin = 0.3f;
+        public const float TickMaxSemitones = 8f;
+        public const float DingVolume = 0.9f;
+
+        /// <summary>Set by <see cref="CoinFly"/> around a count-up payout (level complete): the change then ticks and ends with a ding.</summary>
+        public static bool CountUpSound;
+
         [SerializeField] private Transform punchTarget;
 
         private TMP_Text text;
@@ -44,16 +52,20 @@ namespace BusRush.UI
             Tween.Stop(this, ref countAnim);
             coinTicks = 0;
             nextCoinTick = Time.unscaledTime;
-            bool gained = target > from;
+            bool counting = target > from && CountUpSound;
+            int lastShown = from;
             countAnim = Tween.Value(this, from, target, 0.45f, v =>
             {
-                Render(Mathf.RoundToInt(v));
-                if (gained && coinTicks < 6 && Time.unscaledTime >= nextCoinTick)   // coin clinks, each a semitone higher, during the count-up
+                int now = Mathf.RoundToInt(v);
+                Render(now);
+                if (counting && now > lastShown && Time.unscaledTime >= nextCoinTick)   // one tick per coin step, pitch rising 0.3 semitone each
                 {
-                    AudioManager.PlayRising(SfxId.Coin, coinTicks++, 0.7f);
-                    nextCoinTick = Time.unscaledTime + 0.07f;
+                    float semis = Mathf.Min(coinTicks++ * TickSemitonesPerCoin, TickMaxSemitones);
+                    AudioManager.PlaySemitones(SfxId.CoinTick, semis, 0.8f);
+                    nextCoinTick = Time.unscaledTime + TickGap;
                 }
-            }, Ease.OutCubic);
+                lastShown = now;
+            }, Ease.OutCubic, 0f, counting ? (System.Action)(() => AudioManager.Play(SfxId.CoinDing, 1f, DingVolume)) : null);
 
             Transform punch = punchTarget != null ? punchTarget : transform;
             Tween.Stop(this, ref punchAnim);

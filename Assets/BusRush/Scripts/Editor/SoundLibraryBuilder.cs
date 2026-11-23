@@ -23,7 +23,7 @@ namespace BusRush.EditorTools
             { SfxId.BayArrive, 0.6f }, { SfxId.PassengerBoard, 0.6f }, { SfxId.SeatFilled, 0.7f }, { SfxId.Horn, 0.5f },
             { SfxId.LevelWin, 0.85f }, { SfxId.Star, 0.6f }, { SfxId.LevelFail, 0.7f }, { SfxId.BoosterUse, 0.7f }, { SfxId.LockClick, 0.7f },
             { SfxId.MapPinLift, 0.7f }, { SfxId.RoadShimmer, 0.25f }, { SfxId.PadlockCrack, 0.75f }, { SfxId.Tinkle, 0.45f },
-            { SfxId.PinDrop, 0.6f }, { SfxId.WorldThump, 0.85f }, { SfxId.WorldFanfare, 0.8f }, { SfxId.Coin, 0.6f },
+            { SfxId.PinDrop, 0.6f }, { SfxId.WorldThump, 0.85f }, { SfxId.WorldFanfare, 0.8f }, { SfxId.CoinTick, 1f }, { SfxId.CoinDing, 1f },
             { SfxId.ChestCreak, 0.6f }, { SfxId.ChestSparkle, 0.5f }, { SfxId.SpinTick, 0.5f }, { SfxId.SpinWin, 0.8f }, { SfxId.DailyChime, 0.7f }
         };
 
@@ -58,7 +58,7 @@ namespace BusRush.EditorTools
                 string idName = us > 0 ? stem.Substring(0, us) : stem;
                 if (!Enum.TryParse(idName, out SfxId id)) continue;
                 var clip = AssetDatabase.LoadAssetAtPath<AudioClip>(path);
-                ConfigureImport(path, clip != null ? clip.length : 1f, false, id == SfxId.RoadShimmer);
+                ConfigureImport(path, clip != null ? clip.length : 1f, false, id == SfxId.RoadShimmer || id == SfxId.CoinDing); // CoinDing (0.7 s) decompresses on load like the short clips
                 clip = AssetDatabase.LoadAssetAtPath<AudioClip>(path);
                 if (!sfxByName.TryGetValue(id, out List<AudioClip> list)) sfxByName[id] = list = new List<AudioClip>();
                 list.Add(clip);

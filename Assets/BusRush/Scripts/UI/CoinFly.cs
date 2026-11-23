@@ -5,26 +5,43 @@ using UnityEngine.UI;
 
 namespace BusRush.UI
 {
-    /// <summary>Coins arcing from a point to a coin pill; the amount is added to the wallet when the first one lands.</summary>
+    /// <summary>Coins arcing from a point to a coin pill; the amount is added to the wallet when the first one lands.
+    /// Sound: a one-time reward plays the cash ding as the coins land; with <c>countUp</c> the coin pill's count-up plays the ticks and the final ding.</summary>
     public static class CoinFly
     {
         /// <param name="host">Runs the coroutine (must stay alive for ~1 s).</param>
         /// <param name="layer">Canvas transform the flying coins are drawn on.</param>
         public static void Play(MonoBehaviour host, Transform layer, Sprite sprite, Vector3 from, RectTransform target, int amount,
-                                int count = 6, Action done = null)
+                                int count = 6, Action done = null, bool countUp = false)
         {
             if (host == null || target == null)
             {
-                CoinWallet.Add(amount);
+                Pay(amount, countUp);
                 done?.Invoke();
                 return;
             }
-            host.StartCoroutine(Fly(layer, sprite, from, target, amount, count, done));
+            host.StartCoroutine(Fly(layer, sprite, from, target, amount, count, done, countUp));
         }
 
-        private static IEnumerator Fly(Transform layer, Sprite sprite, Vector3 from, RectTransform target, int amount, int count, Action done)
+        private static void Pay(int amount, bool countUp)
+        {
+            if (countUp)
+            {
+                CoinText.CountUpSound = true;                      // every CoinText that sees this change ticks, then dings
+                try { CoinWallet.Add(amount); }
+                finally { CoinText.CountUpSound = false; }
+            }
+            else
+            {
+                CoinWallet.Add(amount);
+                AudioManager.Play(SfxId.CoinDing, 1f, 0.9f);       // one-time reward: a single ding, no tick
+            }
+        }
+
+        private static IEnumerator Fly(Transform layer, Sprite sprite, Vector3 from, RectTransform target, int amount, int count, Action done, bool countUp)
         {
             bool paid = false;
+            float paidAt = 0f;
             var coins = new RectTransform[count];
             var scatter = new Vector3[count];
             for (int i = 0; i < count; i++)
@@ -66,9 +83,9 @@ namespace BusRush.UI
                         if (!paid)
                         {
                             paid = true;
-                            CoinWallet.Add(amount);
+                            paidAt = Time.unscaledTime;
+                            Pay(amount, countUp);
                             Haptics.Light();
-                            Sfx.Play("coins");
                         }
                         continue;
                     }
@@ -82,7 +99,8 @@ namespace BusRush.UI
                 if (!any) break;
                 yield return null;
             }
-            if (!paid) CoinWallet.Add(amount);
+            if (!paid) Pay(amount, countUp);
+            else if (countUp) yield return new WaitForSecondsRealtime(Mathf.Max(0f, paidAt + 0.5f - Time.unscaledTime)); // let the count-up finish and ding before the screen changes
             done?.Invoke();
         }
     }

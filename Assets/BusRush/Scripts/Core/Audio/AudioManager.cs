@@ -142,6 +142,12 @@ namespace BusRush
             if (Instance != null) Instance.PlayInternal(id, Mathf.Pow(2f, Mathf.Clamp(step, 0, 24) / 12f), volume);
         }
 
+        /// <summary>Count-ups: pitch raised by a number of semitones (fractions allowed).</summary>
+        public static void PlaySemitones(SfxId id, float semitones, float volume = 1f)
+        {
+            if (Instance != null) Instance.PlayInternal(id, Mathf.Pow(2f, semitones / 12f), volume);
+        }
+
         public static void StartLoop(SfxId id, float pitchFrom = 1f, float pitchTo = 1f, float seconds = 0f)
         {
             if (Instance != null) Instance.StartLoopInternal(id, pitchFrom, pitchTo, seconds);
@@ -340,7 +346,7 @@ namespace BusRush
                     Play(SfxId.LevelFail);
                     DuckMusic(2.2f);
                     break;
-                case "coins": Play(SfxId.Coin); break;
+                case "coins": Play(SfxId.CoinDing, 1f, 0.9f); break;
                 case "chest_open":
                     Play(SfxId.ChestCreak);
                     StartCoroutine(Later(SfxId.ChestSparkle, 0.55f));
@@ -355,8 +361,7 @@ namespace BusRush
                     DuckMusic(2f);
                     break;
                 case "daily_claim":
-                    Play(SfxId.DailyChime);
-                    StartCoroutine(Later(SfxId.Coin, 0.12f));
+                    Play(SfxId.DailyChime);                                          // the coin ding plays when the coins land (CoinFly)
                     break;
                 default:
                     if (id != null && id.StartsWith("booster_")) Play(SfxId.BoosterUse);

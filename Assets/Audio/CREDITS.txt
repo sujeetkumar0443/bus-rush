@@ -6,10 +6,11 @@ Sound effects were picked from the free Kenney (www.kenney.nl) audio packs, lice
     Calinou/kenney-interface-sounds, Boyquotes/kenney-impact-sounds-for-godot, kenney-digital-audio-for-godot,
     kenney-music-jingles-for-godot; each carries the CC0 licence text).
   CC0: https://creativecommons.org/publicdomain/zero/1.0/ - free for commercial use, no attribution required.
-  (The Casino Audio pack was not available from a mirror; coin sounds are synthesised.)
+  (The Casino Audio pack was not available from a mirror.)
 
-Every other sound (engine whoosh, buzz, horn, jingles, sparkles, coin, chest creak, road shimmer) and the two music loops
+Every other sound (engine whoosh, buzz, horn, jingles, sparkles, chest creak, road shimmer) and the two music loops
 are synthesised by Assets/BusRush/Scripts/Editor/SoundGenerator.cs (Tools > Bus Rush > Generate Sounds): original work, no licence needed.
+CoinTick_1.ogg and CoinDing_1.ogg (coin count-up tick and cash ding): original synthesized sounds.
 
 Clips used from the packs (converted to 44.1 kHz mono OGG Vorbis, normalised to -1 dBFS):
   UiClick_1.ogg  <-  click_001  [Interface Sounds (Kenney, CC0)]  0.11s

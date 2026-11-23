@@ -172,7 +172,7 @@ namespace BusRush.UI
             {
                 RoadMapScreen.PendingUnlockLevel = Level;
                 SceneLoader.LoadHome();
-            });
+            }, countUp: true);
         }
 
         // ------------------------------------------------------------------ animation

@@ -28,7 +28,8 @@ namespace BusRush
         PinDrop,         // map: new pin drop-in bounce pop
         WorldThump,      // map: New World sign drop
         WorldFanfare,    // map: New World card fanfare sting
-        Coin,            // coin clink
+        CoinTick,        // coin count-up tick (rising pitch)
+        CoinDing,        // cash ding: end of a count-up, or a one-time coin reward
         ChestCreak,      // gift chest open: creak
         ChestSparkle,    // gift chest open: sparkle
         SpinTick,        // lucky spin tick

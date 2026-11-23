@@ -842,7 +842,7 @@ namespace BusRush.EditorTools
                 SaveSystem.Commit();
                 int c1 = am.PlayCount;
                 yield return new WaitForSecondsRealtime(0.06f);
-                AudioManager.Play(SfxId.Coin);
+                AudioManager.Play(SfxId.CoinDing);
                 Sfx.Play("click");
                 AudioManager.PlayRising(SfxId.Star, 2);
                 AudioManager.StartLoop(SfxId.RoadShimmer);
@@ -850,7 +850,7 @@ namespace BusRush.EditorTools
                 d.soundOn = true;
                 SaveSystem.Commit();
                 yield return new WaitForSecondsRealtime(0.06f);
-                AudioManager.Play(SfxId.Coin);
+                AudioManager.Play(SfxId.CoinDing);
                 bool back = am.PlayCount == c1 + 1;
                 Result("Sound toggle", silent && back, $"off -> silent={silent} (no starts, no active sources), on again -> plays={back}");
 
