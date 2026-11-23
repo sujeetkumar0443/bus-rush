@@ -94,7 +94,8 @@ namespace BusRush.UI
         private MapNodeView seqA, seqB;
         private static AnimationCurve easeOut, easeInOut, dotScale;
 
-        private const float NodeBoxHalf = 44f;                       // node incl. stars / 125 % Play disc, half size
+        // A pin's box around its tip (the node position): 72 wide, from 8 px below the lip to the top of its crown, 88 px up.
+        private const float NodeHalfW = 36f, NodeBottom = -8f, NodeTop = 88f;
         private const float BannerHalfW = MapSeamView.BannerWidth * 0.5f + 4f, BannerHalfH = MapSeamView.BannerHeight * 0.5f + 4f;
 
         private sealed class TileView
@@ -309,8 +310,6 @@ namespace BusRush.UI
             SetScrollY(seqScrollTo);
 
             RefreshTiles(); // node N+1 is now the current node (red Play disc in the marker layer)
-            MapNodeView next = NodeView(won + 1);
-            if (next != null) next.PlayArrive();
             if (rewards != null) StopCoroutine(rewards);
             rewards = StartCoroutine(AfterUnlock(won));
             SequenceFinished?.Invoke(won);
@@ -476,35 +475,47 @@ namespace BusRush.UI
         }
 
         /// <summary>
-        /// The banner sits centred on the seam, on the road. If a node would be under it, it slides along the road (nearest first, both
-        /// ways) to the closest spot where no node box touches the banner box.
+        /// The banner sits centred on the seam, on the road. If a pin would be under it, it slides along the road (nearest first, both ways)
+        /// to the closest spot where no pin box touches the banner box; if there is no such spot it takes the one with the least overlap.
         /// </summary>
         public Vector2 BannerCentre(int seamIndex)
         {
             geo ??= new RoadMapGeometry(roadJson.text);
             float seamArc = seamIndex * geo.TileArc;
             int firstLevel = seamIndex * RoadMapGeometry.LevelsPerTile + 1;
-            for (int step = 0; step <= 40; step++)
+            Vector2 best = geo.ContentAt(seamArc, out _);
+            float bestOverlap = BannerOverlapAt(best, firstLevel);
+            for (int step = 1; step <= 40 && bestOverlap > 0f; step++)
             {
                 for (int sign = 1; sign >= -1; sign -= 2)
                 {
-                    if (step == 0 && sign < 0) continue;
                     Vector2 p = geo.ContentAt(seamArc + sign * step * 4f, out _);
-                    if (BannerClearAt(p, firstLevel)) return p;
+                    float o = BannerOverlapAt(p, firstLevel);
+                    if (o < bestOverlap)
+                    {
+                        best = p;
+                        bestOverlap = o;
+                    }
                 }
             }
-            return geo.ContentAt(seamArc, out _);
+            return best;
         }
 
-        private bool BannerClearAt(Vector2 p, int firstLevel)
+        /// <summary>How far the banner box at <paramref name="p"/> sinks into the pin boxes next to the seam (0 = clear).</summary>
+        private float BannerOverlapAt(Vector2 p, int firstLevel)
         {
+            float total = 0f;
             for (int level = firstLevel - 2; level <= firstLevel + 1; level++)
             {
                 if (level < 1 || level > levelCount) continue;
                 Vector2 n = geo.NodeContent(level) + new Vector2(0f, 3f);
-                if (Mathf.Abs(p.x - n.x) < NodeBoxHalf + BannerHalfW && Mathf.Abs(p.y - n.y) < NodeBoxHalf + BannerHalfH) return false;
+                float ox = NodeHalfW + BannerHalfW - Mathf.Abs(p.x - n.x);
+                if (ox <= 0f) continue;
+                float oy = Mathf.Min(p.y + BannerHalfH, n.y + NodeTop) - Mathf.Max(p.y - BannerHalfH, n.y + NodeBottom);
+                if (oy <= 0f) continue;
+                total += Mathf.Min(ox, oy);
             }
-            return true;
+            return total;
         }
 
         private void Release(TileView tv)

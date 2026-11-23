@@ -1,4 +1,5 @@
 using System;
+using System.IO;
 using System.Linq;
 using BusRush.UI;
 using TMPro;
@@ -120,7 +121,7 @@ namespace BusRush.EditorTools
             for (int i = 0; i < order.Length; i++) content.Find(order[i]).SetSiblingIndex(i);
 
             // Templates.
-            MapNodeView nodeT = BuildMapNode(templates, greenText, brownText, soft, ellipse, rays, ring, star, sparkle);
+            MapNodeView nodeT = BuildMapNode(templates, ellipse, ring, soft, star);
             MapSeamView seamT = BuildMapSeam(templates, soft, blueText);
             Transform roadLineT = templates.Find("RoadLine");
             GameObject goldGo = UnityEngine.Object.Instantiate(roadLineT.gameObject, templates);
@@ -180,118 +181,231 @@ namespace BusRush.EditorTools
             if (templates.Find("Chest") != null) Wire(screen, ("chestTemplate", templates.Find("Chest").GetComponent<Button>()));
         }
 
-        // ------------------------------------------------------------------ node
+        // ------------------------------------------------------------------ node: "map pin" (style D)
 
-        private static MapNodeView BuildMapNode(RectTransform parent, Material greenText, Material brownText, Sprite soft, Sprite ellipse,
-                                                Sprite rays, Sprite ring, Sprite star, Sprite sparkle)
+        private const float PinUnit = 48f;                 // design px per normalized sprite unit (the pin sprite covers 96 x 96 design px)
+        private const float PinHalf = 26f;                 // the pin is a 52 px square rotated -45 degrees: radius 26 round part, tip 36.8 px below its centre
+        private const float NodeW = 72f, NodeH = 100f, NodeAbove = 72f;   // tap box: 72 x 100, 72 px above the tip and 28 below (>= 64 px)
+
+        /// <summary>
+        /// Signed distance (negative inside) of the pin in normalized coordinates (y up): a square with corner radii 50% 50% 50% 0 (the
+        /// sharp corner bottom-left), rotated -45 degrees so that corner is the point facing down.
+        /// </summary>
+        private static float PinSdf(float x, float y)
         {
+            float h = PinHalf / PinUnit, c = 0.70710678f;
+            float px = x * c + y * c, py = -x * c + y * c;          // back into the unrotated square
+            float r = (px > 0f || py > 0f) ? h : 0f;               // TR, BR, TL round; BL sharp
+            float qx = Mathf.Abs(px) - h + r, qy = Mathf.Abs(py) - h + r;
+            return Mathf.Min(Mathf.Max(qx, qy), 0f) + new Vector2(Mathf.Max(qx, 0f), Mathf.Max(qy, 0f)).magnitude - r;
+        }
+
+        /// <summary>White-edged gradient pin with its white 40 px number circle and a bottom lip (the pin moved 6 px down in a darker colour).</summary>
+        private static Color PinPixel(float u, float v, Color top, Color bottom, Color lip)
+        {
+            float x = (u - 0.5f) * 2f, y = (v - 0.5f) * 2f;
+            float h = PinHalf / PinUnit;
+            float db = PinSdf(x, y) * PinUnit;                    // px, negative inside
+            float dl = PinSdf(x, y + 6f / PinUnit) * PinUnit;     // lip
+            float aBody = Mathf.Clamp01(0.5f - db), aLip = Mathf.Clamp01(0.5f - dl);
+            Color grad = Color.Lerp(top, bottom, Mathf.InverseLerp(h, -1.4142f * h, y));
+            Color body = Color.Lerp(Color.white, grad, Smooth(-2.5f, -3.6f, db));         // ~2.5 px white edge
+            float dc = new Vector2(x, y).magnitude * PinUnit - 20f;                        // number circle: 40 px, upright
+            Color circle = Color.Lerp(Color.white, new Color(0.86f, 0.89f, 0.95f), Smooth(-2.2f, 0f, dc));
+            body = Color.Lerp(body, circle, Mathf.Clamp01(0.5f - dc));
+            Color c = Color.Lerp(lip, body, aBody);
+            return new Color(c.r, c.g, c.b, Mathf.Max(aLip, aBody));
+        }
+
+        private static readonly Vector2[] CrownPoly =
+        {
+            new Vector2(0.10f, 0.18f), new Vector2(0.10f, 0.68f), new Vector2(0.31f, 0.44f), new Vector2(0.50f, 0.82f),
+            new Vector2(0.69f, 0.44f), new Vector2(0.90f, 0.68f), new Vector2(0.90f, 0.18f)
+        };
+
+        private static float PolyDistance(Vector2 p, Vector2[] v)
+        {
+            float d = (p - v[0]).sqrMagnitude, sign = 1f;
+            for (int i = 0, j = v.Length - 1; i < v.Length; j = i, i++)
+            {
+                Vector2 e = v[j] - v[i], w = p - v[i];
+                Vector2 b = w - e * Mathf.Clamp01(Vector2.Dot(w, e) / Vector2.Dot(e, e));
+                d = Mathf.Min(d, b.sqrMagnitude);
+                bool c1 = p.y >= v[i].y, c2 = p.y < v[j].y, c3 = e.x * w.y > e.y * w.x;
+                if ((c1 && c2 && c3) || (!c1 && !c2 && !c3)) sign = -sign;
+            }
+            return sign * Mathf.Sqrt(d);
+        }
+
+        /// <summary>Small gold crown: three peaks, three balls, a darker outline.</summary>
+        private static Color CrownPixel(float u, float v)
+        {
+            var p = new Vector2(u, v);
+            float d = PolyDistance(p, CrownPoly);
+            d = Mathf.Min(d, (p - new Vector2(0.10f, 0.73f)).magnitude - 0.075f);
+            d = Mathf.Min(d, (p - new Vector2(0.50f, 0.87f)).magnitude - 0.085f);
+            d = Mathf.Min(d, (p - new Vector2(0.90f, 0.73f)).magnitude - 0.075f);
+            float px = d * 128f;                                           // px at 128
+            float a = Mathf.Clamp01(0.5f - px);
+            Color gold = Color.Lerp(new Color32(0xF5, 0xA6, 0x23, 0xFF), new Color32(0xFF, 0xE2, 0x7A, 0xFF), Mathf.InverseLerp(0.15f, 0.9f, v));
+            Color c = Color.Lerp(new Color32(0xB8, 0x73, 0x0F, 0xFF), gold, Smooth(-1.2f, -3.6f, px));
+            if (v < 0.34f && v > 0.18f && u > 0.14f && u < 0.86f) c = Color.Lerp(c, new Color32(0xC9, 0x2B, 0x3A, 0xFF), 0.85f); // red band
+            return new Color(c.r, c.g, c.b, a);
+        }
+
+        /// <summary>Writes (always, so a tweak shows) a coloured procedural sprite into Art/UI_v2/Generated.</summary>
+        private static Sprite GeneratedColorSprite(string name, int size, Func<float, float, Color> pixel)
+        {
+            string path = $"{GeneratedDir}/{name}.png";
+            Directory.CreateDirectory(GeneratedDir);
+            var tex = new Texture2D(size, size, TextureFormat.RGBA32, false);
+            var px = new Color[size * size];
+            for (int y = 0; y < size; y++)
+            {
+                for (int x = 0; x < size; x++) px[y * size + x] = pixel((x + 0.5f) / size, (y + 0.5f) / size);
+            }
+            tex.SetPixels(px);
+            tex.Apply();
+            File.WriteAllBytes(path, tex.EncodeToPNG());
+            UnityEngine.Object.DestroyImmediate(tex);
+            AssetDatabase.ImportAsset(path, ImportAssetOptions.ForceSynchronousImport);
+            var ti = (TextureImporter)AssetImporter.GetAtPath(path);
+            ti.textureType = TextureImporterType.Sprite;
+            ti.spriteImportMode = SpriteImportMode.Single;
+            ti.mipmapEnabled = false;
+            ti.alphaIsTransparency = true;
+            ti.wrapMode = TextureWrapMode.Clamp;
+            ti.filterMode = FilterMode.Bilinear;
+            ti.textureCompression = TextureImporterCompression.CompressedHQ;
+            ti.SaveAndReimport();
+            return AssetDatabase.LoadAssetAtPath<Sprite>(path);
+        }
+
+        private static Sprite PinSprite(string name, int topHex, int bottomHex, int lipHex)
+        {
+            Color top = H(topHex), bottom = H(bottomHex), lip = H(lipHex);
+            return GeneratedColorSprite(name, 192, (u, v) => PinPixel(u, v, top, bottom, lip));
+        }
+
+        /// <summary>Lilita One digits with a hard 1 px underlay (no outline, never black): crisp on the white circle. Lives outside the font folder.</summary>
+        private static Material PinNumberMaterial()
+        {
+            string path = MapArt + "/LilitaOne PinNumber.mat";
+            var m = AssetDatabase.LoadAssetAtPath<Material>(path);
+            if (m == null)
+            {
+                m = new Material(Theme.headingFont.material) { name = "LilitaOne PinNumber" };
+                AssetDatabase.CreateAsset(m, path);
+            }
+            m.SetTexture(ShaderUtilities.ID_MainTex, Theme.headingFont.atlasTexture);
+            Theme.ApplyPlainText(m);
+            m.EnableKeyword(ShaderUtilities.Keyword_Underlay);
+            m.SetColor(ShaderUtilities.ID_UnderlayColor, new Color(0.1f, 0.16f, 0.4f, 0.45f));
+            m.SetFloat(ShaderUtilities.ID_UnderlayOffsetX, 0f);
+            m.SetFloat(ShaderUtilities.ID_UnderlayOffsetY, -0.6f);
+            m.SetFloat(ShaderUtilities.ID_UnderlaySoftness, 0f);
+            m.SetFloat(ShaderUtilities.ID_UnderlayDilate, 0f);
+            EditorUtility.SetDirty(m);
+            return m;
+        }
+
+        private static MapNodeView BuildMapNode(RectTransform parent, Sprite ellipse, Sprite ring, Sprite soft, Sprite star)
+        {
+            Sprite pinDone = PinSprite("map_pin_done", 0xFFB04D, 0xF2711C, 0xC0500C);
+            Sprite pinCurrent = PinSprite("map_pin_current", 0x7CE05B, 0x2CB43A, 0x16792A);
+            Sprite pinLocked = PinSprite("map_pin_locked", 0xC9D2E3, 0x95A2BC, 0x6B7894);
+            Sprite pinBoss = PinSprite("map_pin_boss", 0xFF8383, 0xDB2B3B, 0x8A1020);
+            Sprite crownSprite = GeneratedColorSprite("map_crown", 128, CrownPixel);
+            Material numberMat = PinNumberMaterial();
+
             RectTransform node = Rect(parent, "Node");
             node.anchorMin = node.anchorMax = Vector2.zero;
-            node.pivot = new Vector2(0.5f, 0.5f);
-            node.sizeDelta = new Vector2(66f, 54f);
+            node.pivot = new Vector2(0.5f, (NodeH - NodeAbove) / NodeH);   // the node position is the pin's tip
+            node.sizeDelta = new Vector2(NodeW, NodeH);
             Image hit = node.gameObject.AddComponent<Image>();
             hit.color = new Color(0f, 0f, 0f, 0f);
             Button button = node.gameObject.AddComponent<Button>();
             button.transition = Selectable.Transition.None;
             Wire(node.gameObject.AddComponent<UIButton>(), ("pressedScale", 0.92f), ("lightHaptic", true));
 
-            // Current: slowly turning light rays + a soft warm glow behind the red disc.
-            RectTransform glow = Box(Rect(node, "Glow"), -34f, -44f, 134f, 134f);
-            Image spin = Img(glow, "Rays", rays, new Color(1f, 0.85f, 0.7f, 1f));
-            spin.raycastTarget = false;
-            Stretch(spin.rectTransform);
-            Image glowSoft = Img(glow, "Soft", ellipse, new Color(1f, 0.55f, 0.45f, 0.7f));
-            glowSoft.raycastTarget = false;
-            Box(glowSoft.rectTransform, 27f, 30f, 80f, 66f);
+            // Box centred at (cx, heightAboveTip) in the tap box.
+            RectTransform At(RectTransform rt, float cx, float heightAboveTip, float w, float h) =>
+                Box(rt, NodeW * 0.5f + cx - w * 0.5f, (NodeAbove - heightAboveTip) - h * 0.5f, w, h);
 
-            // Pulsing ring (also the unlock pop's ring), centred on the disc.
-            Image ringImg = Img(node, "Ring", ring, new Color(1f, 0.78f, 0.72f, 0f));
-            ringImg.raycastTarget = false;
-            Box(ringImg.rectTransform, -15f, -21f, 96f, 96f);
+            // Soft ground shadow under the point, two ripples (current).
+            Image shadow = Img(node, "Shadow", ellipse, new Color(0.05f, 0.1f, 0.25f, 0.38f));
+            shadow.raycastTarget = false;
+            At(shadow.rectTransform, 0f, -1f, 54f, 17f);
+            var ripples = new Image[2];
+            for (int i = 0; i < 2; i++)
+            {
+                ripples[i] = Img(node, "Ripple" + i, ring, new Color(1f, 1f, 1f, 0f));
+                ripples[i].raycastTarget = false;
+                At(ripples[i].rectTransform, 0f, 0f, 64f, 64f);
+            }
 
-            // Current: 125 % red Play disc with a white triangle, bounces every 2 s.
-            RectTransform hop = Stretch(Rect(node, "Hop"));
-            RectTransform red = Box(Rect(hop, "Red"), -3f, -3f, 72f, 58f);
-            Image redDisc = ShadowedImg(red, "Disc", UiV2Sprite("Map/disc_red.png"), 4f, 0.3f);
-            Stretch((RectTransform)redDisc.transform.parent);
-            Image playIcon = Img(hop, "PlayIcon", GeneratedSprite("ui_play", 64, 64, PaintPlay), Color.white);
-            playIcon.raycastTarget = false;
-            Box(playIcon.rectTransform, 20f, 10f, 30f, 32f);
+            // Pin body: its pivot is the tip, so lifting / squashing / shaking works around the point.
+            float tipBelowCentre = PinHalf * 1.41421f;
+            RectTransform body = Rect(node, "Body");
+            body.anchorMin = body.anchorMax = new Vector2(0f, 1f);
+            body.pivot = new Vector2(0.5f, (48f - tipBelowCentre) / 96f);
+            body.sizeDelta = new Vector2(96f, 96f);
+            body.anchoredPosition = new Vector2(NodeW * 0.5f, -NodeAbove);
+            Image pin = Img(body, "Pin", pinCurrent, Color.white);
+            pin.raycastTarget = false;
+            Stretch(pin.rectTransform);
+            TextMeshProUGUI number = V2Text(body, "Number", "1", 20f, true, MapNodeView.NumberCurrent, numberMat);
+            Place(number.rectTransform, 0.5f, 0.5f, 0f, -1f, 40f, 28f);
+            Image lockIcon = Img(body, "Lock", UiV2Sprite("Map/lock.png"), new Color32(0x6B, 0x78, 0x94, 0xFF));
+            lockIcon.raycastTarget = false;
+            lockIcon.preserveAspect = true;
+            Place(lockIcon.rectTransform, 0.5f, 0.5f, 0f, 0f, 20f, 24f);
+            Image crown = Img(body, "Crown", crownSprite, Color.white);
+            crown.raycastTarget = false;
+            Place(crown.rectTransform, 0.5f, 0.5f, 0f, 36f, 32f, 24f);
 
-            // Completed: gold disc + number + stars.
-            RectTransform gold = Stretch(Rect(node, "Gold"));
-            Image goldDisc = ShadowedImg(gold, "Disc", UiV2Sprite("Map/disc_gold.png"), 4f, 0.3f);
-            Stretch((RectTransform)goldDisc.transform.parent);
-            TextMeshProUGUI goldNum = V2Text(gold, "Number", "1", 23f, true, Color.white, brownText);
-            Box(goldNum.rectTransform, 0f, 2f, 66f, 36f);
-            RectTransform starsRow = Box(Rect(node, "Stars"), 3f, 42f, 60f, 22f);
+            // Done: three gold stars under the pin.
+            RectTransform starsRow = Rect(node, "Stars");
+            At(starsRow, 0f, -15f, 60f, 22f);
             var stars = new Image[3];
-            (float x, float y, float s)[] starSpec = { (0f, 2f, 19f), (19f, 4f, 21f), (41f, 2f, 19f) };
             for (int i = 0; i < 3; i++)
             {
                 stars[i] = Img(starsRow, "Star" + i, star, Color.white);
-                Box(stars[i].rectTransform, starSpec[i].x, starSpec[i].y, starSpec[i].s, starSpec[i].s);
+                stars[i].raycastTarget = false;
+                Place(stars[i].rectTransform, 0.5f, 0.5f, (i - 1) * 19f, i == 1 ? -2f : 1f, i == 1 ? 21f : 18f, i == 1 ? 21f : 18f);
             }
 
-            // Locked: grey disc 62x50 + a small lock badge on its top right (it belongs to the node, never to a banner).
-            Image greyImg = Img(node, "Grey", UiV2Sprite("Map/disc_grey_locked.png"), Color.white);
-            Box(greyImg.rectTransform, 2f, 2f, 62f, 50f, 0.5f, 0.4f);
-            RectTransform badge = V2Box(node, "LockBadge", 9f, H(0x4A5A8E), H(0x24345E), null, 2f, Color.white, 0f);
-            Box(badge, 45f, -8f, 24f, 26f);
-            Image lockIcon = Img(badge, "Icon", UiV2Sprite("Map/lock.png"), Color.white);
-            lockIcon.raycastTarget = false;
-            Place(lockIcon.rectTransform, 0.5f, 0.5f, 0f, 0f, 13f, 17f);
+            // Current: white PLAY pill above the pin (bobs).
+            RectTransform play = Rect(node, "Play");
+            At(play, 0f, 92f, 64f, 32f);
+            Image pill = RoundImg(play, "Pill", 13f, Color.white);
+            pill.raycastTarget = false;
+            Place(pill.rectTransform, 0.5f, 0.5f, 0f, 3f, 62f, 26f);
+            Image pointer = Img(play, "Pointer", White, Color.white);
+            pointer.raycastTarget = false;
+            Place(pointer.rectTransform, 0.5f, 0f, 0f, 6f, 9f, 9f);
+            pointer.rectTransform.localRotation = Quaternion.Euler(0f, 0f, 45f);
+            TextMeshProUGUI playText = V2Text(play, "Text", "PLAY", 15f, true, MapNodeView.NumberCurrent, numberMat);
+            Place(playText.rectTransform, 0.5f, 0.5f, 0f, 3f, 62f, 24f);
 
-            // The two halves of the cracked lock disc (filled left / right half of the grey disc).
-            Image halfL = Img(node, "HalfLeft", UiV2Sprite("Map/disc_grey_locked.png"), Color.white);
-            Box(halfL.rectTransform, 2f, 2f, 62f, 50f, 0.5f, 0.4f);
-            halfL.type = Image.Type.Filled;
-            halfL.fillMethod = Image.FillMethod.Horizontal;
-            halfL.fillOrigin = (int)Image.OriginHorizontal.Left;
-            halfL.fillAmount = 0.5f;
-            halfL.raycastTarget = false;
-            Image halfR = Img(node, "HalfRight", UiV2Sprite("Map/disc_grey_locked.png"), Color.white);
-            Box(halfR.rectTransform, 2f, 2f, 62f, 50f, 0.5f, 0.4f);
-            halfR.type = Image.Type.Filled;
-            halfR.fillMethod = Image.FillMethod.Horizontal;
-            halfR.fillOrigin = (int)Image.OriginHorizontal.Right;
-            halfR.fillAmount = 0.5f;
-            halfR.raycastTarget = false;
-
-            // Boss: 66x64 disc (5 px higher) + red number tag.
-            RectTransform boss = Box(Rect(node, "Boss"), 0f, -10f, 66f, 64f);
-            Image bossDisc = ShadowedImg(boss, "Disc", UiV2Sprite("Map/disc_boss.png"), 4f, 0.3f);
-            Stretch((RectTransform)bossDisc.transform.parent);
-            RectTransform tag = V2Box(boss, "Tag", 10f, H(0x7A1016), H(0x7A1016), null, 2f, Color.white, 0f);
-            Box(tag, 13f, 56f, 40f, 20f);
-            TextMeshProUGUI tagText = V2Text(tag, "Text", "10", 12f, true, Color.white);
-
-            // Star burst (9 stars) and twinkles, white flash.
-            var burst = new Image[9];
-            for (int i = 0; i < 9; i++)
-            {
-                burst[i] = Img(node, "Ray" + i, star, Color.white);
-                burst[i].raycastTarget = false;
-                Box(burst[i].rectTransform, 24f, 2f, 18f, 18f);
-            }
-            var tw = new Image[3];
-            (float x, float y, float s, Color c)[] twSpec = { (-14f, -10f, 16f, Color.white), (66f, -6f, 12f, H(0xFFF6B0)), (58f, 44f, 14f, Color.white) };
-            for (int i = 0; i < 3; i++)
-            {
-                tw[i] = Img(node, "Twinkle" + i, sparkle, twSpec[i].c);
-                tw[i].raycastTarget = false;
-                Box(tw[i].rectTransform, twSpec[i].x, twSpec[i].y, twSpec[i].s, twSpec[i].s);
-            }
-            Image flash = Img(node, "Flash", soft, new Color(1f, 1f, 1f, 0f));
+            // Unlock fx: ring flash and 6 padlock pieces at the pin's circle centre.
+            float centre = tipBelowCentre;
+            Image flash = Img(node, "Flash", ring, new Color(1f, 1f, 1f, 0f));
             flash.raycastTarget = false;
-            Box(flash.rectTransform, -22f, -28f, 110f, 110f);
+            At(flash.rectTransform, 0f, centre, 88f, 88f);
+            var pieces = new Image[6];
+            for (int i = 0; i < 6; i++)
+            {
+                pieces[i] = Img(node, "Piece" + i, soft, new Color(0.62f, 0.68f, 0.8f, 1f));
+                pieces[i].raycastTarget = false;
+                At(pieces[i].rectTransform, 0f, centre, 9f, 9f);
+            }
 
             MapNodeView view = node.gameObject.AddComponent<MapNodeView>();
-            Wire(view, ("button", button), ("gold", gold.gameObject), ("goldNumber", goldNum), ("starsRow", starsRow.gameObject),
-                ("stars", stars), ("glow", glow), ("spin", spin.rectTransform), ("glowSoft", glowSoft), ("ring", ringImg), ("hop", hop),
-                ("red", red.gameObject), ("playIcon", playIcon.rectTransform), ("twinkles", tw), ("rays", burst), ("flash", flash),
-                ("grey", greyImg.rectTransform), ("greyImage", greyImg), ("lockBadge", badge.gameObject), ("halfLeft", halfL),
-                ("halfRight", halfR), ("boss", boss.gameObject), ("bossTag", tagText));
+            Wire(view, ("button", button), ("body", body), ("pin", pin), ("pinDone", pinDone), ("pinCurrent", pinCurrent),
+                ("pinLocked", pinLocked), ("pinBoss", pinBoss), ("number", number), ("lockIcon", lockIcon), ("crown", crown),
+                ("shadow", shadow), ("starsRow", starsRow), ("stars", stars), ("playMarker", play), ("playText", playText),
+                ("ripples", ripples), ("flashRing", flash), ("pieces", pieces));
             node.gameObject.SetActive(false);
             return view;
         }
