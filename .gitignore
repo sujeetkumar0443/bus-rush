@@ -9,3 +9,5 @@ UserSettings/
 # Unity crash-recovery leftovers
 Assets/_Recovery/
 Assets/_Recovery.meta
+unity_check.log
+smoke.log
