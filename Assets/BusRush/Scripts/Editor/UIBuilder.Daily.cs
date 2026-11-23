@@ -276,9 +276,10 @@ namespace BusRush.EditorTools
             Place(video.rectTransform, 0.5f, 0.5f, -34f, 2f, 40f, 33f);
             V2Text(spinBox, "Label", "Spin", 30f, true, Color.white, LilitaOutline("Green", H(0x1D5F12))).rectTransform.anchoredPosition = new Vector2(24f, 2f);
             Button spin = V2Button(spinBox);
-            TextMeshProUGUI spinsText = V2Text(p, "SpinsLeft", "3 spins left today", 15f, false, Color.white);
+            TextMeshProUGUI spinsText = V2Text(p, "SpinsLeft", "3 spins left today", 18f, false, SpinsTextColor);
             spinsText.fontStyle = FontStyles.Bold;
             Box(spinsText.rectTransform, -45f, 568f, 390f, 20f);
+            AddSpinsLeftPill(spinsText.rectTransform); // light pill behind it: navy text on the dark blurred scene
 
             // "You won!" card over its own dim (above the panel).
             RectTransform won = Stretch(Rect(s.Root.transform, "Won"));
