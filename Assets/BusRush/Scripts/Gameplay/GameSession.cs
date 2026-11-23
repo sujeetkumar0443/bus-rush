@@ -125,14 +125,18 @@ namespace BusRush.Gameplay
             {
                 case TapResult.Moved:
                     Moves++;
+                    AudioManager.Play(SfxId.VehicleOut);                       // soft engine whoosh
                     break;
                 case TapResult.Blocked:
                     WrongTaps++;
+                    AudioManager.Play(SfxId.Blocked);                          // low thud + short buzz
+                    AudioManager.Play(SfxId.Buzz);
                     Haptics.Short();
                     ScreenFlash.Play();
                     break;
                 case TapResult.NoBay:
                     NoBayTaps++;
+                    AudioManager.Play(SfxId.Buzz, 1f, 0.5f);                   // bays full: the same buzz, softer
                     Haptics.Short();
                     Toast.Show(Localizer.T("No free bay!"));
                     break;
@@ -191,6 +195,7 @@ namespace BusRush.Gameplay
             bay.SeatsReserved = Mathf.Max(0, bay.SeatsReserved - 1);
             bay.SetFilled(bay.Filled + 1);
             BoardedCount++;
+            AudioManager.PlayRising(SfxId.PassengerBoard, bay.Filled - 1);     // +1 semitone per passenger of this vehicle (a rising scale)
 
             Tween.Scale(vehicle, vehicle.transform, Vector3.one * 1.06f, Vector3.one, 0.1f, Ease.OutQuad);
             if (fx != null) fx.Sparkle(ScreenRef.RefToWorld(ScreenRef.BayX(bay.Index), ScreenRef.BayY) + Vector3.up * 0.6f, GameColors.GetColor(color));
@@ -198,6 +203,7 @@ namespace BusRush.Gameplay
             if (bay.Filled >= bay.Capacity && !bay.Full)
             {
                 bay.Full = true;
+                AudioManager.Play(SfxId.SeatFilled);                           // last seat: happy chime (the horn follows as it leaves)
                 StartCoroutine(DepartWhenFull(bay));
             }
         }
@@ -205,11 +211,13 @@ namespace BusRush.Gameplay
         private IEnumerator DepartWhenFull(BayState bay)
         {
             yield return new WaitForSeconds(GameTuning.FullDepartDelaySeconds);
+            AudioManager.Play(SfxId.Horn);                                     // short car horn as the vehicle drives away
             bay.DepartVehicle();
         }
 
         private void HandleParked(BayState bay)
         {
+            AudioManager.Play(SfxId.BayArrive);                                // vehicle arrives in a bay: small pop
             OnVehicleParked?.Invoke(bay);
             if (debugAutoDepart) StartCoroutine(AutoDepart(bay));
         }

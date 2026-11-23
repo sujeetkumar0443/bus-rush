@@ -116,7 +116,11 @@ namespace BusRush.UI
             Popup top = Top;
             if (top != null)
             {
-                if (top.CloseOnBack) Close(top);
+                if (top.CloseOnBack)
+                {
+                    if (top.CanClose) AudioManager.Play(SfxId.UiBack);
+                    Close(top);
+                }
             }
             else
             {

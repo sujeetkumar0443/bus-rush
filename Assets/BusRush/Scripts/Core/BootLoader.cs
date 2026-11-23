@@ -15,6 +15,7 @@ namespace BusRush
         {
             GameManager.EnsureExists();
             SaveSystem.Load();
+            AudioManager.EnsureCreated();
             SceneLoader.EnsureTransitionCanvas();
         }
 

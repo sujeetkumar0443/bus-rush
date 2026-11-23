@@ -96,6 +96,7 @@ namespace BusRush.UI
         private bool worldSeq, worldHold, worldAfter, skipRequested;
         private int seqSeam;
         private float arcSign, fillSign, seqTime2;
+        private bool cueLift, cueShimmer, cueShimmerEnd, cueBreak, cueTinkle, cuePin, cueDrop;
         private static AnimationCurve easeOut, easeInOut, dotScale;
 
         // New-world variant: the road runs gold to the world sign, the sign drops in, the New World card zooms out of it, then the next pin unlocks.
@@ -156,6 +157,8 @@ namespace BusRush.UI
             seqA = seqB = null;
             seqBanner = null;
             worldSeq = worldHold = worldAfter = skipRequested = false;
+            cueLift = cueShimmer = cueShimmerEnd = cueBreak = cueTinkle = cuePin = cueDrop = false;
+            AudioManager.StopLoop(SfxId.RoadShimmer);
             if (skipCatcher != null) skipCatcher.gameObject.SetActive(false);
             if (greyPath != null) greyPath.gameObject.SetActive(false);
             if (goldGlow != null) goldGlow.gameObject.SetActive(false);
@@ -301,6 +304,21 @@ namespace BusRush.UI
                 if (seqA != null) seqA.SeqCompleted(t);                                                            // 2. lift, squash, orange, stars
 
                 float pathEnd = worldSeq ? WorldPathEnd : MapSequence.PathEnd;
+                if (!cueLift && t >= MapSequence.LiftStart)
+                {
+                    cueLift = true;
+                    AudioManager.Play(SfxId.MapPinLift);                                                           // pin lift thump
+                }
+                if (!cueShimmer && t >= MapSequence.PathStart)
+                {
+                    cueShimmer = true;
+                    AudioManager.StartLoop(SfxId.RoadShimmer, 1f, 1.6f, pathEnd - MapSequence.PathStart);          // rising shimmer while the gold fills
+                }
+                if (!cueShimmerEnd && t >= pathEnd)
+                {
+                    cueShimmerEnd = true;
+                    AudioManager.StopLoop(SfxId.RoadShimmer);
+                }
                 float pk = Mathf.Clamp01((t - MapSequence.PathStart) / (pathEnd - MapSequence.PathStart));       // 3. gold road + dot
                 fill = (worldSeq ? fillSign : 1f) * easeInOut.Evaluate(pk);
                 dotOn = t >= MapSequence.PathStart && t < pathEnd + 0.1f;
@@ -310,6 +328,11 @@ namespace BusRush.UI
                 {
                     if (seqB != null) seqB.SeqNext(0f);                                                            // next pin waits, locked
                     if (seqBanner != null) seqBanner.SetDrop(t < WorldPathEnd ? -1f : Mathf.Clamp01((t - WorldPathEnd) / (DropEnd - WorldPathEnd)));
+                    if (!cueDrop && t >= WorldPathEnd)
+                    {
+                        cueDrop = true;
+                        AudioManager.Play(SfxId.WorldThump);                                                       // the sign drops in: heavy thump
+                    }
                     if (t >= WorldCardAt)
                     {
                         worldHold = true;
@@ -323,6 +346,7 @@ namespace BusRush.UI
                 else
                 {
                     if (seqB != null) seqB.SeqNext(t);                                                             // 4. padlock breaks, green pin
+                    UnlockCues(t);
                 }
                 goldGlow.Fill = fill;
                 goldPath.Fill = fill;
@@ -341,6 +365,17 @@ namespace BusRush.UI
             SetDot(t2 < PathAfterCard + 0.1f, fill, t2 < PathAfterCard ? 0.95f : Mathf.Clamp01(1f - (t2 - PathAfterCard) / 0.1f), pk2);
             float u = MapSequence.ShakeStart - 0.01f + Mathf.Max(0f, t2 - PathAfterCard + 0.01f);
             if (seqB != null) seqB.SeqNext(u);
+            if (!cueShimmer)
+            {
+                cueShimmer = true;
+                AudioManager.StartLoop(SfxId.RoadShimmer, 1f, 1.6f, PathAfterCard);
+            }
+            if (!cueShimmerEnd && t2 >= PathAfterCard)
+            {
+                cueShimmerEnd = true;
+                AudioManager.StopLoop(SfxId.RoadShimmer);
+            }
+            UnlockCues(u);
             goldGlow.Fill = fill;
             goldPath.Fill = fill;
             seqArc = Mathf.Lerp(arcA, arcB, fill);
@@ -364,6 +399,28 @@ namespace BusRush.UI
             worldHold = false;
             worldAfter = true;
             seqTime2 = 0f;
+            cueShimmer = cueShimmerEnd = false; // the road continues to the next pin
+        }
+
+        /// <summary>Padlock break: crack + small tinkles, then the new pin's drop-in bounce pop (u = the next pin's unlock time).</summary>
+        private void UnlockCues(float u)
+        {
+            if (!cueBreak && u >= MapSequence.BreakAt)
+            {
+                cueBreak = true;
+                AudioManager.Play(SfxId.PadlockCrack);
+                AudioManager.Play(SfxId.Tinkle);
+            }
+            if (!cueTinkle && u >= MapSequence.BreakAt + 0.1f)
+            {
+                cueTinkle = true;
+                AudioManager.PlayRising(SfxId.Tinkle, 4, 0.8f);
+            }
+            if (!cuePin && u >= MapSequence.BreakAt + 0.12f)
+            {
+                cuePin = true;
+                AudioManager.Play(SfxId.PinDrop);
+            }
         }
 
         /// <summary>Tap anywhere: jump to the end state.</summary>

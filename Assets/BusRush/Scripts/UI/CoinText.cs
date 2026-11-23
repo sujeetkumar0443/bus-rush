@@ -14,6 +14,8 @@ namespace BusRush.UI
         private int shown;
         private Coroutine countAnim;
         private Coroutine punchAnim;
+        private int coinTicks;
+        private float nextCoinTick;
 
         private void Awake()
         {
@@ -40,7 +42,18 @@ namespace BusRush.UI
             int from = shown;
             shown = target;
             Tween.Stop(this, ref countAnim);
-            countAnim = Tween.Value(this, from, target, 0.45f, v => Render(Mathf.RoundToInt(v)), Ease.OutCubic);
+            coinTicks = 0;
+            nextCoinTick = Time.unscaledTime;
+            bool gained = target > from;
+            countAnim = Tween.Value(this, from, target, 0.45f, v =>
+            {
+                Render(Mathf.RoundToInt(v));
+                if (gained && coinTicks < 6 && Time.unscaledTime >= nextCoinTick)   // coin clinks, each a semitone higher, during the count-up
+                {
+                    AudioManager.PlayRising(SfxId.Coin, coinTicks++, 0.7f);
+                    nextCoinTick = Time.unscaledTime + 0.07f;
+                }
+            }, Ease.OutCubic);
 
             Transform punch = punchTarget != null ? punchTarget : transform;
             Tween.Stop(this, ref punchAnim);

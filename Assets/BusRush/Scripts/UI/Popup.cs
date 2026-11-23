@@ -43,6 +43,7 @@ namespace BusRush.UI
             {
                 dimButton.onClick.AddListener(() =>
                 {
+                    if (closeOnDimClick && IsOpen && CanClose) AudioManager.Play(SfxId.UiBack);
                     if (closeOnDimClick) Close();
                 });
             }

@@ -256,6 +256,7 @@ namespace BusRush.Gameplay
                 if (b.Kind != BayKind.Locked) continue;
                 b.Kind = BayKind.Open;
                 b.View.SetKind(BayKind.Open);
+                AudioManager.Play(SfxId.LockClick);                            // bay unlock (the booster whoosh comes from the booster hook)
                 return true;
             }
             return false;

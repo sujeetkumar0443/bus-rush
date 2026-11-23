@@ -93,7 +93,7 @@ namespace BusRush.UI
         private void OnClick()
         {
             Clicked?.Invoke();
-            Sfx.Play("click");
+            Sfx.Play(name.Contains("Close") || name.Contains("Back") ? "back" : "click");   // soft click, softer for back / close
             if (!haptic) return;
             if (lightHaptic) Haptics.Light();
             else Haptics.Short();
