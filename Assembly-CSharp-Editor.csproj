@@ -74,6 +74,7 @@
     <Compile Include="Assets\BusRush\Tests\Editor\RoadMapTests.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\SplashScreenshotTool.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\UIKit.cs" />
+    <Compile Include="Assets\BusRush\Editor\SmokeTest.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\UIBuilder.Popups.cs" />
     <Compile Include="Assets\BusRush\Scripts\Editor\UIBuilder.RoadMap.cs" />
     <Compile Include="Assets\BusRush\Tests\Editor\TrafficScheduleTests.cs" />
