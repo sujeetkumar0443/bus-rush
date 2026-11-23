@@ -69,6 +69,24 @@ namespace BusRush.EditorTools
                         Debug.Log($"[HomeShots] capturing at {home.Elapsed:0.000}s");
                         yield return RenderCapture.Capture(OutputDir, $"home_{t:0}s_390x844", 390, 844);
                     }
+                    // Shine: find a sweep start (streak turns on), then shoot 3 frames 0.4 s apart around the next one.
+                    var fx = Object.FindFirstObjectByType<HomeLevelButtonFx>();
+                    Transform streak = fx != null ? fx.transform.Find("ShineMask/Streak") : null;
+                    if (streak == null) Debug.LogWarning("[HomeShots] no streak found");
+                    else
+                    {
+                        Time.timeScale = 1f;
+                        while (!streak.gameObject.activeSelf) yield return null;
+                        float start = Time.unscaledTime;
+                        float next = start + 2.5f;
+                        for (int i = 0; i < 3; i++)
+                        {
+                            float at = next - 0.2f + 0.4f * i;
+                            while (Time.unscaledTime < at) yield return null;
+                            yield return RenderCapture.Capture(OutputDir, $"home_shine_{i + 1}_390x844", 390, 844);
+                            Debug.Log($"[HomeShots] shine frame {i + 1}: t-sweep={Time.unscaledTime - next:0.00}s streakOn={streak.gameObject.activeSelf}");
+                        }
+                    }
                     UIManager.Instance.Open<FreeCoinsPopup>();
                     yield return new WaitForSecondsRealtime(0.6f);
                     yield return RenderCapture.Capture(OutputDir, "home_free_coins_390x844", 390, 844);

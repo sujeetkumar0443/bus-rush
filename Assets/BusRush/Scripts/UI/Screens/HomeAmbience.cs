@@ -63,7 +63,7 @@ namespace BusRush.UI
             idleY = CssCurve.Build(half, new[] { 0f, 4f, 0f }, CssCurve.EaseInOut);        // idle 1.4 s: translateY(-4px)
             idleScaleY = CssCurve.Build(half, new[] { 1f, 1.01f, 1f }, CssCurve.EaseInOut);
             exhaustT = CssCurve.Build(new[] { 0f, 1f }, new[] { 0f, 1f }, new Vector4(0f, 0f, 0.58f, 1f)); // ease-out
-            pulseScale = CssCurve.Build(half, new[] { 1f, 1.06f, 1f }, CssCurve.EaseInOut); // pulse 1.2 s
+            pulseScale = CssCurve.Build(half, new[] { 1f, 1.04f, 1f }, CssCurve.EaseInOut); // breathing pulse 1.2 s, 1.0 -> 1.04
             dotScale = CssCurve.Build(half, new[] { 1f, 1.25f, 1f }, CssCurve.EaseInOut);   // dot 1 s
             floatY = CssCurve.Build(half, new[] { 0f, 4f, 0f }, CssCurve.EaseInOut);        // floaty 2 s
 

@@ -171,7 +171,7 @@ namespace BusRush.EditorTools
             return root;
         }
 
-        /// <summary>Lilita One material with a coloured outline + drop (CSS text-shadow outline), cached per colour.</summary>
+        /// <summary>Lilita One material in the UiTheme text style (button or title), cached per colour.</summary>
         private static Material LilitaOutline(string key, Color edge, float width = 0.6f, float dropY = -1.2f)
         {
             string path = $"{UiV2Importer.FontsDir}/LilitaOne UIv2 SDF {key}.mat";
@@ -186,16 +186,11 @@ namespace BusRush.EditorTools
             m.shader = font.material.shader;
             m.CopyPropertiesFromMaterial(font.material);
             m.SetTexture(ShaderUtilities.ID_MainTex, font.atlasTexture);
-            m.EnableKeyword(ShaderUtilities.Keyword_Outline);
-            m.SetFloat(ShaderUtilities.ID_OutlineWidth, width);
-            m.SetFloat(ShaderUtilities.ID_FaceDilate, width * 0.5f); // outline grows outward; the letters keep their size
-            m.SetColor(ShaderUtilities.ID_OutlineColor, edge);
-            m.EnableKeyword(ShaderUtilities.Keyword_Underlay);
-            m.SetColor(ShaderUtilities.ID_UnderlayColor, edge);
-            m.SetFloat(ShaderUtilities.ID_UnderlayOffsetX, 0f);
-            m.SetFloat(ShaderUtilities.ID_UnderlayOffsetY, dropY);
-            m.SetFloat(ShaderUtilities.ID_UnderlayDilate, width);
-            m.SetFloat(ShaderUtilities.ID_UnderlaySoftness, 0f);
+            // The central text style (UiTheme): colour buttons get white text + soft dark underlay, everything else the thin
+            // title outline. width / dropY are ignored now. Re-run Tools > Bus Rush > Apply UI Text Style after a full rebuild.
+            bool button = key == "Green" || key == "Orange" || key == "Blue" || key == "Purple" || key == "Red";
+            if (button) Theme.ApplyButtonText(m, edge);
+            else Theme.ApplyTitleText(m, edge);
             EditorUtility.SetDirty(m);
             return m;
         }
@@ -329,14 +324,14 @@ namespace BusRush.EditorTools
             (RectTransform wrap, Button button, RectTransform frameBox) Side(string name, string label, string icon, Vector2 iconSize,
                                                                              bool right, float top)
             {
-                RectTransform wrap = Place(Rect(safe, name), right ? 1f : 0f, 1f, right ? -12f : 12f, -top, 78f, 106f,
+                RectTransform wrap = Place(Rect(safe, name), right ? 1f : 0f, 1f, right ? -12f : 12f, -top, 78f, SideWrapHeight,
                                            right ? 1f : 0f, 1f);
                 RectTransform box = V2Box(wrap, "Frame", 26f, Color.white, H(0xDDF1FF), null, 3f, navyEdge, 5f, true);
                 Place(box, 0.5f, 1f, 0f, 0f, 76f, 76f, 0.5f, 1f);
                 Image ic = Img(box, "Icon", UiV2Sprite(icon), Color.white);
                 Place(ic.rectTransform, 0.5f, 0.5f, 0f, 0f, iconSize.x, iconSize.y);
                 TextMeshProUGUI t = V2Text(wrap, "Label", label, 16f, true, Color.white, navyText);
-                Place(t.rectTransform, 0.5f, 1f, 0f, -82f, 110f, 20f, 0.5f, 1f);
+                Place(t.rectTransform, 0.5f, 1f, 0f, -SideLabelY, SideLabelWidth, 20f, 0.5f, 1f);
                 Button b = V2Button(wrap, box);
                 return (wrap, b, box);
             }
@@ -351,16 +346,12 @@ namespace BusRush.EditorTools
             Image video = Img(lucky.frameBox, "VideoBadge", UiV2Sprite("Icons/video.png"), Color.white);
             Place(video.rectTransform, 1f, 0f, 10f, -8f, 30f, 25f, 1f, 0f);
 
-            // --- Level button: left 50, top 752, 290x74, radius 26, pulsing; bottom-anchored in the safe area.
-            // R11: top 700 of 844 = 70 above the bottom of the safe area (always >= 28 px clear of it).
-            const float levelTop = 700f, minAboveSafeBottom = 28f;
-            float levelBottom = Mathf.Max(minAboveSafeBottom, RefHeight - levelTop - 74f);
-            RectTransform pulse = Place(Rect(safe, "LevelPulse"), 0.5f, 0f, 0f, levelBottom + 37f, 290f, 74f, 0.5f, 0.5f);
-            RectTransform levelRt = V2Box(pulse, "LevelButton", 26f, green0, green2, green1, 3f, greenEdge, 6f, true);
-            Stretch(levelRt);
-            TextMeshProUGUI levelText = V2Text(levelRt, "Label", "Level 1", 36f, true, Color.white, greenText);
-            Stretch(levelText.rectTransform, 18f, 6f, 18f, 2f);
-            Button level = V2Button(levelRt);
+            // --- Level button (hero): 290x85, bottom edge where the old 74 px button ended (always >= 28 px clear of the
+            // safe-area bottom). Layers, shine, sparkles and content: UIBuilder.HomeLevelButton.cs.
+            RectTransform pulse = Place(Rect(safe, "LevelPulse"), 0.5f, 0f, 0f, LevelPulseY(), LevelW, LevelH, 0.5f, 0.5f);
+            var levelBuilt = BuildLevelButton(pulse);
+            Button level = levelBuilt.button;
+            TextMeshProUGUI levelText = levelBuilt.text;
 
             // --- Toast ("Coming soon").
             RectTransform toast = V2Box(safe, "Toast", 23f, H(0x24345E), H(0x14204F), null, 3f, Color.white, 0f);
