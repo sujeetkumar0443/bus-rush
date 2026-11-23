@@ -1,0 +1,36 @@
+Bus Rush audio credits
+======================
+
+Sound effects were picked from the free Kenney (www.kenney.nl) audio packs, licence Creative Commons Zero (CC0 1.0):
+  - Interface Sounds, Impact Sounds, Digital Audio, Music Jingles (downloaded as GitHub mirrors of the packs:
+    Calinou/kenney-interface-sounds, Boyquotes/kenney-impact-sounds-for-godot, kenney-digital-audio-for-godot,
+    kenney-music-jingles-for-godot; each carries the CC0 licence text).
+  CC0: https://creativecommons.org/publicdomain/zero/1.0/ - free for commercial use, no attribution required.
+  (The Casino Audio pack was not available from a mirror; coin sounds are synthesised.)
+
+Every other sound (engine whoosh, buzz, horn, jingles, sparkles, coin, chest creak, road shimmer) and the two music loops
+are synthesised by Assets/BusRush/Scripts/Editor/SoundGenerator.cs (Tools > Bus Rush > Generate Sounds): original work, no licence needed.
+
+Clips used from the packs (converted to 44.1 kHz mono OGG Vorbis, normalised to -1 dBFS):
+  UiClick_1.ogg  <-  click_001  [Interface Sounds (Kenney, CC0)]  0.11s
+  UiClick_2.ogg  <-  click_003  [Interface Sounds (Kenney, CC0)]  0.02s
+  UiBack_1.ogg  <-  back_001  [Interface Sounds (Kenney, CC0)]  0.07s
+  UiBack_2.ogg  <-  back_003  [Interface Sounds (Kenney, CC0)]  0.09s
+  Blocked_1.ogg  <-  impact_soft_heavy_001  [Impact Sounds (Kenney, CC0)]  0.57s
+  BayArrive_1.ogg  <-  drop_002  [Interface Sounds (Kenney, CC0)]  0.20s
+  BayArrive_2.ogg  <-  drop_003  [Interface Sounds (Kenney, CC0)]  0.20s
+  PassengerBoard_1.ogg  <-  pluck_001  [Interface Sounds (Kenney, CC0)]  0.11s
+  SeatFilled_1.ogg  <-  confirmation_003  [Interface Sounds (Kenney, CC0)]  0.32s
+  LevelFail_1.ogg  <-  low_down  [Digital Audio (Kenney, CC0)]  0.78s
+  BoosterUse_1.ogg  <-  phaser_up_2  [Digital Audio (Kenney, CC0)]  0.42s
+  BoosterUse_2.ogg  <-  phaser_up_3  [Digital Audio (Kenney, CC0)]  0.52s
+  LockClick_1.ogg  <-  switch_004  [Interface Sounds (Kenney, CC0)]  0.50s
+  MapPinLift_1.ogg  <-  impact_soft_heavy_000  [Impact Sounds (Kenney, CC0)]  0.51s
+  PadlockCrack_1.ogg  <-  impact_wood_light_001  [Impact Sounds (Kenney, CC0)]  0.27s
+  Tinkle_1.ogg  <-  glass_001  [Interface Sounds (Kenney, CC0)]  0.29s
+  Tinkle_2.ogg  <-  glass_003  [Interface Sounds (Kenney, CC0)]  0.13s
+  Tinkle_3.ogg  <-  glass_005  [Interface Sounds (Kenney, CC0)]  0.13s
+  PinDrop_1.ogg  <-  drop_001  [Interface Sounds (Kenney, CC0)]  0.13s
+  WorldThump_1.ogg  <-  impact_punch_heavy_001  [Impact Sounds (Kenney, CC0)]  0.54s
+  SpinTick_1.ogg  <-  tick_001  [Interface Sounds (Kenney, CC0)]  0.04s
+  DailyChime_1.ogg  <-  confirmation_002  [Interface Sounds (Kenney, CC0)]  0.56s
